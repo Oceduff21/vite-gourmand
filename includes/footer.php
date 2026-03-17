@@ -24,7 +24,7 @@ propose depuis plus de 25 ans des menus savoureux pour tous vos événements.
 <h5 class="footer-title">Horaires</h5>
 
 <ul class="footer-list">
-<li><i class="fa-regular fa-clock"></i> Mardi - Dimanche</li>
+<li><i class="fa-regular fa-clock"></i> Lundi - Dimanche</li>
 <li>11h00 - 20h00</li>
 </ul>
 </div>
