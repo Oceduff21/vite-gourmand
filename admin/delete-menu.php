@@ -1,10 +1,19 @@
 <?php
+session_start();
 require '../includes/db.php';
 
-if(isset($_GET['id'])){
-    $stmt = $pdo->prepare("DELETE FROM menus WHERE id = ?");
-    $stmt->execute([$_GET['id']]);
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'employe'])) {
+    header('Location: ../index.php');
+    exit();
 }
 
-header("Location: admin-menus.php");
+if (!isset($_GET['id'])) {
+    header('Location: admin-menus.php');
+    exit();
+}
+
+$id = (int)$_GET['id'];
+$pdo->prepare('DELETE FROM menus WHERE id = ?')->execute([$id]);
+
+header('Location: admin-menus.php');
 exit();

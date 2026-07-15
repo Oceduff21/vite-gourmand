@@ -22,6 +22,9 @@ $_SESSION["user_role"] = $user["role"];
 $_SESSION["user_nom"] = $user["nom"];
 
 $redirect = $_GET["redirect"] ?? "index.php";
+if (preg_match('#^(https?://|//)#i', $redirect) || str_contains($redirect, '..')) {
+    $redirect = "index.php";
+}
 header("Location: " . $redirect);
 exit();
 

@@ -6,7 +6,8 @@ UPDATE commandes SET statut = 'en_attente' WHERE statut = 'en attente';
 ALTER TABLE avis ADD COLUMN IF NOT EXISTS commande_id INT NULL;
 ALTER TABLE avis ADD COLUMN IF NOT EXISTS is_validated TINYINT(1) DEFAULT 0;
 ALTER TABLE avis ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-UPDATE avis SET is_validated = valide WHERE is_validated = 0 AND valide = 1;
+-- Legacy: anciennes BDD avaient une colonne "valide" (ignore si absente)
+-- UPDATE avis SET is_validated = valide WHERE is_validated = 0 AND valide = 1;
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS telephone VARCHAR(20) NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS date_naissance DATE NULL;
@@ -66,6 +67,17 @@ CREATE TABLE IF NOT EXISTS commande_historique (
     id INT AUTO_INCREMENT PRIMARY KEY,
     commande_id INT NOT NULL,
     statut VARCHAR(50) NOT NULL,
+    note TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE commande_historique ADD COLUMN IF NOT EXISTS note TEXT NULL;
+
+CREATE TABLE IF NOT EXISTS password_resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(150) NOT NULL,
+    token VARCHAR(64) NOT NULL,
+    expires_at DATETIME NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
