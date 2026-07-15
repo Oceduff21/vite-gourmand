@@ -32,4 +32,5 @@ docker-compose exec web php scripts/sync-mongo.php
 
 ## Comptes test
 
-- Admin : admin@vite-gourmand.fr / Admin123!
+- Admin : testadmin@test.com / Admin123!
+- Admin (copie ECF) : admin@vite-gourmand.fr / Admin123!
