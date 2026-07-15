@@ -21,7 +21,8 @@ $_SESSION["user_id"] = $user["id"];
 $_SESSION["user_role"] = $user["role"];
 $_SESSION["user_nom"] = $user["nom"];
 
-header("Location: index.php");
+$redirect = $_GET["redirect"] ?? "index.php";
+header("Location: " . $redirect);
 exit();
 
 }else{
@@ -58,6 +59,8 @@ $message = "Email ou mot de passe incorrect";
 <button class="btn btn-primary">Se connecter</button>
 
 </form>
+
+<p class="mt-3"><a href="mot-de-passe-oublie.php">Mot de passe oublie ?</a></p>
 
 </div>
 
