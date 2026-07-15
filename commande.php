@@ -149,9 +149,10 @@ function calculPrix() {
     let livraison = 0;
     if (ville !== 'bordeaux') {
         livraison = 5;
-        if (cp.startsWith('33')) livraison += 8;
-        else if (cp.startsWith('24') || cp.startsWith('47')) livraison += 15;
-        else if (cp) livraison += 25;
+        if (cp.startsWith('33')) livraison += 8 * 0.59;
+        else if (cp.startsWith('24') || cp.startsWith('47')) livraison += 15 * 0.59;
+        else if (cp) livraison += 25 * 0.59;
+        livraison = Math.round(livraison * 100) / 100;
     }
     let reduction = quantite >= (minPers + 5) ? totalMenu * 0.10 : 0;
     document.getElementById('prixMenu').textContent = totalMenu.toFixed(2);

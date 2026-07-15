@@ -15,7 +15,8 @@ Application web PHP/MySQL de gestion de menus et commandes pour un service trait
 
 | Role | Email | Mot de passe |
 |------|-------|--------------|
-| Admin | admin@vite-gourmand.fr | Admin123! |
+| Admin | testadmin@test.com | Admin123! |
+| Admin (ECF) | admin@vite-gourmand.fr | Admin123! |
 | Utilisateur | test@test.com | (voir BDD) |
 
 ## Stack

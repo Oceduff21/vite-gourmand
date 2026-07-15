@@ -106,7 +106,8 @@ Projet PHP/MySQL traiteur avec base UI solide (Bootstrap, filtres AJAX, espace a
 
 | Role | Email | Mot de passe |
 |------|-------|--------------|
-| Admin | admin@vite-gourmand.fr | Admin123! |
+| Admin | testadmin@test.com | Admin123! |
+| Admin (copie ECF) | admin@vite-gourmand.fr | Admin123! |
 | Utilisateur | test@test.com | (existant en BDD) |
 
 ---

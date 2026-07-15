@@ -2,9 +2,19 @@
 session_start();
 require '../includes/db.php';
 
-$id = (int)$_GET["id"];
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'employe'])) {
+    header('Location: ../index.php');
+    exit();
+}
 
-$pdo->prepare("DELETE FROM avis WHERE id = ?")
-    ->execute([$id]);
+if (!isset($_GET['id'])) {
+    header('Location: admin-avis.php');
+    exit();
+}
 
-header("Location: admin-avis.php");
+$id = (int)$_GET['id'];
+
+$pdo->prepare('DELETE FROM avis WHERE id = ?')->execute([$id]);
+
+header('Location: admin-avis.php');
+exit();

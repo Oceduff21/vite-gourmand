@@ -103,8 +103,17 @@ CREATE TABLE commande_historique (
     id INT AUTO_INCREMENT PRIMARY KEY,
     commande_id INT NOT NULL,
     statut VARCHAR(50) NOT NULL,
+    note TEXT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE CASCADE
+);
+
+CREATE TABLE password_resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(150) NOT NULL,
+    token VARCHAR(64) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE avis (
