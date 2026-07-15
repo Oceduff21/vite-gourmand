@@ -75,6 +75,25 @@ $stmt->execute([
 $commande_id = (int)$pdo->lastInsertId();
 
 enregistrerHistorique($pdo, $commande_id, 'en_attente');
+
+$cart = json_decode($_POST['cart_json'] ?? '', true);
+if (is_array($cart)) {
+    foreach (['entree', 'plat', 'dessert'] as $type) {
+        if (empty($cart[$type]) || !is_array($cart[$type])) {
+            continue;
+        }
+        foreach ($cart[$type] as $platId => $qty) {
+            $qty = (int)$qty;
+            $platId = (int)$platId;
+            if ($platId > 0 && $qty > 0) {
+                $stmt = $pdo->prepare('INSERT INTO commande_details (commande_id, plat_id, quantite, type) VALUES (?, ?, ?, ?)');
+                $stmt->execute([$commande_id, $platId, $qty, $type]);
+            }
+        }
+    }
+}
+unset($_SESSION['menu_cart'], $_SESSION['menu_cart_menu_id']);
+
 $pdo->prepare('UPDATE menus SET stock = stock - 1 WHERE id = ? AND stock > 0')->execute([$menu_id]);
 
 $pdo->commit();

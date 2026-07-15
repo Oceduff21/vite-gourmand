@@ -6,7 +6,7 @@
 
 Projet PHP/MySQL traiteur avec base UI solide (Bootstrap, filtres AJAX, espace admin). **Correctifs P0 appliques le 15/07/2026** : schema SQL unifie, footer JS repare, flux commande reconnecte, endpoints securises, acces employe ouvert.
 
-**Conformite estimee : ~55%** (apres correctifs P0). Reste : MongoDB, deploiement, RGAA, emails, statuts complets, livrables PDF.
+**Conformite estimee : ~65%** (apres P0 + P1 partiel). Reste : deploiement actif, PDF finaux, RGAA complet.
 
 ---
 
@@ -33,13 +33,14 @@ Projet PHP/MySQL traiteur avec base UI solide (Bootstrap, filtres AJAX, espace a
 ## 2. Elements manquants
 
 ### Critiques (avant 23 juillet)
-- [ ] **Deploiement en ligne** (lien vide dans copie a rendre = rejet possible)
-- [ ] **MongoDB** obligatoire (seul stats.json present)
-- [ ] **Mot de passe oublie** + email reset
-- [ ] **Email bienvenue** inscription
-- [ ] **Contact** : formulaire inerte (contact.php)
-- [ ] **Workflow statuts complet** (7 statuts CDC + historique)
-- [ ] **RGAA** accessibilite
+- [ ] **Deploiement en ligne** (lien vide dans copie a rendre = rejet possible) — voir DEPLOY.md + render.yaml
+- [x] **MongoDB** stats + dashboard admin
+- [x] **Mot de passe oublie** + email reset
+- [x] **Email bienvenue** inscription
+- [x] **Contact** : formulaire fonctionnel
+- [x] **Workflow statuts complet** (8 statuts + historique)
+- [x] **commande_details** : choix plats persistes
+- [ ] **RGAA** accessibilite complete
 
 ### Importants
 - [ ] Galerie images par menu, allergenes affiches

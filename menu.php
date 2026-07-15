@@ -102,7 +102,7 @@ Restant : <span id="remain-<?= $type ?>">0</span>
 <h4>Résumé</h4>
 <div id="cart"></div>
 <h5>Total : <span id="total">0</span> €</h5>
-<a href="commande.php?menu_id=<?= $id ?>" class="btn btn-success w-100">Commander</a>
+<a href="commande.php?menu_id=<?= $id ?>" class="btn btn-success w-100" id="btn-commander" onclick="return goToCommande(event)">Commander</a>
 </div>
 
 </div>
@@ -204,12 +204,18 @@ sum(cart.plat)!==cart.invites ||
 sum(cart.dessert)!==cart.invites
 ){
 alert("Répartition incorrecte");
-return;
+return false;
 }
 
 let f=document.createElement("form");
 f.method="POST";
 f.action="commande.php";
+
+let menuInput=document.createElement("input");
+menuInput.type="hidden";
+menuInput.name="menu_id";
+menuInput.value="<?= $id ?>";
+f.appendChild(menuInput);
 
 let i=document.createElement("input");
 i.type="hidden";
@@ -219,6 +225,39 @@ i.value=JSON.stringify(cart);
 f.appendChild(i);
 document.body.appendChild(f);
 f.submit();
+return false;
+}
+
+function goToCommande(e){
+if(
+sum(cart.entree)!==cart.invites ||
+sum(cart.plat)!==cart.invites ||
+sum(cart.dessert)!==cart.invites
+){
+e.preventDefault();
+alert("Veuillez repartir les plats entre les invites avant de commander.");
+return false;
+}
+
+let f=document.createElement("form");
+f.method="POST";
+f.action="commande.php";
+
+let menuInput=document.createElement("input");
+menuInput.type="hidden";
+menuInput.name="menu_id";
+menuInput.value="<?= $id ?>";
+f.appendChild(menuInput);
+
+let i=document.createElement("input");
+i.type="hidden";
+i.name="data";
+i.value=JSON.stringify(cart);
+f.appendChild(i);
+
+document.body.appendChild(f);
+f.submit();
+return false;
 }
 
 reset();
