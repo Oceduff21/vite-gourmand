@@ -8,7 +8,7 @@ $menus = $pdo->query("SELECT * FROM menus")->fetchAll();
 
 <h2 class="mb-4">Gestion des menus</h2>
 
-<a href="create-menu.php" class="btn btn-success mb-3">+ Ajouter un menu</a>
+<a href="add-menu.php" class="btn btn-success mb-3">+ Ajouter un menu</a>
 
 <div class="card-custom">
 

@@ -98,7 +98,7 @@ SELECT AVG(note) FROM avis WHERE is_validated = 1
 
 <div class="col-md-4">
     <div class="menu-card">
-        <img src="assets/images/menu-noel.jpg" alt="Photo equipe Vite et Gourmand">
+        <img src="assets/images/menu-noel-entree.jpg" alt="Photo equipe Vite et Gourmand">
         <div class="p-3">
             <h5>Menu Noël</h5>
             <a href="menus.php" class="btn btn-outline-dark w-100">Voir</a>
@@ -108,7 +108,7 @@ SELECT AVG(note) FROM avis WHERE is_validated = 1
 
 <div class="col-md-4">
     <div class="menu-card">
-        <img src="assets/images/menu-mariage.jpg" alt="Photo equipe Vite et Gourmand">
+        <img src="assets/images/menu-gastronomique.jpg" alt="Photo equipe Vite et Gourmand">
         <div class="p-3">
             <h5>Menu Mariage</h5>
             <a href="menus.php" class="btn btn-outline-dark w-100">Voir</a>
@@ -118,7 +118,7 @@ SELECT AVG(note) FROM avis WHERE is_validated = 1
 
 <div class="col-md-4">
     <div class="menu-card">
-        <img src="assets/images/menu-vegan.jpg" alt="Photo equipe Vite et Gourmand">
+        <img src="assets/images/salade.jpg" alt="Photo equipe Vite et Gourmand">
         <div class="p-3">
             <h5>Menu Vegan</h5>
             <a href="menus.php" class="btn btn-outline-dark w-100">Voir</a>
