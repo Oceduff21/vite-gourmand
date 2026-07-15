@@ -1,9 +1,9 @@
 <?php
 
-$host = "localhost";
-$dbname = "vite_gourmand";
-$user = "root";
-$password = "";
+$host = getenv('DB_HOST') ?: 'localhost';
+$dbname = getenv('DB_NAME') ?: 'vite_gourmand';
+$user = getenv('DB_USER') ?: 'root';
+$password = getenv('DB_PASS') !== false ? getenv('DB_PASS') : '';
 
 try {
 

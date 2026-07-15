@@ -8,6 +8,17 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['data'])) {
+    $cart = json_decode($_POST['data'], true);
+    $postedMenuId = (int)($_POST['menu_id'] ?? 0);
+    if (is_array($cart) && $postedMenuId > 0) {
+        $_SESSION['menu_cart'] = $cart;
+        $_SESSION['menu_cart_menu_id'] = $postedMenuId;
+    }
+    header('Location: commande.php?menu_id=' . $postedMenuId);
+    exit();
+}
+
 $menu_id = (int)($_GET['menu_id'] ?? $_GET['id'] ?? 0);
 if (!$menu_id) {
     header('Location: menus.php');
@@ -29,6 +40,35 @@ $min = (int)$menu['min_personnes'];
 $prix = (float)$menu['prix'];
 $stock = (int)($menu['stock'] ?? 0);
 
+$cart = [];
+if (!empty($_SESSION['menu_cart']) && (int)($_SESSION['menu_cart_menu_id'] ?? 0) === $menu_id) {
+    $cart = $_SESSION['menu_cart'];
+}
+
+$platLabels = [];
+if ($cart) {
+    $platIds = [];
+    foreach (['entree', 'plat', 'dessert'] as $type) {
+        if (!empty($cart[$type]) && is_array($cart[$type])) {
+            foreach ($cart[$type] as $platId => $qty) {
+                if ((int)$qty > 0) {
+                    $platIds[] = (int)$platId;
+                }
+            }
+        }
+    }
+    if ($platIds) {
+        $placeholders = implode(',', array_fill(0, count($platIds), '?'));
+        $stmt = $pdo->prepare("SELECT id, nom, type FROM plats WHERE id IN ($placeholders)");
+        $stmt->execute($platIds);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $plat) {
+            $platLabels[(int)$plat['id']] = $plat;
+        }
+    }
+}
+
+$quantiteDefault = (int)($cart['invites'] ?? $min);
+
 include 'includes/header.php';
 ?>
 
@@ -49,6 +89,24 @@ include 'includes/header.php';
     <form method="POST" action="valider-commande.php" id="form-commande">
         <?= csrfField() ?>
         <input type="hidden" name="menu_id" value="<?= $menu_id ?>">
+        <input type="hidden" name="cart_json" value="<?= htmlspecialchars(json_encode($cart), ENT_QUOTES) ?>">
+
+        <?php if ($cart): ?>
+        <div class="alert alert-info mb-4">
+            <strong>Plats selectionnes :</strong>
+            <ul class="mb-0 mt-2">
+            <?php foreach (['entree', 'plat', 'dessert'] as $type): ?>
+                <?php if (!empty($cart[$type]) && is_array($cart[$type])): ?>
+                    <?php foreach ($cart[$type] as $platId => $qty): ?>
+                        <?php if ((int)$qty > 0 && isset($platLabels[(int)$platId])): ?>
+                        <li><?= htmlspecialchars(ucfirst($type)) ?> : <?= htmlspecialchars($platLabels[(int)$platId]['nom']) ?> — <?= (int)$qty ?> invite(s)</li>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            <?php endforeach; ?>
+            </ul>
+        </div>
+        <?php endif; ?>
 
         <div class="row g-4">
             <div class="col-md-6">
@@ -110,7 +168,7 @@ include 'includes/header.php';
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Nombre de personnes (min. <?= $min ?>)</label>
-                        <input type="number" name="quantite" id="quantite" class="form-control" min="<?= $min ?>" value="<?= $min ?>" required>
+                        <input type="number" name="quantite" id="quantite" class="form-control" min="<?= $min ?>" value="<?= max($min, $quantiteDefault) ?>" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Date de livraison</label>
