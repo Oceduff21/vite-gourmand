@@ -48,3 +48,11 @@ Les statistiques CA par menu sont stockees dans MongoDB (collection `commandes_s
 docker-compose up -d --build
 ```
 Voir [DEPLOY.md](DEPLOY.md) pour le deploiement complet.
+
+## Git workflow
+
+- `main` : version stable livrable ECF
+- `develop` : branche d'integration
+- `feature/*` : developpements (ex. `feature/admin`)
+
+Workflow : feature → merge dans `develop` → merge dans `main`.
