@@ -5,17 +5,9 @@ if(session_status() === PHP_SESSION_NONE){
 
 $page = basename($_SERVER['PHP_SELF']);
 
-$breadcrumbs = [
-    'index.php' => 'Accueil',
-    'menus.php' => 'Menus',
-    'menu.php' => 'Détail du menu',
-    'contact.php' => 'Contact',
-    'commande.php' => 'Commande',
-    'login.php' => 'Connexion',
-    'espace-utilisateur.php' => 'Mon espace'
-];
-
-$current = $breadcrumbs[$page] ?? 'Page';
+function isActive($pages, $currentPage){
+    return in_array($currentPage, (array)$pages) ? 'active-link' : '';
+}
 ?>
 
 <!DOCTYPE html>
@@ -27,98 +19,109 @@ $current = $breadcrumbs[$page] ?? 'Page';
 
 <title>Vite & Gourmand</title>
 
+<!-- Bootstrap -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/style.css">
+
+<!-- Fonts + Icons -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<!-- CSS Perso -->
+<link rel="stylesheet" href="assets/css/style.css">
 
 </head>
 
 <body>
+<a href="#main-content" class="visually-hidden-focusable btn btn-sm btn-primary position-absolute m-2">Aller au contenu</a>
 
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-light custom-navbar">
+<!-- NAVBAR MODERNE -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top custom-navbar">
+    <div class="container">
 
-<div class="container">
+        <!-- Logo -->
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="index.php">
+            <i class="fa-solid fa-utensils text-warning"></i>
+            Vite & Gourmand
+        </a>
 
-<a class="navbar-brand fw-bold" href="index.php">
-Vite & Gourmand
-</a>
+        <!-- Mobile button -->
+        <button class="navbar-toggler border-0" data-bs-toggle="collapse" data-bs-target="#nav">
+            <i class="fa-solid fa-bars"></i>
+        </button>
 
-<button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav">
-<span class="navbar-toggler-icon"></span>
-</button>
+        <div class="collapse navbar-collapse" id="nav">
 
-<div class="collapse navbar-collapse" id="nav">
+            <!-- Menu centre -->
+            <ul class="navbar-nav mx-auto align-items-lg-center">
 
-<ul class="navbar-nav mx-auto">
+                <li class="nav-item">
+                    <a class="nav-link <?= isActive(['index.php'], $page) ?>" href="index.php">Accueil</a>
+                </li>
 
-<li class="nav-item">
-<a class="nav-link <?= ($page == 'index.php') ? 'active-link' : '' ?>" href="index.php">
-Accueil
-</a>
-</li>
+                <li class="nav-item">
+                    <a class="nav-link <?= isActive(['menus.php','menu.php'], $page) ?>" href="menus.php">Menus</a>
+                </li>
 
-<li class="nav-item">
-<a class="nav-link <?= ($page == 'menus.php' || $page == 'menu.php') ? 'active-link' : '' ?>" href="menus.php">
-Menus
-</a>
-</li>
+                <li class="nav-item">
+                    <a class="nav-link <?= isActive(['contact.php'], $page) ?>" href="contact.php">Contact</a>
+                </li>
 
-<li class="nav-item">
-<a class="nav-link <?= ($page == 'contact.php') ? 'active-link' : '' ?>" href="contact.php">
-Contact
-</a>
-</li>
+            </ul>
 
-</ul>
+            <!-- Partie droite -->
+            <ul class="navbar-nav align-items-lg-center">
 
-<ul class="navbar-nav">
+                <?php if(isset($_SESSION["user_id"])): ?>
 
-<?php if(isset($_SESSION["user_id"])): ?>
+                    <li class="nav-item me-2">
+                        <a class="nav-link" href="espace-utilisateur.php">
+                            <i class="fa-regular fa-user me-1"></i> Mon espace
+                        </a>
+                    </li>
 
-<li class="nav-item">
-<a class="nav-link" href="espace-utilisateur.php">Mon espace</a>
-</li>
+                    <?php if($_SESSION["user_role"] === "admin"): ?>
+                        <li class="nav-item me-2">
+                            <a class="nav-link text-danger fw-semibold" href="admin/">
+                                <i class="fa-solid fa-shield-halved me-1"></i> Admin
+                            </a>
+                        </li>
+                    <?php endif; ?>
 
-<?php if($_SESSION["user_role"] === "admin"): ?>
-<li class="nav-item">
-<a class="nav-link admin-link" href="admin.php">Admin</a>
-</li>
-<?php endif; ?>
+                    <li class="nav-item">
+                        <a class="btn btn-outline-dark rounded-pill px-3" href="logout.php">
+                            Déconnexion
+                        </a>
+                    </li>
 
-<li class="nav-item">
-<a class="btn btn-outline-dark ms-2" href="logout.php">Déconnexion</a>
-</li>
+                <?php else: ?>
 
-<?php else: ?>
+                    <li class="nav-item me-2">
+                        <a class="nav-link" href="register.php">Inscription</a>
+                    </li>
+                    <li class="nav-item"><a class="btn btn-dark rounded-pill px-4" href="login.php">
+                            <i class="fa-solid fa-right-to-bracket me-1"></i> Connexion
+                        </a>
+                    </li>
 
-<li class="nav-item">
-<a class="btn btn-dark" href="login.php">Connexion</a>
-</li>
+                <?php endif; ?>
 
-<?php endif; ?>
+            </ul>
 
-</ul>
+        </div>
 
-</div>
-
-</div>
-
+    </div>
 </nav>
 
-<!-- BREADCRUMB (SOUS HEADER) -->
-<?php
-$page = basename($_SERVER['PHP_SELF']);
+<!-- ESPACE POUR NAVBAR FIXE -->
+<div style="height:80px;"></div>
 
+<!-- BREADCRUMB PRO -->
+<?php
 $current = 'Page';
 $sub = null;
 
-/* PAGE MENU DETAIL */
 if($page === 'menu.php' && isset($_GET['id'])){
-    
     try {
         require_once 'includes/db.php';
-        require_once 'includes/helpers.php';
 
         $stmt = $pdo->prepare("SELECT titre FROM menus WHERE id=?");
         $stmt->execute([$_GET['id']]);
@@ -133,10 +136,7 @@ if($page === 'menu.php' && isset($_GET['id'])){
         $current = "Menus";
     }
 
-}
-/* AUTRES PAGES */
-else{
-
+} else {
     $pages = [
         'menus.php' => 'Menus',
         'contact.php' => 'Contact',
@@ -149,22 +149,32 @@ else{
 }
 ?>
 
-<div class="breadcrumb-container">
+<div class="breadcrumb-container py-2 bg-light border-bottom">
     <div class="container">
-        <nav class="breadcrumb-custom">
+        <nav class="small">
 
-            <a href="index.php">Accueil</a>
+            <a href="index.php" class="text-decoration-none text-muted">
+                <i class="fa-solid fa-house"></i>
+            </a>
 
             <?php if($page !== 'index.php'): ?>
 
-                <span>›</span>
+                <span class="mx-2 text-muted"></span>
 
                 <?php if(isset($sub)): ?>
-                    <a href="menus.php"><?= $current ?></a>
-                    <span>›</span>
-                    <span class="active"><?= htmlspecialchars($sub) ?></span>
+
+                    <a href="menus.php" class="text-decoration-none text-muted">
+                        <?= $current ?>
+                    </a>
+
+                    <span class="mx-2 text-muted"></span>
+
+                    <span class="fw-semibold"><?= htmlspecialchars($sub) ?></span>
+
                 <?php else: ?>
-                    <span class="active"><?= $current ?></span>
+
+                    <span class="fw-semibold"><?= $current ?></span>
+
                 <?php endif; ?>
 
             <?php endif; ?>
@@ -174,4 +184,4 @@ else{
 </div>
 
 <!-- CONTENU -->
-<div class="container mt-4">
+<main id="main-content" class="container mt-4">
