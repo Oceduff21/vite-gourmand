@@ -1,83 +1,151 @@
+<?php include 'includes/header.php'; ?>
+<?php require 'includes/db.php'; ?>
+
 <?php
-require 'includes/db.php';
+$avis = $pdo->query("
+SELECT avis.*, users.nom 
+FROM avis
+JOIN users ON avis.user_id = users.id
+WHERE is_validated = 1
+ORDER BY created_at DESC
+LIMIT 3
+");
 
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
-/* MENUS PHARES */
-$sql = "SELECT * FROM menus LIMIT 3";
-$stmt = $pdo->query($sql);
-$menus = $stmt->fetchAll();
-?>
-
-<?php 
-include 'includes/header.php';
-require 'includes/helpers.php';
+$moyenne = $pdo->query("
+SELECT AVG(note) FROM avis WHERE is_validated = 1
+")->fetchColumn();
 ?>
 
 <!-- HERO -->
 <section class="hero">
-<div class="hero-content">
-<h1>Vite & Gourmand</h1>
-<p>Traiteur à Bordeaux depuis 25 ans</p>
-<a href="menus.php" class="btn btn-primary">Voir les menus</a>
+
+    <div class="hero-slide active" style="background-image:url('assets/images/presentation.jpg')"></div>
+    <div class="hero-slide" style="background-image:url('assets/images/hero1.jpg')"></div>
+    <div class="hero-slide" style="background-image:url('assets/images/hero2.jpg')"></div>
+    <div class="hero-slide" style="background-image:url('assets/images/hero3.jpg')"></div>
+
+    <div class="hero-overlay"></div>
+
+    <button class="hero-btn prev" aria-label="Image precedente">❮</button>
+    <button class="hero-btn next" aria-label="Image suivante">❯</button>
+
+    <div class="hero-content">
+        <h1 id="hero-title">Une cuisine élégante</h1>
+
+        <p id="hero-text">
+            Vite & Gourmand propose des prestations culinaires haut de gamme pour vos événements privés et professionnels.
+        </p>
+
+        <p class="hero-subtext">
+            Notre équipe met son savoir-faire au service d’une expérience gastronomique unique.
+        </p>
+
+        <a href="menus.php" class="btn btn-hero mt-3">
+            Découvrir nos menus
+        </a>
+    </div>
+
+</section>
+
+<!-- EQUIPE -->
+<section class="bg-light py-5">
+<div class="container text-center">
+
+<h2 class="mb-5">Une équipe professionnelle</h2>
+
+<div class="row g-4">
+
+<div class="col-md-4">
+    <div class="team-card">
+        <img src="assets/images/chef.jpg" alt="Chef experimente en cuisine">
+        <div class="p-3">
+            <h5>Chef expérimenté</h5>
+            <p>15 ans d'expérience en gastronomie.</p>
+        </div>
+    </div>
+</div>
+
+<div class="col-md-4">
+    <div class="team-card">
+        <img src="assets/images/chef.jpg" alt="Photo equipe Vite et Gourmand">
+        <div class="p-3">
+            <h5>Service haut de gamme</h5>
+            <p>Professionnalisme et discrétion.</p>
+        </div>
+    </div>
+</div>
+
+<div class="col-md-4">
+    <div class="team-card">
+        <img src="assets/images/presentation.jpg" alt="Photo equipe Vite et Gourmand">
+        <div class="p-3">
+            <h5>Organisation</h5>
+            <p>Accompagnement sur mesure.</p>
+        </div>
+    </div>
+</div>
+
+</div>
 </div>
 </section>
 
 <!-- MENUS -->
-<section class="section">
-<div class="container">
+<section class="container py-5">
 
-<h2 class="section-title">Nos menus</h2>
+<h2 class="text-center mb-5">Nos Menus</h2>
 
-<div class="row">
+<div class="row g-4">
 
-<?php foreach($menus as $menu): ?>
-
-<?php $badge = getBadge($menu["theme"]); ?>
-
-<div class="col-md-4 mb-4">
-
-<div class="menu-card">
-
-<div class="menu-img-wrapper">
-
-<img 
-src="assets/images/menu-<?= strtolower($menu["theme"]) ?>.jpg"
-onerror="this.src='assets/images/default.jpg'">
-
-<span class="menu-badge <?= $badge["class"] ?>">
-<?= $badge["icon"] ?> <?= htmlspecialchars($menu["theme"]) ?>
-</span>
-
+<div class="col-md-4">
+    <div class="menu-card">
+        <img src="assets/images/menu-noel.jpg" alt="Photo equipe Vite et Gourmand">
+        <div class="p-3">
+            <h5>Menu Noël</h5>
+            <a href="menus.php" class="btn btn-outline-dark w-100">Voir</a>
+        </div>
+    </div>
 </div>
 
-<div class="menu-body">
+<div class="col-md-4">
+    <div class="menu-card">
+        <img src="assets/images/menu-mariage.jpg" alt="Photo equipe Vite et Gourmand">
+        <div class="p-3">
+            <h5>Menu Mariage</h5>
+            <a href="menus.php" class="btn btn-outline-dark w-100">Voir</a>
+        </div>
+    </div>
+</div>
 
-<h5><?= htmlspecialchars($menu["titre"]) ?></h5>
-
-<p class="menu-desc">
-<?= htmlspecialchars(substr($menu["description"],0,80)) ?>...
-</p>
-
-<div class="menu-footer">
-
-<span class="menu-price">
-<?= $menu["prix"] ?> €
-</span>
-
-<a href="menu.php?id=<?= $menu["id"] ?>" class="btn btn-sm btn-primary">
-Voir
-</a>
-
+<div class="col-md-4">
+    <div class="menu-card">
+        <img src="assets/images/menu-vegan.jpg" alt="Photo equipe Vite et Gourmand">
+        <div class="p-3">
+            <h5>Menu Vegan</h5>
+            <a href="menus.php" class="btn btn-outline-dark w-100">Voir</a>
+        </div>
+    </div>
 </div>
 
 </div>
+</section>
 
+<!-- AVIS -->
+<section class="bg-dark text-white py-5">
+<div class="container text-center">
+
+<h2 class="mb-3">Avis clients</h2>
+
+<p class="mb-5"><?= $moyenne ? round($moyenne,1) : 0 ?> ⭐ sur 5</p>
+
+<div class="row g-4">
+
+<?php foreach($avis as $a): ?>
+<div class="col-md-4">
+    <div class="review-card">
+        <p>"<?= htmlspecialchars($a['commentaire']) ?>"</p>
+        <h6><?= str_repeat("⭐", $a['note']) ?> - <?= $a['nom'] ?></h6>
+    </div>
 </div>
-
-</div>
-
 <?php endforeach; ?>
 
 </div>
