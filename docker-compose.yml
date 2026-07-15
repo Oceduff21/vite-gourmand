@@ -10,6 +10,10 @@
       - mongo
     environment:
       MONGO_URI: mongodb://mongo:27017
+      DB_HOST: mysql
+      DB_NAME: vite_gourmand
+      DB_USER: root
+      DB_PASS: root
 
   mysql:
     image: mysql:8.0
