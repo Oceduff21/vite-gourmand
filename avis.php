@@ -2,73 +2,50 @@
 session_start();
 require 'includes/db.php';
 
-if(!isset($_SESSION["user_id"])){
-    header("Location: login.php");
-    exit();
-}
+if(!isset(\$_SESSION['user_id'])){ header('Location: login.php'); exit(); }
 
-$message = "";
+\$commande_id = (int)(\$_GET['commande_id'] ?? 0);
 
 if($_SERVER["REQUEST_METHOD"] === "POST"){
 
     $note = $_POST["note"];
     $commentaire = $_POST["commentaire"];
 
-    $sql = "INSERT INTO avis (user_id, note, commentaire)
-            VALUES (?, ?, ?)";
+    $stmt = $pdo->prepare("
+    INSERT INTO avis (user_id, commande_id, note, commentaire)
+    VALUES (?, ?, ?, ?)
+    ");
 
-    $stmt = $pdo->prepare($sql);
-
-    if($stmt->execute([
+    $stmt->execute([
         $_SESSION["user_id"],
+        $commande_id,
         $note,
         $commentaire
-    ])){
-        $message = "Avis envoyé avec succès";
-    }
+    ]);
+
+    echo "<div class='alert alert-success'>Avis envoyé</div>";
 }
 ?>
 
 <?php include 'includes/header.php'; ?>
 
-<div class="container mt-5">
+<div class="container py-5">
 
-<h2>Laisser un avis</h2>
-
-<?php if($message): ?>
-<div class="alert alert-success"><?= $message ?></div>
-<?php endif; ?>
+<h2>Donner un avis</h2>
 
 <form method="POST">
 
-<div class="mb-3">
-<label>Note</label>
-
-<select name="note" class="form-control">
-
-<option value="5">5 ⭐</option>
-<option value="4">4 ⭐</option>
-<option value="3">3 ⭐</option>
-<option value="2">2 ⭐</option>
-<option value="1">1 ⭐</option>
-
+<select name="note" class="form-control mb-3">
+<option value="5">⭐⭐⭐⭐⭐</option>
+<option value="4">⭐⭐⭐⭐</option>
+<option value="3">⭐⭐⭐</option>
+<option value="2">⭐⭐</option>
+<option value="1">⭐</option>
 </select>
 
-</div>
+<textarea name="commentaire" class="form-control mb-3"></textarea>
 
-<div class="mb-3">
-
-<label>Commentaire</label>
-
-<textarea name="commentaire"
-class="form-control"
-required></textarea>
-
-</div>
-
-<button class="btn btn-primary">
-Envoyer l'avis
-</button>
+<button class="btn btn-success">Envoyer</button>
 
 </form>
 
