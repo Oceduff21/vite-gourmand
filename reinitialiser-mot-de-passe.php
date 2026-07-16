@@ -15,6 +15,10 @@ if ($token) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $valid) {
+    if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
+        $message = 'Session expiree. Rechargez la page.';
+        $type = 'danger';
+    } else {
     $password = $_POST['password'] ?? '';
     $pwdError = validatePassword($password);
     if ($pwdError) {
@@ -27,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $valid) {
         header('Location: login.php');
         exit();
     }
+    }
 }
 
 include 'includes/header.php';
@@ -38,6 +43,7 @@ include 'includes/header.php';
 <?php else: ?>
 <?php if ($message): ?><div class="alert alert-<?= $type ?>"><?= htmlspecialchars($message) ?></div><?php endif; ?>
 <form method="POST" class="col-md-6">
+<?= csrfField() ?>
 <label class="form-label">Nouveau mot de passe</label>
 <input type="password" name="password" class="form-control mb-3" required minlength="10">
 <button class="btn btn-primary">Enregistrer</button>

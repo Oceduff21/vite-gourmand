@@ -45,8 +45,9 @@ $menu = $menu ?? [];
         <input name="stock" type="number" min="0" class="form-control" value="<?= htmlspecialchars($menu['stock'] ?? '10') ?>">
     </div>
     <div class="col-md-2">
-        <label class="form-label">Delai (jours)</label>
+        <label class="form-label">Delai reservation (horaires, jours)</label>
         <input name="delai_jours" type="number" min="1" class="form-control" value="<?= htmlspecialchars($menu['delai_jours'] ?? '7') ?>">
+        <div class="form-text">Nombre de jours ouvres minimum avant la date de livraison.</div>
     </div>
     <div class="col-md-12">
         <label class="form-label">Description</label>

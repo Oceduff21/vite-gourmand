@@ -1,9 +1,7 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'employe'])) {
-    header('Location: ../index.php');
-    exit();
-}
+require __DIR__ . '/partials/auth.php';
+requireAdminAccess();
+
 require '../includes/db.php';
 
 /* FILTRE */
@@ -87,17 +85,18 @@ Voir
 </button>
 
 <?php if(!$a["is_validated"]): ?>
-<a href="validate-avis.php?id=<?= $a["id"] ?>" 
-class="btn btn-sm btn-success">
-Valider
-</a>
+<form method="POST" action="validate-avis.php" class="d-inline">
+<?= csrfField() ?>
+<input type="hidden" name="id" value="<?= (int)$a['id'] ?>">
+<button type="submit" class="btn btn-sm btn-success">Valider</button>
+</form>
 <?php endif; ?>
 
-<a href="delete-avis.php?id=<?= $a["id"] ?>" 
-class="btn btn-sm btn-danger"
-onclick="return confirm('Supprimer cet avis ?')">
-Supprimer
-</a>
+<form method="POST" action="delete-avis.php" class="d-inline" onsubmit="return confirm('Supprimer cet avis ?')">
+<?= csrfField() ?>
+<input type="hidden" name="id" value="<?= (int)$a['id'] ?>">
+<button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+</form>
 
 </td>
 
@@ -130,14 +129,18 @@ Supprimer
 <div class="modal-footer">
 
 <?php if(!$a["is_validated"]): ?>
-<a href="validate-avis.php?id=<?= $a["id"] ?>" class="btn btn-success">
-Valider
-</a>
+<form method="POST" action="validate-avis.php" class="d-inline">
+<?= csrfField() ?>
+<input type="hidden" name="id" value="<?= (int)$a['id'] ?>">
+<button type="submit" class="btn btn-success">Valider</button>
+</form>
 <?php endif; ?>
 
-<a href="delete-avis.php?id=<?= $a["id"] ?>" class="btn btn-danger">
-Supprimer
-</a>
+<form method="POST" action="delete-avis.php" class="d-inline" onsubmit="return confirm('Supprimer cet avis ?')">
+<?= csrfField() ?>
+<input type="hidden" name="id" value="<?= (int)$a['id'] ?>">
+<button type="submit" class="btn btn-danger">Supprimer</button>
+</form>
 
 </div>
 

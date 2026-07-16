@@ -1,7 +1,10 @@
 <?php
 session_start();
+require '../includes/db.php';
+require_once '../includes/helpers.php';
+sendSecurityHeaders();
 
-require __DIR__ . '/../includes/db.php';
+$pageTitle = 'Connexion Admin';
 
 if (isset($_SESSION['user_id']) && in_array($_SESSION['user_role'] ?? '', ['admin', 'employe'], true)) {
     header('Location: index.php');
@@ -11,28 +14,34 @@ if (isset($_SESSION['user_id']) && in_array($_SESSION['user_role'] ?? '', ['admi
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-
-    $stmt = $pdo->prepare('SELECT * FROM users WHERE email = ?');
-    $stmt->execute([$email]);
-    $user = $stmt->fetch();
-
-    if ($user && password_verify($password, $user['password'])) {
-        if ($user['role'] !== 'admin' && $user['role'] !== 'employe') {
-            $error = 'Acces refuse';
-        } elseif (isset($user['is_active']) && !$user['is_active']) {
-            $error = 'Compte desactive';
-        } elseif (isset($user['actif']) && !$user['actif']) {
-            $error = 'Compte desactive';
-        } else {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_role'] = $user['role'];
-            header('Location: index.php');
-            exit();
-        }
+    if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
+        $error = 'Session expiree. Rechargez la page.';
     } else {
-        $error = 'Identifiants incorrects';
+        $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+
+        $stmt = $pdo->prepare('SELECT * FROM users WHERE email = ?');
+        $stmt->execute([$email]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user && password_verify($password, $user['password'])) {
+            if (!in_array($user['role'] ?? '', ['admin', 'employe'], true)) {
+                $error = 'Acces reserve au personnel.';
+            } elseif (isset($user['is_active']) && !$user['is_active']) {
+                $error = 'Compte desactive.';
+            } elseif (isset($user['actif']) && !$user['actif']) {
+                $error = 'Compte desactive.';
+            } else {
+                secureSessionLogin((int)$user['id'], $user['role'], [
+                    'user_prenom' => $user['prenom'] ?? '',
+                    'user_nom' => $user['nom'] ?? '',
+                ]);
+                header('Location: index.php');
+                exit();
+            }
+        } else {
+            $error = 'Identifiants incorrects.';
+        }
     }
 }
 ?>
@@ -41,20 +50,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Login Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<title><?= htmlspecialchars($pageTitle) ?> — Vite & Gourmand</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+body{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',sans-serif}
+.admin-login-card{width:100%;max-width:400px;background:#fff;border-radius:16px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.admin-login-brand{text-align:center;margin-bottom:1.5rem}
+.admin-login-brand i{font-size:2rem;color:#c9a227}
+</style>
 </head>
-<body class="bg-light d-flex justify-content-center align-items-center vh-100">
-<div class="card p-4 shadow" style="width:350px">
-<h3 class="mb-3 text-center">Admin Login</h3>
-<?php if ($error): ?>
-<div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-<?php endif; ?>
-<form method="POST">
-<input type="email" name="email" class="form-control mb-3" placeholder="Email" required>
-<input type="password" name="password" class="form-control mb-3" placeholder="Mot de passe" required>
-<button class="btn btn-primary w-100">Connexion</button>
-</form>
+<body>
+<div class="admin-login-card">
+    <div class="admin-login-brand">
+        <i class="fa-solid fa-utensils"></i>
+        <h1 class="h4 mt-2 mb-1">Espace personnel</h1>
+        <p class="text-muted small mb-0">Administration &amp; employes — Vite &amp; Gourmand</p>
+    </div>
+    <?php if ($error): ?>
+    <div class="alert alert-danger py-2"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
+    <form method="POST">
+        <?= csrfField() ?>
+        <div class="mb-3">
+            <label class="form-label small fw-semibold">Email</label>
+            <input type="email" name="email" class="form-control" placeholder="admin@..." required autofocus>
+        </div>
+        <div class="mb-3">
+            <label class="form-label small fw-semibold">Mot de passe</label>
+            <input type="password" name="password" class="form-control" required>
+        </div>
+        <button class="btn btn-primary w-100">Se connecter</button>
+    </form>
+    <p class="text-center mt-3 mb-0"><a href="../index.php" class="small text-muted">&larr; Retour au site</a></p>
 </div>
 </body>
 </html>

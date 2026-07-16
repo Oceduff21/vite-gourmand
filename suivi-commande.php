@@ -2,6 +2,7 @@
 session_start();
 require 'includes/db.php';
 require 'includes/helpers.php';
+require 'includes/user-helpers.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
@@ -25,6 +26,9 @@ $statuts = getStatutsCommande();
 $statutActuel = $c['statut'];
 $ordre = array_keys($statuts);
 $indexActuel = array_search($statutActuel, $ordre, true);
+
+$reviewCheck = canUserReviewOrder($pdo, (int)$_SESSION['user_id'], $id);
+$hasReview = userHasReviewForOrder($pdo, (int)$_SESSION['user_id'], $id);
 
 include 'includes/header.php';
 ?>
@@ -55,7 +59,23 @@ include 'includes/header.php';
 <?php endif; ?>
 </div>
 
-<a href="espace-utilisateur.php" class="btn btn-outline-primary mt-4">Retour a mon espace</a>
+<?php if ($reviewCheck['can_review']): ?>
+<div class="alert alert-success mt-4">
+    <strong>Votre evenement s'est bien passe ?</strong>
+    <p class="mb-2 small">Partagez votre experience pour aider d'autres clients.</p>
+    <a href="avis.php?commande_id=<?= $id ?>" class="btn btn-success btn-sm"><i class="fa-solid fa-star me-1"></i> Laisser un avis</a>
+</div>
+<?php elseif ($hasReview): ?>
+<div class="alert alert-secondary mt-4 mb-0 py-2">
+    <i class="fa-solid fa-check me-1"></i> Merci, votre avis a bien ete enregistre.
+</div>
+<?php elseif (in_array($c['statut'], getReviewEligibleStatuts(), true) === false && $c['statut'] !== 'annulee'): ?>
+<div class="alert alert-light mt-4 mb-0 py-2 small text-muted">
+    Vous pourrez laisser un avis une fois la commande marquee comme livree.
+</div>
+<?php endif; ?>
+
+<a href="espace-utilisateur.php?tab=commandes" class="btn btn-outline-primary mt-4">Retour a mon espace</a>
 </div>
 
 <style>

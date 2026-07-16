@@ -1,7 +1,38 @@
 <?php
 session_start();
 require 'includes/db.php';
+require 'includes/helpers.php';
 require 'includes/menu-helpers.php';
+require 'includes/user-helpers.php';
+require 'includes/flash.php';
+
+$id = (int)($_GET['id'] ?? $_POST['menu_id'] ?? 0);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'toggle_favori') {
+    if (!isset($_SESSION['user_id'])) {
+        header('Location: login.php?redirect=' . urlencode('menu.php?id=' . $id));
+        exit();
+    }
+    $redirect = 'menu.php?id=' . $id;
+    if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
+        setFlash('Session expiree. Rechargez la page et reessayez.');
+        header('Location: ' . $redirect);
+        exit();
+    }
+    $menuId = (int)($_POST['menu_id'] ?? 0);
+    if ($menuId > 0) {
+        $result = toggleUserFavori($pdo, (int)$_SESSION['user_id'], $menuId);
+        if ($result === null) {
+            setFlash('Favoris indisponibles : executez migration-user-space.sql dans phpMyAdmin.');
+        } elseif ($result) {
+            setFlash('Menu ajoute a vos favoris.');
+        } else {
+            setFlash('Menu retire de vos favoris.');
+        }
+    }
+    header('Location: ' . $redirect);
+    exit();
+}
 
 $id = (int)($_GET['id'] ?? 0);
 
@@ -19,20 +50,110 @@ $stock = (int)($menu['stock'] ?? 0);
 $delai = (int)($menu['delai_jours'] ?? 7);
 $group = getMenuPlatsByType($pdo, $id);
 $hasOptions = array_sum(array_map('count', $group)) > 0;
+$boissonsByCat = getMenuBoissons($pdo, $id);
+$boissonLabels = getBoissonCategories();
+$hasBoissons = !empty($boissonsByCat);
+$isFavori = isset($_SESSION['user_id']) ? isMenuFavori($pdo, (int)$_SESSION['user_id'], $id) : false;
+$isMenuEnfant = stripos($menu['theme'] ?? '', 'enfant') !== false || stripos($menu['titre'] ?? '', 'enfant') !== false;
+
+$menuEnfantInfo = null;
+if (!$isMenuEnfant) {
+    $stmtEnf = $pdo->query("SELECT id, titre, prix FROM menus WHERE LOWER(theme) = 'enfant' OR LOWER(titre) LIKE '%enfant%' ORDER BY id LIMIT 1");
+    $menuEnfantInfo = $stmtEnf->fetch(PDO::FETCH_ASSOC) ?: null;
+}
+
+$platNamesJs = [];
+foreach ($group as $type => $items) {
+    foreach ($items as $item) {
+        $platNamesJs[(int)$item['id']] = [
+            'nom' => $item['nom'],
+            'type' => $type,
+        ];
+    }
+}
+
+$boissonNamesJs = [];
+foreach ($boissonsByCat as $items) {
+    foreach ($items as $b) {
+        $boissonNamesJs[(int)$b['id']] = [
+            'nom' => $b['nom'],
+            'prix' => (float)$b['prix'],
+        ];
+    }
+}
+
+$wizardSteps = [
+    ['id' => 'invites', 'label' => 'Invites', 'num' => 1],
+    ['id' => 'entree', 'label' => 'Entrees', 'num' => 2],
+    ['id' => 'plat', 'label' => 'Plats', 'num' => 3],
+    ['id' => 'dessert', 'label' => 'Desserts', 'num' => 4],
+];
+if ($hasBoissons) {
+    $wizardSteps[] = ['id' => 'boissons', 'label' => 'Boissons', 'num' => count($wizardSteps) + 1];
+}
+$wizardSteps[] = ['id' => 'recap', 'label' => 'Commande', 'num' => count($wizardSteps) + 1];
+
+$galleryImages = [];
+$seenImages = [];
+if (!empty($menu['image']) && $menu['image'] !== 'default.jpg') {
+    $galleryImages[] = ['src' => $menu['image'], 'label' => 'Presentation du menu'];
+    $seenImages[$menu['image']] = true;
+}
+foreach ($group as $type => $items) {
+    foreach ($items as $item) {
+        $img = $item['image'] ?? '';
+        if ($img !== '' && $img !== 'default.jpg' && empty($seenImages[$img])) {
+            $galleryImages[] = ['src' => $img, 'label' => ucfirst($type) . ' : ' . ($item['nom'] ?? '')];
+            $seenImages[$img] = true;
+        }
+    }
+}
+if (empty($galleryImages) && !empty($menu['image'])) {
+    $galleryImages[] = ['src' => $menu['image'], 'label' => 'Menu ' . ($menu['titre'] ?? '')];
+}
 
 function platBadge(string $regime): string
 {
-    return match ($regime) {
-        'vegan' => '<span class="badge bg-success">Vegan</span>',
-        'vegetarien' => '<span class="badge bg-warning text-dark">Vegetarien</span>',
-        default => '<span class="badge bg-secondary">Classique</span>',
-    };
+    $map = [
+        'vegan' => ['Vegan', 'bg-success'],
+        'vegetarien' => ['Vegetarien', 'bg-warning text-dark'],
+        'sans gluten' => ['Sans gluten', 'bg-info text-dark'],
+        'sans lactose' => ['Sans lactose', 'bg-primary'],
+        'halal' => ['Halal', 'bg-dark'],
+        'pescetarien' => ['Pescetarien', 'bg-secondary'],
+        'classique' => ['Classique', 'bg-secondary'],
+    ];
+    $key = strtolower(trim($regime));
+    [$label, $cls] = $map[$key] ?? ['Classique', 'bg-secondary'];
+    return '<span class="badge ' . $cls . '">' . htmlspecialchars($label) . '</span>';
 }
+
+$pageTitle = htmlspecialchars($menu['titre']) . ' — Menu traiteur | Vite & Gourmand';
+$pageDescription = mb_substr(strip_tags($menu['description'] ?? 'Menu traiteur evenementiel a Bordeaux.'), 0, 160);
+$pageOgImage = !empty($menu['image']) ? 'assets/images/' . $menu['image'] : 'assets/images/presentation.jpg';
 
 include 'includes/header.php';
 ?>
 
 <div class="container py-5 menu-order-page">
+<?php showFlash(); ?>
+
+<?php if (!empty($galleryImages)): ?>
+<div class="menu-gallery mb-4">
+    <div class="row g-3">
+        <?php foreach ($galleryImages as $i => $img): ?>
+        <div class="col-6 col-md-<?= $i === 0 ? '8' : '4' ?>">
+            <figure class="menu-gallery-item mb-0 h-100">
+                <img src="assets/images/<?= htmlspecialchars($img['src']) ?>" alt="<?= htmlspecialchars($img['label']) ?>" class="img-fluid rounded w-100 menu-gallery-img" loading="lazy">
+                <figcaption class="small text-muted mt-1"><?= htmlspecialchars($img['label']) ?></figcaption>
+            </figure>
+        </div>
+        <?php if ($i === 0 && count($galleryImages) === 1) break; ?>
+        <?php if ($i >= 2) break; ?>
+        <?php endforeach; ?>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="menu-order-header text-center mb-4">
     <h1><?= htmlspecialchars($menu['titre']) ?></h1>
@@ -47,6 +168,16 @@ include 'includes/header.php';
         <span class="badge bg-success"><?= $stock ?> menu(x) disponible(s)</span>
         <?php else: ?>
         <span class="badge bg-danger">Rupture de stock</span>
+        <?php endif; ?>
+        <?php if (isset($_SESSION['user_id'])): ?>
+        <form method="POST" action="menu.php?id=<?= $id ?>" class="d-inline">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="toggle_favori">
+            <input type="hidden" name="menu_id" value="<?= $id ?>">
+            <button type="submit" class="btn btn-sm <?= $isFavori ? 'btn-danger' : 'btn-outline-danger' ?>">
+                <i class="fa-<?= $isFavori ? 'solid' : 'regular' ?> fa-heart me-1"></i><?= $isFavori ? 'Favori' : 'Ajouter aux favoris' ?>
+            </button>
+        </form>
         <?php endif; ?>
     </div>
 </div>
@@ -74,84 +205,202 @@ if ($cartFlash):
 <div class="alert alert-danger"><?= htmlspecialchars($cartFlash) ?></div>
 <?php endif; ?>
 
-<div class="menu-steps card-custom mb-4">
-    <div class="row text-center g-3">
-        <div class="col-md-4"><span class="step-badge">1</span> Nombre d'invites</div>
-        <div class="col-md-4"><span class="step-badge">2</span> Repartir les plats</div>
-        <div class="col-md-4"><span class="step-badge">3</span> Valider la commande</div>
+<div class="menu-wizard card-custom mb-4" id="wizard-stepper">
+    <div class="wizard-stepper d-flex flex-wrap justify-content-center gap-1 gap-md-2">
+        <?php foreach ($wizardSteps as $i => $ws): ?>
+        <button type="button" class="wizard-step-btn" data-step="<?= (int)$i ?>" data-target="step-<?= htmlspecialchars($ws['id']) ?>" <?= $i === 0 ? 'data-active="1"' : '' ?>>
+            <span class="step-badge"><?= (int)$ws['num'] ?></span>
+            <span class="wizard-step-label"><?= htmlspecialchars($ws['label']) ?></span>
+        </button>
+        <?php if ($i < count($wizardSteps) - 1): ?>
+        <span class="wizard-step-sep d-none d-md-inline" aria-hidden="true">›</span>
+        <?php endif; ?>
+        <?php endforeach; ?>
     </div>
 </div>
 
-<div class="card p-4 mb-4">
-    <label class="form-label fw-bold" for="invites">Nombre d'invites</label>
-    <div class="row align-items-end g-3">
-        <div class="col-md-4">
-            <input type="number" id="invites" class="form-control form-control-lg" value="<?= $min ?>" min="<?= $min ?>" max="500">
+<section id="step-invites" class="wizard-panel card-custom mb-4 menu-guests-card wizard-panel-active">
+    <div class="wizard-panel-head">
+        <h3 class="h5 mb-1"><span class="step-badge">1</span> Nombre d'invites</h3>
+        <p class="text-muted small mb-0">Indiquez combien de personnes seront presentes.</p>
+    </div>
+    <div class="row align-items-center g-3 mt-2">
+        <div class="col-sm-4 col-md-3">
+            <label class="form-label small fw-bold" for="invites">Total invites</label>
+            <input type="number" id="invites" class="form-control form-control-lg wizard-focus-field" value="<?= $min ?>" min="<?= $min ?>" max="500" autofocus>
         </div>
-        <div class="col-md-8">
-            <p class="text-muted mb-0 small">Chaque categorie (entree, plat, dessert) doit totaliser exactement ce nombre d'invites.</p>
+        <div class="col-sm-8 col-md-9">
+            <p class="text-muted mb-0 small">Minimum <strong><?= $min ?></strong> personnes. Ce nombre sera reparti entre les entrees, plats et desserts.</p>
         </div>
     </div>
-</div>
+    <?php if ($menuEnfantInfo && !$isMenuEnfant): ?>
+    <div class="row g-3 mt-3 pt-3 border-top">
+        <div class="col-12">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="has-enfants">
+                <label class="form-check-label" for="has-enfants">Des enfants seront presents (menu enfant separe)</label>
+            </div>
+        </div>
+        <div class="col-sm-4 col-md-3" id="enfants-wrap" style="display:none">
+            <label class="form-label small fw-bold" for="nb-enfants">Nombre d'enfants</label>
+            <input type="number" id="nb-enfants" class="form-control" value="0" min="0" max="500">
+        </div>
+        <div class="col-sm-8 col-md-9" id="enfants-info" style="display:none">
+            <p class="small text-muted mb-0">
+                <i class="fa-solid fa-child me-1"></i>
+                <span id="enfants-summary">0</span> menu(x) enfant a <?= number_format((float)$menuEnfantInfo['prix'], 2) ?> EUR
+                (<a href="menu.php?id=<?= (int)$menuEnfantInfo['id'] ?>" target="_blank"><?= htmlspecialchars($menuEnfantInfo['titre']) ?></a>)
+            </p>
+        </div>
+    </div>
+    <?php endif; ?>
+    <div class="wizard-nav mt-4">
+        <span></span>
+        <button type="button" class="btn btn-primary btn-wizard-next" data-next="step-entree" data-validate="invites">Suite — Entrees <i class="fa-solid fa-arrow-down ms-1"></i></button>
+    </div>
+</section>
 
 <?php
 $labels = ['entree' => 'Entrees', 'plat' => 'Plats', 'dessert' => 'Desserts'];
+$stepNums = ['entree' => 2, 'plat' => 3, 'dessert' => 4];
+$stepOrder = ['entree', 'plat', 'dessert'];
 foreach ($group as $type => $items):
     if (empty($items)) {
         continue;
     }
+    $idx = array_search($type, $stepOrder, true);
+    $prevStep = $idx > 0 ? 'step-' . $stepOrder[$idx - 1] : 'step-invites';
+    $nextStep = $idx < count($stepOrder) - 1 ? 'step-' . $stepOrder[$idx + 1] : ($hasBoissons ? 'step-boissons' : 'step-recap');
 ?>
-<section class="menu-category mb-4" data-type="<?= $type ?>">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h3 class="mb-0"><?= $labels[$type] ?></h3>
-        <div class="category-status" id="status-<?= $type ?>">
-            <span class="badge bg-secondary">0 / <?= $min ?></span>
+<section id="step-<?= $type ?>" class="wizard-panel menu-category mb-4" data-type="<?= $type ?>">
+    <div class="wizard-panel-head d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h3 class="h5 mb-1"><span class="step-badge"><?= $stepNums[$type] ?></span> <?= $labels[$type] ?></h3>
+            <p class="text-muted small mb-0">Repartissez <strong class="guest-count-label"><?= $min ?></strong> invites entre les options.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="category-status" id="status-<?= $type ?>">
+                <span class="badge bg-secondary">0 / <?= $min ?></span>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary btn-autofill-cat" data-type="<?= $type ?>" title="Repartir en alternant veg, sans gluten/lactose et viande/poisson">
+                <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Auto
+            </button>
         </div>
     </div>
-    <div class="progress mb-3" style="height:8px">
+    <div class="progress mb-2" style="height:8px">
         <div class="progress-bar" id="progress-<?= $type ?>" role="progressbar" style="width:0%"></div>
     </div>
-    <div class="row g-3">
+    <p class="small text-muted mb-3" id="hint-<?= $type ?>">Repartissez les invites entre les options ci-dessous.</p>
+    <div class="row g-3 plat-grid">
         <?php foreach ($items as $item): ?>
-        <div class="col-md-4">
-            <div class="plat-select-card card h-100" id="card-<?= $type ?>-<?= (int)$item['id'] ?>">
-                <img src="assets/images/<?= htmlspecialchars($item['image'] ?? 'default.jpg') ?>" class="card-img-top plat-img" alt="<?= htmlspecialchars($item['nom']) ?>">
-                <div class="card-body">
-                    <h5 class="card-title"><?= htmlspecialchars($item['nom']) ?></h5>
-                    <?= platBadge($item['regime'] ?? 'classique') ?>
-                    <?php if (!empty($item['description'])): ?>
-                    <p class="small text-muted mt-2 mb-2"><?= htmlspecialchars($item['description']) ?></p>
-                    <?php endif; ?>
-                    <label class="form-label small mt-2" for="<?= $type ?>-<?= (int)$item['id'] ?>">Invites pour ce plat</label>
-                    <input type="range" class="form-range plat-slider" min="0" max="<?= $min ?>" value="0"
-                        id="<?= $type ?>-<?= (int)$item['id'] ?>"
-                        data-type="<?= $type ?>" data-id="<?= (int)$item['id'] ?>">
-                    <div class="text-center fw-bold plat-qty">
-                        <span id="label-<?= $type ?>-<?= (int)$item['id'] ?>">0</span> invite(s)
+        <div class="col-sm-6 col-lg-4">
+            <div class="plat-select-card" id="card-<?= $type ?>-<?= (int)$item['id'] ?>">
+                <div class="plat-img-wrap">
+                    <img src="assets/images/<?= htmlspecialchars($item['image'] ?? 'default.jpg') ?>" class="plat-img" alt="<?= htmlspecialchars($item['nom']) ?>" loading="lazy">
+                </div>
+                <div class="plat-card-body">
+                    <div class="plat-card-info">
+                        <h5 class="plat-card-title"><?= htmlspecialchars($item['nom']) ?></h5>
+                        <div class="plat-card-badges"><?= platBadge($item['regime'] ?? 'classique') ?></div>
+                        <div class="plat-allergenes mt-1"><?= renderAllergenesBadges($item['allergenes'] ?? null) ?></div>
+                        <?php if (!empty($item['description'])): ?>
+                        <p class="plat-desc"><?= htmlspecialchars($item['description']) ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <div class="plat-card-controls">
+                        <label class="form-label small mb-1" for="<?= $type ?>-<?= (int)$item['id'] ?>">Invites</label>
+                        <input type="range" class="form-range plat-slider" min="0" max="<?= $min ?>" value="0"
+                            id="<?= $type ?>-<?= (int)$item['id'] ?>"
+                            data-type="<?= $type ?>" data-id="<?= (int)$item['id'] ?>"
+                            data-nom="<?= htmlspecialchars($item['nom'], ENT_QUOTES) ?>"
+                            data-regime="<?= htmlspecialchars($item['regime'] ?? 'classique', ENT_QUOTES) ?>">
+                        <div class="plat-qty"><span id="label-<?= $type ?>-<?= (int)$item['id'] ?>">0</span> invite(s)</div>
                     </div>
                 </div>
             </div>
         </div>
         <?php endforeach; ?>
     </div>
+    <div class="wizard-nav mt-4">
+        <button type="button" class="btn btn-outline-secondary btn-wizard-prev" data-prev="<?= $prevStep ?>"><i class="fa-solid fa-arrow-up me-1"></i> Precedent</button>
+        <button type="button" class="btn btn-primary btn-wizard-next" data-next="<?= $nextStep ?>" data-validate="<?= $type ?>">
+            Suite<?= $nextStep === 'step-recap' ? ' — Recapitulatif' : '' ?> <i class="fa-solid fa-arrow-down ms-1"></i>
+        </button>
+    </div>
 </section>
 <?php endforeach; ?>
 
-<div class="menu-summary card p-4 sticky-summary">
-    <div class="row align-items-center g-3">
-        <div class="col-lg-7">
-            <h4 class="mb-2">Recapitulatif</h4>
-            <div id="cart-summary" class="small text-muted"></div>
-            <div id="validation-msg" class="alert alert-warning mt-2 mb-0 py-2 small d-none"></div>
+<?php if ($hasBoissons): ?>
+<section id="step-boissons" class="wizard-panel menu-category mb-4">
+    <div class="wizard-panel-head mb-3">
+        <h3 class="h5 mb-1"><span class="step-badge"><?= count($wizardSteps) - 1 ?></span> Boissons</h3>
+        <p class="text-muted small mb-0">Optionnel — selectionnez les quantites souhaitees.</p>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover boisson-list align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>Boisson</th><th>Categorie</th><th class="text-end">Prix unit.</th><th style="width:100px">Quantite</th></tr>
+            </thead>
+            <tbody>
+            <?php foreach ($boissonsByCat as $cat => $items): ?>
+                <?php foreach ($items as $b): ?>
+                <tr>
+                    <td>
+                        <strong><?= htmlspecialchars($b['nom']) ?></strong>
+                        <?php if (!empty($b['description'])): ?><br><span class="small text-muted"><?= htmlspecialchars($b['description']) ?></span><?php endif; ?>
+                    </td>
+                    <td><span class="badge bg-light text-dark"><?= htmlspecialchars($boissonLabels[$cat] ?? ucfirst($cat)) ?></span></td>
+                    <td class="text-end"><?= number_format((float)$b['prix'], 2) ?> &euro;</td>
+                    <td>
+                        <input type="number" class="form-control form-control-sm boisson-qty" min="0" max="999" value="0"
+                            id="boisson-<?= (int)$b['id'] ?>" data-id="<?= (int)$b['id'] ?>"
+                            data-nom="<?= htmlspecialchars($b['nom'], ENT_QUOTES) ?>"
+                            data-price="<?= (float)$b['prix'] ?>">
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    <div class="wizard-nav mt-3">
+        <button type="button" class="btn btn-outline-secondary btn-wizard-prev" data-prev="step-dessert"><i class="fa-solid fa-arrow-up me-1"></i> Precedent</button>
+        <button type="button" class="btn btn-primary btn-wizard-next" data-next="step-recap" data-validate="boissons">Suite — Recapitulatif <i class="fa-solid fa-arrow-down ms-1"></i></button>
+    </div>
+</section>
+<?php endif; ?>
+
+<section id="step-recap" class="wizard-panel card-custom mb-5">
+    <div class="wizard-panel-head mb-3">
+        <h3 class="h5 mb-1"><span class="step-badge"><?= count($wizardSteps) ?></span> Recapitulatif</h3>
+        <p class="text-muted small mb-0">Verifiez votre selection avant de continuer la commande.</p>
+        <p class="small text-muted mb-0 mt-1"><i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Les allergenes sont indiques sur chaque plat. Signalez toute intolerance lors de la commande.</p>
+    </div>
+    <div id="recap-detail" class="recap-detail mb-4"></div>
+    <div id="validation-msg" class="alert alert-warning py-2 small d-none mb-3"></div>
+    <div class="recap-totals p-3 bg-light rounded mb-4">
+        <div class="d-flex justify-content-between mb-1"><span>Adultes (<span id="recap-adultes"><?= $min ?></span> pers.)</span><span><span id="recap-adultes-total">0.00</span> EUR</span></div>
+        <div class="d-flex justify-content-between mb-1 d-none" id="recap-enfants-line"><span>Enfants (<span id="recap-enfants-n">0</span> pers.)</span><span><span id="recap-enfants-total">0.00</span> EUR</span></div>
+        <div class="d-flex justify-content-between mb-1"><span>Boissons</span><span><span id="recap-boissons-total">0.00</span> EUR</span></div>
+        <hr class="my-2">
+        <div class="d-flex justify-content-between fw-bold fs-5"><span>Total estime</span><span class="text-danger"><span id="total">0.00</span> EUR</span></div>
+    </div>
+    <div class="wizard-nav">
+        <button type="button" class="btn btn-outline-secondary btn-wizard-prev" data-prev="<?= $hasBoissons ? 'step-boissons' : 'step-dessert' ?>"><i class="fa-solid fa-arrow-up me-1"></i> Precedent</button>
+        <div class="d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-outline-primary" id="btn-autofill">Tout remplir auto</button>
+            <button type="button" class="btn btn-success btn-lg" id="btn-commander" disabled>Continuer la commande</button>
         </div>
-        <div class="col-lg-5 text-lg-end">
-            <p class="mb-1">Total estime</p>
-            <p class="fs-3 fw-bold text-danger mb-3"><span id="total">0.00</span> &euro;</p>
-            <div class="d-flex flex-column flex-sm-row gap-2 justify-content-lg-end">
-                <button type="button" class="btn btn-outline-primary" id="btn-autofill">Repartition auto</button>
-                <button type="button" class="btn btn-success btn-lg" id="btn-commander" disabled>Continuer la commande</button>
-            </div>
+    </div>
+</section>
+
+<div class="wizard-sticky-bar" id="wizard-sticky">
+    <div class="container d-flex align-items-center justify-content-between gap-3">
+        <div class="small">
+            <strong id="sticky-step-label">Etape 1 — Invites</strong>
+            <span class="text-muted ms-2">Total : <span id="sticky-total">0.00</span> EUR</span>
         </div>
+        <button type="button" class="btn btn-sm btn-primary" id="sticky-next">Suite</button>
     </div>
 </div>
 
@@ -162,89 +411,399 @@ foreach ($group as $type => $items):
 <script>
 const MENU_ID = <?= $id ?>;
 const BASE_PRICE = <?= $prix ?>;
+const PRIX_ENFANT = <?= $menuEnfantInfo ? (float)$menuEnfantInfo['prix'] : 0 ?>;
+const HAS_ENFANT_OPTION = <?= ($menuEnfantInfo && !$isMenuEnfant) ? 'true' : 'false' ?>;
 const MIN_GUESTS = <?= $min ?>;
 const TYPES = ['entree', 'plat', 'dessert'];
+const HAS_BOISSONS = <?= $hasBoissons ? 'true' : 'false' ?>;
+const CSRF_TOKEN = <?= json_encode(csrfToken()) ?>;
+const WIZARD_STEPS = <?= json_encode(array_column($wizardSteps, 'id')) ?>;
+const WIZARD_LABELS = <?= json_encode(array_combine(array_column($wizardSteps, 'id'), array_column($wizardSteps, 'label')), JSON_UNESCAPED_UNICODE) ?>;
+const PLAT_TYPE_LABELS = { entree: 'Entrees', plat: 'Plats', dessert: 'Desserts' };
 
-let cart = { invites: MIN_GUESTS, entree: {}, plat: {}, dessert: {} };
+let cart = { invites: MIN_GUESTS, enfants: 0, entree: {}, plat: {}, dessert: {}, boissons: {} };
+let currentStepIndex = 0;
+
+function sumBoissons() {
+    let total = 0;
+    document.querySelectorAll('.boisson-qty').forEach(input => {
+        const qty = parseInt(input.value, 10) || 0;
+        total += qty * (parseFloat(input.dataset.price) || 0);
+    });
+    return total;
+}
+
+function syncBoissonsCart() {
+    cart.boissons = {};
+    document.querySelectorAll('.boisson-qty').forEach(input => {
+        const qty = parseInt(input.value, 10) || 0;
+        if (qty > 0) cart.boissons[input.dataset.id] = qty;
+    });
+}
 
 function sumType(type) {
     return Object.values(cart[type] || {}).reduce((a, b) => a + b, 0);
 }
 
+function sumTypeExcept(type, excludeId) {
+    let sum = 0;
+    document.querySelectorAll('.plat-slider[data-type="' + type + '"]').forEach(s => {
+        if (String(s.dataset.id) !== String(excludeId)) {
+            sum += parseInt(s.value, 10) || 0;
+        }
+    });
+    return sum;
+}
+
+function updateSliderLimits(type) {
+    document.querySelectorAll('.plat-slider[data-type="' + type + '"]').forEach(s => {
+        const id = s.dataset.id;
+        const others = sumTypeExcept(type, id);
+        const maxAllowed = Math.max(0, cart.invites - others);
+        s.max = maxAllowed;
+
+        let val = parseInt(s.value, 10) || 0;
+        if (val > maxAllowed) {
+            val = maxAllowed;
+            s.value = val;
+            if (val <= 0) delete cart[type][id];
+            else cart[type][id] = val;
+            const lbl = document.getElementById('label-' + type + '-' + id);
+            if (lbl) lbl.textContent = val;
+        }
+
+        const card = document.getElementById('card-' + type + '-' + id);
+        if (card) card.classList.toggle('plat-slider-capped', maxAllowed === 0 && val === 0);
+    });
+}
+
+function updateAllSliderLimits() {
+    TYPES.forEach(updateSliderLimits);
+}
+
 function syncSlidersMax() {
-    document.querySelectorAll('.plat-slider').forEach(s => { s.max = cart.invites; });
+    document.querySelectorAll('.guest-count-label').forEach(el => { el.textContent = cart.invites; });
+    const rg = document.getElementById('recap-guests');
+    if (rg) rg.textContent = cart.invites;
+    const ra = document.getElementById('recap-adultes');
+    if (ra) ra.textContent = Math.max(0, cart.invites - cart.enfants);
+    updateAllSliderLimits();
+}
+
+function getRegimeBucket(regime) {
+    const r = (regime || 'classique').toLowerCase();
+    if (['vegan', 'vegetarien'].includes(r)) return 'veg';
+    if (['sans gluten', 'sans lactose', 'halal'].includes(r)) return 'diet';
+    return 'protein';
+}
+
+function getOrderedSliders(type) {
+    const sliders = Array.from(document.querySelectorAll('.plat-slider[data-type="' + type + '"]'));
+    const buckets = { veg: [], diet: [], protein: [] };
+    sliders.forEach(s => buckets[getRegimeBucket(s.dataset.regime)].push(s));
+    const ordered = [];
+    const maxB = Math.max(buckets.veg.length, buckets.diet.length, buckets.protein.length, 1);
+    for (let i = 0; i < maxB; i++) {
+        if (buckets.veg[i]) ordered.push(buckets.veg[i]);
+        if (buckets.diet[i]) ordered.push(buckets.diet[i]);
+        if (buckets.protein[i]) ordered.push(buckets.protein[i]);
+    }
+    return ordered.length ? ordered : sliders;
+}
+
+function applyDistribution(type, ordered, total) {
+    cart[type] = {};
+    ordered.forEach(s => { s.value = 0; });
+    let i = 0;
+    while (total > 0 && ordered.length) {
+        const s = ordered[i % ordered.length];
+        s.value = (parseInt(s.value, 10) || 0) + 1;
+        total--;
+        i++;
+    }
+    ordered.forEach(s => {
+        const val = parseInt(s.value, 10) || 0;
+        const id = s.dataset.id;
+        if (val <= 0) delete cart[type][id];
+        else cart[type][id] = val;
+        const lbl = document.getElementById('label-' + type + '-' + id);
+        if (lbl) lbl.textContent = val;
+    });
+    updateAllSliderLimits();
+}
+
+function autoFillCategory(type) {
+    applyDistribution(type, getOrderedSliders(type), cart.invites);
+    updateUI();
+}
+
+function syncEnfantsUI() {
+    if (!HAS_ENFANT_OPTION) return;
+    const has = document.getElementById('has-enfants')?.checked;
+    const wrap = document.getElementById('enfants-wrap');
+    const info = document.getElementById('enfants-info');
+    if (wrap) wrap.style.display = has ? '' : 'none';
+    if (info) info.style.display = has ? '' : 'none';
+    if (!has) {
+        cart.enfants = 0;
+        const inp = document.getElementById('nb-enfants');
+        if (inp) inp.value = 0;
+    } else {
+        cart.enfants = Math.min(cart.invites, parseInt(document.getElementById('nb-enfants')?.value, 10) || 0);
+    }
+    const sum = document.getElementById('enfants-summary');
+    if (sum) sum.textContent = cart.enfants;
+    const line = document.getElementById('recap-enfants-line');
+    if (line) line.classList.toggle('d-none', cart.enfants <= 0);
 }
 
 function updateChoice(type, id, val) {
     val = parseInt(val, 10) || 0;
+    const maxAllowed = Math.max(0, cart.invites - sumTypeExcept(type, id));
+    if (val > maxAllowed) val = maxAllowed;
+
+    const slider = document.getElementById(type + '-' + id);
+    if (slider) slider.value = val;
+
     if (val <= 0) delete cart[type][id];
     else cart[type][id] = val;
-    document.getElementById('label-' + type + '-' + id).textContent = val;
+
+    const lbl = document.getElementById('label-' + type + '-' + id);
+    if (lbl) lbl.textContent = val;
+
+    updateAllSliderLimits();
     updateUI();
 }
 
-function updateUI() {
+function validateStep(stepId) {
+    if (stepId === 'invites') {
+        return cart.invites >= MIN_GUESTS && cart.enfants >= 0 && cart.enfants <= cart.invites;
+    }
+    if (TYPES.includes(stepId)) {
+        return sumType(stepId) === cart.invites;
+    }
+    if (stepId === 'boissons') return true;
+    if (stepId === 'recap') {
+        return TYPES.every(t => sumType(t) === cart.invites);
+    }
+    return true;
+}
+
+function stepMessage(stepId) {
+    if (stepId === 'invites') return 'Indiquez au moins ' + MIN_GUESTS + ' invites (enfants inclus, max ' + cart.invites + ').';
+    if (TYPES.includes(stepId)) {
+        const sum = sumType(stepId);
+        return 'Repartissez exactement ' + cart.invites + ' invites pour les ' + (PLAT_TYPE_LABELS[stepId] || stepId).toLowerCase() + ' (' + sum + '/' + cart.invites + ').';
+    }
+    return 'Completez les etapes precedentes.';
+}
+
+function buildDetailedRecap() {
     let html = '';
-    let total = BASE_PRICE * cart.invites;
+    TYPES.forEach(type => {
+        html += '<div class="recap-block mb-3"><h6 class="fw-bold text-uppercase small text-muted mb-2">' + PLAT_TYPE_LABELS[type] + '</h6><ul class="list-group list-group-flush">';
+        let hasItems = false;
+        document.querySelectorAll('.plat-slider[data-type="' + type + '"]').forEach(slider => {
+            const qty = parseInt(slider.value, 10) || 0;
+            if (qty > 0) {
+                hasItems = true;
+                html += '<li class="list-group-item d-flex justify-content-between px-0"><span>' + (slider.dataset.nom || 'Plat') + '</span><strong>' + qty + ' invite(s)</strong></li>';
+            }
+        });
+        if (!hasItems) html += '<li class="list-group-item px-0 text-muted">Aucune selection</li>';
+        html += '</ul></div>';
+    });
+    const boissonExtra = sumBoissons();
+    html += '<div class="recap-block mb-2"><h6 class="fw-bold text-uppercase small text-muted mb-2">Boissons</h6><ul class="list-group list-group-flush">';
+    let hasBoisson = false;
+    document.querySelectorAll('.boisson-qty').forEach(input => {
+        const qty = parseInt(input.value, 10) || 0;
+        if (qty > 0) {
+            hasBoisson = true;
+            const prix = (parseFloat(input.dataset.price) || 0) * qty;
+            html += '<li class="list-group-item d-flex justify-content-between px-0"><span>' + (input.dataset.nom || 'Boisson') + '</span><strong>' + qty + ' x ' + prix.toFixed(2) + ' EUR</strong></li>';
+        }
+    });
+    if (!hasBoisson) html += '<li class="list-group-item px-0 text-muted">Aucune (optionnel)</li>';
+    html += '</ul></div>';
+    if (cart.enfants > 0 && HAS_ENFANT_OPTION) {
+        html += '<div class="recap-block mb-2 alert alert-info py-2 small"><i class="fa-solid fa-child me-1"></i> '
+            + cart.enfants + ' menu(s) enfant a prevoir (' + (cart.enfants * PRIX_ENFANT).toFixed(2) + ' EUR)</div>';
+    }
+    return html;
+}
+
+function updateWizardNextButtons() {
+    document.querySelectorAll('.btn-wizard-next').forEach(btn => {
+        const stepId = btn.dataset.validate || btn.closest('.wizard-panel')?.id?.replace('step-', '') || '';
+        const ok = stepId ? validateStep(stepId) : false;
+        btn.disabled = !ok;
+        btn.classList.toggle('btn-primary', ok);
+        btn.classList.toggle('btn-secondary', !ok);
+        btn.setAttribute('aria-disabled', ok ? 'false' : 'true');
+    });
+    const sticky = document.getElementById('sticky-next');
+    if (sticky) {
+        if (currentStepIndex >= WIZARD_STEPS.length - 1) {
+            sticky.classList.add('d-none');
+        } else {
+            sticky.classList.remove('d-none');
+            const ok = validateStep(WIZARD_STEPS[currentStepIndex]);
+            sticky.disabled = !ok;
+            sticky.classList.toggle('btn-primary', ok);
+            sticky.classList.toggle('btn-secondary', !ok);
+        }
+    }
+}
+
+function updateStepperUI() {
+    document.querySelectorAll('.wizard-step-btn').forEach(btn => {
+        const idx = parseInt(btn.dataset.step, 10);
+        btn.classList.remove('active', 'done', 'locked');
+        if (idx === currentStepIndex) btn.classList.add('active');
+        else if (idx < currentStepIndex || (idx > 0 && WIZARD_STEPS.slice(0, idx).every(s => validateStep(s)))) {
+            btn.classList.add('done');
+        } else if (idx > currentStepIndex + 1) {
+            btn.classList.add('locked');
+        }
+    });
+    const stepId = WIZARD_STEPS[currentStepIndex];
+    const stickyLabel = document.getElementById('sticky-step-label');
+    if (stickyLabel) {
+        stickyLabel.textContent = 'Etape ' + (currentStepIndex + 1) + ' — ' + (WIZARD_LABELS[stepId] || stepId);
+    }
+    document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('wizard-panel-active'));
+    const panel = document.getElementById('step-' + stepId);
+    if (panel) panel.classList.add('wizard-panel-active');
+    updateWizardNextButtons();
+}
+
+function goToStep(index, scroll = true) {
+    if (index < 0 || index >= WIZARD_STEPS.length) return;
+    currentStepIndex = index;
+    updateStepperUI();
+    const stepId = WIZARD_STEPS[index];
+    const el = document.getElementById('step-' + stepId);
+    if (scroll && el) {
+        setTimeout(() => {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 80);
+    }
+    if (stepId === 'invites') {
+        const inp = document.getElementById('invites');
+        if (inp) setTimeout(() => inp.focus(), 400);
+    }
+}
+
+function tryGoNext(fromBtn) {
+    const currentId = WIZARD_STEPS[currentStepIndex];
+    if (!validateStep(currentId)) {
+        const msg = document.getElementById('validation-msg');
+        if (msg) {
+            msg.textContent = stepMessage(currentId);
+            msg.classList.remove('d-none');
+        }
+        const panel = document.getElementById('step-' + currentId);
+        if (panel) {
+            panel.classList.add('wizard-shake');
+            setTimeout(() => panel.classList.remove('wizard-shake'), 600);
+        }
+        return;
+    }
+    document.getElementById('validation-msg')?.classList.add('d-none');
+    let nextIndex = currentStepIndex + 1;
+    if (fromBtn && fromBtn.dataset.next) {
+        const target = fromBtn.dataset.next.replace('step-', '');
+        const idx = WIZARD_STEPS.indexOf(target);
+        if (idx >= 0) nextIndex = idx;
+    }
+    goToStep(nextIndex);
+}
+
+function updateUI() {
+    syncBoissonsCart();
+    syncEnfantsUI();
+    const adultes = Math.max(0, cart.invites - cart.enfants);
+    const menuAdultes = adultes * BASE_PRICE;
+    const menuEnfants = cart.enfants * PRIX_ENFANT;
+    const boissonsExtra = sumBoissons();
+    const total = menuAdultes + menuEnfants + boissonsExtra;
     let allValid = true;
 
     TYPES.forEach(type => {
         const sum = sumType(type);
-        const remain = cart.invites - sum;
         const pct = cart.invites > 0 ? Math.min(100, (sum / cart.invites) * 100) : 0;
         const ok = sum === cart.invites;
-
+        const over = sum > cart.invites;
         if (!ok) allValid = false;
 
         const badge = document.getElementById('status-' + type);
         if (badge) {
-            badge.innerHTML = ok
-                ? '<span class="badge bg-success">' + sum + ' / ' + cart.invites + ' OK</span>'
-                : '<span class="badge bg-warning text-dark">' + sum + ' / ' + cart.invites + '</span>';
+            if (ok) {
+                badge.innerHTML = '<span class="badge bg-success">' + sum + ' / ' + cart.invites + ' OK</span>';
+            } else if (over) {
+                badge.innerHTML = '<span class="badge bg-danger">' + sum + ' / ' + cart.invites + ' (trop)</span>';
+            } else {
+                badge.innerHTML = '<span class="badge bg-warning text-dark">' + sum + ' / ' + cart.invites + ' (manque ' + (cart.invites - sum) + ')</span>';
+            }
         }
         const bar = document.getElementById('progress-' + type);
         if (bar) {
             bar.style.width = pct + '%';
-            bar.className = 'progress-bar ' + (ok ? 'bg-success' : 'bg-warning');
+            bar.className = 'progress-bar ' + (ok ? 'bg-success' : (over ? 'bg-danger' : 'bg-warning'));
         }
-
-        html += '<div>' + type.charAt(0).toUpperCase() + type.slice(1) + ' : <strong>' + sum + '/' + cart.invites + '</strong></div>';
-
-        document.querySelectorAll('[data-type="' + type + '"]').forEach(slider => {
+        document.querySelectorAll('.plat-slider[data-type="' + type + '"]').forEach(slider => {
             const card = document.getElementById('card-' + type + '-' + slider.dataset.id);
             const v = parseInt(slider.value, 10) || 0;
-            if (card) card.classList.toggle('plat-active', v > 0);
+            if (card) {
+                card.classList.toggle('plat-active', v > 0);
+            }
         });
+
+        const hint = document.getElementById('hint-' + type);
+        if (hint) {
+            if (ok) {
+                hint.textContent = 'Quota atteint — vous pouvez reajuster entre les plats.';
+                hint.className = 'small text-success mb-2';
+            } else if (over) {
+                hint.textContent = 'Quota depasse — reduisez une selection.';
+                hint.className = 'small text-danger mb-2';
+            } else {
+                hint.textContent = 'Il reste ' + (cart.invites - sum) + ' invite(s) a repartir.';
+                hint.className = 'small text-muted mb-2';
+            }
+        }
     });
 
-    document.getElementById('cart-summary').innerHTML = html;
     document.getElementById('total').textContent = total.toFixed(2);
+    document.getElementById('sticky-total').textContent = total.toFixed(2);
+    const elAdultesTotal = document.getElementById('recap-adultes-total');
+    if (elAdultesTotal) elAdultesTotal.textContent = menuAdultes.toFixed(2);
+    const elEnfantsTotal = document.getElementById('recap-enfants-total');
+    const elEnfantsN = document.getElementById('recap-enfants-n');
+    if (elEnfantsTotal) elEnfantsTotal.textContent = menuEnfants.toFixed(2);
+    if (elEnfantsN) elEnfantsN.textContent = cart.enfants;
+    document.getElementById('recap-boissons-total').textContent = boissonsExtra.toFixed(2);
+    document.getElementById('recap-detail').innerHTML = buildDetailedRecap();
 
-    const msg = document.getElementById('validation-msg');
     const btn = document.getElementById('btn-commander');
+    const msg = document.getElementById('validation-msg');
     if (allValid) {
-        msg.classList.add('d-none');
+        if (WIZARD_STEPS[currentStepIndex] === 'recap') msg?.classList.add('d-none');
         btn.disabled = false;
-        btn.textContent = 'Continuer la commande';
     } else {
-        msg.classList.remove('d-none');
-        msg.textContent = 'Repartissez exactement ' + cart.invites + ' invites pour chaque categorie avant de continuer.';
+        if (WIZARD_STEPS[currentStepIndex] === 'recap') {
+            msg?.classList.remove('d-none');
+            msg.textContent = 'Repartissez exactement ' + cart.invites + ' invites pour chaque categorie.';
+        }
         btn.disabled = true;
     }
+    updateWizardNextButtons();
+    updateStepperUI();
 }
 
 function autoFill() {
-    TYPES.forEach(type => {
-        cart[type] = {};
-        const sliders = document.querySelectorAll('.plat-slider[data-type="' + type + '"]');
-        if (!sliders.length) return;
-        const each = Math.floor(cart.invites / sliders.length);
-        sliders.forEach((s, i) => {
-            const val = i === 0 ? cart.invites - each * (sliders.length - 1) : each;
-            s.value = val;
-            updateChoice(type, s.dataset.id, val);
-        });
-    });
+    TYPES.forEach(type => autoFillCategory(type));
 }
 
 function submitOrder() {
@@ -262,6 +821,11 @@ function submitOrder() {
     dataInput.value = JSON.stringify(cart);
     f.appendChild(menuInput);
     f.appendChild(dataInput);
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrf_token';
+    csrfInput.value = CSRF_TOKEN;
+    f.appendChild(csrfInput);
     document.body.appendChild(f);
     f.submit();
 }
@@ -269,14 +833,71 @@ function submitOrder() {
 document.getElementById('invites').addEventListener('input', e => {
     cart.invites = Math.max(MIN_GUESTS, parseInt(e.target.value, 10) || MIN_GUESTS);
     e.target.value = cart.invites;
+    if (cart.enfants > cart.invites) cart.enfants = cart.invites;
+    const nbE = document.getElementById('nb-enfants');
+    if (nbE) nbE.max = cart.invites;
     cart.entree = {}; cart.plat = {}; cart.dessert = {};
     document.querySelectorAll('.plat-slider').forEach(s => { s.value = 0; });
     syncSlidersMax();
     updateUI();
 });
 
+if (HAS_ENFANT_OPTION) {
+    document.getElementById('has-enfants')?.addEventListener('change', updateUI);
+    document.getElementById('nb-enfants')?.addEventListener('input', e => {
+        cart.enfants = Math.min(cart.invites, Math.max(0, parseInt(e.target.value, 10) || 0));
+        e.target.value = cart.enfants;
+        updateUI();
+    });
+}
+
+document.querySelectorAll('.btn-autofill-cat').forEach(btn => {
+    btn.addEventListener('click', () => autoFillCategory(btn.dataset.type));
+});
+
 document.querySelectorAll('.plat-slider').forEach(s => {
     s.addEventListener('input', () => updateChoice(s.dataset.type, s.dataset.id, s.value));
+});
+document.querySelectorAll('.boisson-qty').forEach(input => {
+    input.addEventListener('input', updateUI);
+});
+
+document.querySelectorAll('.btn-wizard-next').forEach(btn => {
+    btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        tryGoNext(btn);
+    });
+});
+document.querySelectorAll('.btn-wizard-prev').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const prev = btn.dataset.prev?.replace('step-', '');
+        const idx = WIZARD_STEPS.indexOf(prev);
+        goToStep(idx >= 0 ? idx : Math.max(0, currentStepIndex - 1));
+    });
+});
+document.querySelectorAll('.wizard-step-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.step, 10);
+        if (idx <= currentStepIndex) {
+            goToStep(idx);
+            return;
+        }
+        for (let i = 0; i < idx; i++) {
+            if (!validateStep(WIZARD_STEPS[i])) {
+                const msg = document.getElementById('validation-msg');
+                if (msg) { msg.textContent = stepMessage(WIZARD_STEPS[i]); msg.classList.remove('d-none'); }
+                goToStep(i);
+                return;
+            }
+        }
+        goToStep(idx);
+    });
+});
+
+document.getElementById('sticky-next').addEventListener('click', () => {
+    const sticky = document.getElementById('sticky-next');
+    if (sticky?.disabled || currentStepIndex >= WIZARD_STEPS.length - 1) return;
+    tryGoNext({ dataset: { next: 'step-' + WIZARD_STEPS[currentStepIndex + 1] } });
 });
 
 document.getElementById('btn-autofill').addEventListener('click', autoFill);
@@ -284,6 +905,7 @@ document.getElementById('btn-commander').addEventListener('click', submitOrder);
 
 syncSlidersMax();
 updateUI();
+goToStep(0, false);
 </script>
 <?php endif; ?>
 

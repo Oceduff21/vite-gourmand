@@ -1,5 +1,8 @@
 <?php
+$pageTitle = 'Vite & Gourmand — Traiteur premium a Bordeaux';
+$pageDescription = 'Traiteur evenementiel haut de gamme a Bordeaux : mariages, seminaires, receptions privees. Menus sur mesure, livraison et service premium.';
 require 'includes/db.php';
+require 'includes/menu-helpers.php';
 
 $moyenne = 0;
 $avisList = [];
@@ -18,6 +21,13 @@ try {
 } catch (Throwable $e) {
     $avisList = [];
     $moyenne = 0;
+}
+
+$featuredMenus = [];
+try {
+    $featuredMenus = $pdo->query('SELECT * FROM menus WHERE stock > 0 ORDER BY id LIMIT 6')->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    $featuredMenus = [];
 }
 
 include 'includes/header.php';
@@ -96,44 +106,53 @@ include 'includes/header.php';
 </div>
 </section>
 
+<!-- CHIFFRES CLES -->
+<section class="py-5 bg-white">
+<div class="container">
+<div class="row g-4 text-center">
+<div class="col-6 col-md-3"><div class="stat-card p-4"><div class="stat-number">15+</div><div class="text-muted small">Ans d'experience</div></div></div>
+<div class="col-6 col-md-3"><div class="stat-card p-4"><div class="stat-number">14</div><div class="text-muted small">Menus thematiques</div></div></div>
+<div class="col-6 col-md-3"><div class="stat-card p-4"><div class="stat-number"><?= $moyenne ? round($moyenne, 1) : '4.8' ?></div><div class="text-muted small">Note moyenne</div></div></div>
+<div class="col-6 col-md-3"><div class="stat-card p-4"><div class="stat-number">48h</div><div class="text-muted small">Devis gratuit</div></div></div>
+</div>
+<div class="text-center mt-4">
+<a href="avis.php" class="btn btn-outline-dark me-2">Tous les avis clients</a>
+<a href="a-propos.php" class="btn btn-outline-dark me-2">Notre histoire</a>
+<a href="faq.php" class="btn btn-outline-dark">Questions frequentes</a>
+</div>
+</div>
+</section>
+
 <!-- MENUS -->
 <section class="container py-5">
 
-<h2 class="text-center mb-5">Nos Menus</h2>
+<h2 class="text-center mb-5">Nos menus phares</h2>
 
+<?php if (empty($featuredMenus)): ?>
+<p class="text-center text-muted">Catalogue en cours de mise a jour.</p>
+<?php else: ?>
 <div class="row g-4">
-
-<div class="col-md-4">
-    <div class="menu-card">
-        <img src="assets/images/menu-noel-entree.jpg" alt="Menu Noel">
-        <div class="p-3">
-            <h5>Menu Noel</h5>
-            <a href="menus.php" class="btn btn-outline-dark w-100">Voir</a>
+<?php foreach ($featuredMenus as $menu):
+    $cover = getMenuCoverImage($menu);
+?>
+<div class="col-md-6 col-lg-4">
+    <div class="menu-card h-100 shadow-sm">
+        <img src="<?= htmlspecialchars($cover) ?>" alt="<?= htmlspecialchars($menu['titre']) ?>" class="card-img-top" style="height:180px;object-fit:cover" loading="lazy">
+        <div class="p-3 d-flex flex-column">
+            <h5><?= htmlspecialchars($menu['titre']) ?></h5>
+            <p class="text-muted small flex-grow-1 mb-2"><?= htmlspecialchars(mb_substr($menu['description'] ?? '', 0, 90)) ?><?= mb_strlen($menu['description'] ?? '') > 90 ? '...' : '' ?></p>
+            <p class="mb-1 small"><i class="fa-solid fa-users me-1"></i> Min. <?= (int)$menu['min_personnes'] ?> pers.</p>
+            <p class="text-danger fw-bold mb-3"><?= number_format((float)$menu['prix'], 2) ?> EUR / pers.</p>
+            <a href="menu.php?id=<?= (int)$menu['id'] ?>" class="btn btn-outline-dark w-100 mt-auto">Composer ce menu</a>
         </div>
     </div>
 </div>
-
-<div class="col-md-4">
-    <div class="menu-card">
-        <img src="assets/images/menu-gastronomique.jpg" alt="Menu Mariage">
-        <div class="p-3">
-            <h5>Menu Mariage</h5>
-            <a href="menus.php" class="btn btn-outline-dark w-100">Voir</a>
-        </div>
-    </div>
+<?php endforeach; ?>
 </div>
-
-<div class="col-md-4">
-    <div class="menu-card">
-        <img src="assets/images/salade.jpg" alt="Menu Vegan">
-        <div class="p-3">
-            <h5>Menu Vegan</h5>
-            <a href="menus.php" class="btn btn-outline-dark w-100">Voir</a>
-        </div>
-    </div>
+<div class="text-center mt-4">
+    <a href="menus.php" class="btn btn-dark">Voir tous les menus</a>
 </div>
-
-</div>
+<?php endif; ?>
 </section>
 
 <!-- AVIS -->
@@ -155,6 +174,10 @@ include 'includes/header.php';
 </div>
 <?php endforeach; ?>
 
+</div>
+
+<div class="text-center mt-4">
+<a href="avis.php" class="btn btn-outline-light btn-sm">Voir tous les avis</a>
 </div>
 
 </div>

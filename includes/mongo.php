@@ -7,7 +7,7 @@ function getMongoManager() {
     }
     try {
         return new MongoDB\Driver\Manager(MONGO_URI);
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         return null;
     }
 }
@@ -29,7 +29,7 @@ function mongoInsertCommandeStat(array $data) {
         ]);
         $manager->executeBulkWrite(MONGO_DB . '.' . MONGO_COLLECTION, $bulk);
         return true;
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         return false;
     }
 }

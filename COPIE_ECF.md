@@ -50,9 +50,17 @@ Sources Markdown a convertir en PDF : dossier `docs/`
 ## Checklist avant depot (23 juillet)
 
 - [x] Lien de deploiement fonctionnel — https://vitegourmand.infinityfree.io/
+- [x] CGV completes (delais, 10%, livraison, allergenes, materiel 600€)
+- [x] Validation delai livraison cote serveur (valider-commande + modifier-commande)
+- [x] Modification commande client (adresse, GSM, personnes — menu verrouille)
+- [x] Email client sur refus/annulation admin
+- [x] Galerie images sur fiche menu
+- [x] Inscription avec adresse structuree (rue, CP, ville)
+- [x] Documentation livrables MD (docs/GESTION_PROJET.md, UML, wireframes)
 - [ ] GitHub public a jour (merger `feature/admin` vers `main` si necessaire)
 - [ ] Copie ODT completee (URL + stack ci-dessus)
-- [ ] 3 PDF livrables
+- [ ] 3 PDF livrables (exporter depuis docs/*.md)
+- [ ] Upload prod des fichiers modifies (FileZilla)
 - [ ] Test parcours : inscription → commande → suivi → avis
 - [x] Mentions legales : hebergeur InfinityFree
 

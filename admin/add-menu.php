@@ -1,9 +1,7 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'employe'])) {
-    header('Location: ../index.php');
-    exit();
-}
+require __DIR__ . '/partials/auth.php';
+requireAdminAccess();
+
 require '../includes/db.php';
 require '../includes/menu-helpers.php';
 
@@ -16,6 +14,9 @@ $selected = ['entree' => [], 'plat' => [], 'dessert' => []];
 $selectedBoissons = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
+        die('Token CSRF invalide.');
+    }
     $errors = [];
     if (count($_POST['entrees'] ?? []) !== MENU_OPTIONS_REQUIRED) {
         $errors[] = '3 entrees obligatoires';
@@ -77,6 +78,7 @@ require __DIR__ . '/partials/layout.php';
 <?php endif; ?>
 
 <form method="POST" id="menu-admin-form">
+<?= csrfField() ?>
 <?php require __DIR__ . '/partials/menu-form.php'; ?>
 <button type="submit" class="btn btn-success btn-lg">Creer le menu</button>
 <a href="admin-menus.php" class="btn btn-outline-secondary">Annuler</a>

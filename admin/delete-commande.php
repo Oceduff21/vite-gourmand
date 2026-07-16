@@ -1,27 +1,18 @@
 <?php
-session_start();
+require __DIR__ . '/partials/auth.php';
+requireAdminAccess(true);
 
 require '../includes/db.php';
 
-/* SECURITE ADMIN */
-if(!isset($_SESSION["user_id"]) || $_SESSION["user_role"] !== 'admin'){
-    header("Location: ../index.php");
-    exit();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !verifyCsrf($_POST['csrf_token'] ?? '')) {
+    http_response_code(405);
+    die('Action non autorisee.');
 }
 
-/* VERIF ID */
-if(!isset($_GET['id'])){
-    header("Location: admin-commandes.php");
-    exit();
+$id = (int)($_POST['id'] ?? 0);
+if ($id > 0) {
+    $pdo->prepare('DELETE FROM commandes WHERE id = ?')->execute([$id]);
 }
 
-$id = (int) $_GET['id'];
-
-/* DELETE */
-$sql = "DELETE FROM commandes WHERE id = ?";
-$stmt = $pdo->prepare($sql);
-$stmt->execute([$id]);
-
-/* REDIRECTION */
-header("Location: admin-commandes.php");
+header('Location: admin-commandes.php');
 exit();

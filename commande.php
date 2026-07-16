@@ -4,19 +4,27 @@ require 'includes/db.php';
 require 'includes/helpers.php';
 require 'includes/menu-helpers.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
-    exit();
-}
+$postedMenuId = (int)($_POST['menu_id'] ?? $_GET['menu_id'] ?? $_GET['id'] ?? 0);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['data'])) {
+    if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
+        die('Token CSRF invalide.');
+    }
     $cart = normalizeCartFromPost($_POST['data']);
-    $postedMenuId = (int)($_POST['menu_id'] ?? 0);
     if ($postedMenuId > 0 && !empty($cart)) {
         $_SESSION['menu_cart'] = $cart;
         $_SESSION['menu_cart_menu_id'] = $postedMenuId;
     }
+    if (!isset($_SESSION['user_id'])) {
+        header('Location: login.php?redirect=' . urlencode('commande.php?menu_id=' . $postedMenuId));
+        exit();
+    }
     header('Location: commande.php?menu_id=' . $postedMenuId);
+    exit();
+}
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
     exit();
 }
 
@@ -43,6 +51,13 @@ if (!empty($_SESSION['menu_cart']) && (int)($_SESSION['menu_cart_menu_id'] ?? 0)
 }
 
 $quantiteDefault = max($min, (int)($cart['invites'] ?? $min));
+$nbEnfants = min($quantiteDefault, max(0, (int)($cart['enfants'] ?? 0)));
+$adultes = max(0, $quantiteDefault - $nbEnfants);
+$prixEnfant = $prix;
+$stmtEnf = $pdo->query("SELECT prix FROM menus WHERE LOWER(theme) = 'enfant' OR LOWER(titre) LIKE '%enfant%' ORDER BY id LIMIT 1");
+if ($rowEnf = $stmtEnf->fetch(PDO::FETCH_ASSOC)) {
+    $prixEnfant = (float)$rowEnf['prix'];
+}
 $cartError = null;
 
 if (empty($cart) || !cartHasValidSelection($cart, $quantiteDefault)) {
@@ -83,7 +98,22 @@ if ($cart) {
     }
 }
 
-$quantiteDefault = max($min, (int)($cart['invites'] ?? $min));
+$boissonLabels = [];
+$totalBoissons = calculateBoissonsTotal($pdo, $menu_id, $cart);
+if (!empty($cart['boissons'])) {
+    $bIds = array_keys($cart['boissons']);
+    if ($bIds) {
+        $ph = implode(',', array_fill(0, count($bIds), '?'));
+        $stmt = $pdo->prepare("SELECT id, nom, prix FROM boissons WHERE id IN ($ph)");
+        $stmt->execute($bIds);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $b) {
+            $boissonLabels[(int)$b['id']] = $b;
+        }
+    }
+}
+
+$delai = (int)($menu['delai_jours'] ?? 7);
+$dateMinLivraison = getDateMinLivraison($delai);
 
 include 'includes/header.php';
 ?>
@@ -111,7 +141,7 @@ include 'includes/header.php';
         <div class="alert alert-success mb-4">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                 <div>
-                    <strong>Plats selectionnes (<?= (int)$quantiteDefault ?> invites) :</strong>
+                    <strong>Plats selectionnes (<?= (int)$quantiteDefault ?> invites<?= $nbEnfants > 0 ? ', dont ' . $nbEnfants . ' enfant(s)' : '' ?>) :</strong>
                     <ul class="mb-0 mt-2">
                     <?php foreach (['entree', 'plat', 'dessert'] as $type): ?>
                         <?php if (!empty($cart[$type]) && is_array($cart[$type])): ?>
@@ -123,6 +153,20 @@ include 'includes/header.php';
                         <?php endif; ?>
                     <?php endforeach; ?>
                     </ul>
+                    <?php if (!empty($cart['boissons'])): ?>
+                    <strong class="d-block mt-2">Boissons :</strong>
+                    <ul class="mb-0">
+                    <?php foreach ($cart['boissons'] as $bId => $qty): ?>
+                        <?php if ((int)$qty > 0 && isset($boissonLabels[(int)$bId])): ?>
+                        <li><?= htmlspecialchars($boissonLabels[(int)$bId]['nom']) ?> &mdash; <?= (int)$qty ?> &times; <?= number_format((float)$boissonLabels[(int)$bId]['prix'], 2) ?> EUR</li>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                    </ul>
+                    <?php endif; ?>
+                    <?php if ($nbEnfants > 0): ?>
+                    <strong class="d-block mt-2">Menus enfant :</strong>
+                    <p class="mb-0 small text-muted"><?= $nbEnfants ?> menu(x) enfant a <?= number_format($prixEnfant, 2) ?> EUR/pers.</p>
+                    <?php endif; ?>
                 </div>
                 <a href="menu.php?id=<?= $menu_id ?>" class="btn btn-sm btn-outline-primary">Modifier la selection</a>
             </div>
@@ -194,7 +238,7 @@ include 'includes/header.php';
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Date de livraison</label>
-                        <input type="date" name="date" class="form-control" required min="<?= date('Y-m-d', strtotime('+' . (int)($menu['delai_jours'] ?? 7) . ' days')) ?>">
+                        <input type="date" name="date" class="form-control" required min="<?= htmlspecialchars($dateMinLivraison) ?>">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Heure souhaitee</label>
@@ -204,7 +248,10 @@ include 'includes/header.php';
 
                 <div class="card p-4 mt-3 bg-light">
                     <h4>Recapitulatif prix</h4>
-                    <div class="d-flex justify-content-between"><span>Prix menu</span><span><span id="prixMenu">0.00</span> EUR</span></div>
+                    <div class="d-flex justify-content-between"><span>Adultes (<span id="recap-adultes-n"><?= $adultes ?></span> pers.)</span><span><span id="prixAdultes">0.00</span> EUR</span></div>
+                    <div class="d-flex justify-content-between<?= $nbEnfants > 0 ? '' : ' d-none' ?>" id="recap-enfants-price-line"><span>Enfants (<span id="recap-enfants-n"><?= $nbEnfants ?></span> pers.)</span><span><span id="prixEnfants">0.00</span> EUR</span></div>
+                    <div class="d-flex justify-content-between fw-semibold"><span>Total menu</span><span><span id="prixMenu">0.00</span> EUR</span></div>
+                    <div class="d-flex justify-content-between"><span>Boissons</span><span><span id="prixBoissons"><?= number_format($totalBoissons, 2) ?></span> EUR</span></div>
                     <div class="d-flex justify-content-between"><span>Livraison</span><span><span id="prixLivraison">0.00</span> EUR</span></div>
                     <div class="d-flex justify-content-between text-success"><span>Reduction (-10% si +5 pers.)</span><span><span id="reduction">0.00</span> EUR</span></div>
                     <hr>
@@ -219,13 +266,19 @@ include 'includes/header.php';
 
 <script>
 const prixMenuUnitaire = <?= $prix ?>;
+const prixEnfantUnitaire = <?= $prixEnfant ?>;
+const nbEnfantsFixe = <?= $nbEnfants ?>;
 const minPers = <?= $min ?>;
+const prixBoissonsFixe = <?= $totalBoissons ?>;
 
 function calculPrix() {
     const quantite = parseInt(document.getElementById('quantite').value) || minPers;
+    const adultes = Math.max(0, quantite - nbEnfantsFixe);
     const ville = (document.getElementById('ville').value || '').toLowerCase();
     const cp = document.getElementById('code_postal').value || '';
-    let totalMenu = quantite * prixMenuUnitaire;
+    const prixAdultes = adultes * prixMenuUnitaire;
+    const prixEnfants = nbEnfantsFixe * prixEnfantUnitaire;
+    let totalMenu = prixAdultes + prixEnfants;
     let livraison = 0;
     if (ville !== 'bordeaux') {
         livraison = 5;
@@ -235,10 +288,15 @@ function calculPrix() {
         livraison = Math.round(livraison * 100) / 100;
     }
     let reduction = quantite >= (minPers + 5) ? totalMenu * 0.10 : 0;
+    const elAdultes = document.getElementById('prixAdultes');
+    const elEnfants = document.getElementById('prixEnfants');
+    if (elAdultes) elAdultes.textContent = prixAdultes.toFixed(2);
+    if (elEnfants) elEnfants.textContent = prixEnfants.toFixed(2);
     document.getElementById('prixMenu').textContent = totalMenu.toFixed(2);
+    document.getElementById('prixBoissons').textContent = prixBoissonsFixe.toFixed(2);
     document.getElementById('prixLivraison').textContent = livraison.toFixed(2);
     document.getElementById('reduction').textContent = '-' + reduction.toFixed(2);
-    document.getElementById('total').textContent = (totalMenu + livraison - reduction).toFixed(2);
+    document.getElementById('total').textContent = (totalMenu + prixBoissonsFixe + livraison - reduction).toFixed(2);
 }
 
 ['quantite', 'ville', 'code_postal'].forEach(id => {

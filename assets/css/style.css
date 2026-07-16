@@ -1,8 +1,16 @@
 /* ================= GLOBAL ================= */
+:root{
+    --vg-gold:#c9a227;
+    --vg-gold-light:#e8c547;
+    --vg-dark:#1a1a2e;
+    --vg-cream:#faf8f5;
+    --vg-text:#333;
+}
+
 body{
-    font-family:'Segoe UI', sans-serif;
-    background:#f5f5f5;
-    color:#333;
+    font-family:'Segoe UI', system-ui, sans-serif;
+    background:var(--vg-cream);
+    color:var(--vg-text);
     margin:0;
     padding:0;
 }
@@ -493,14 +501,232 @@ font-size:1.75rem;
 }
 
 /* ================= MENU ORDER ================= */
-.menu-order-page .menu-price{font-size:1.75rem;font-weight:700;color:#c0392b}
-.menu-order-page .card-custom{background:#fff;border-radius:16px;padding:24px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
-.menu-order-page .step-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#c0392b;color:#fff;font-weight:700;margin-right:8px}
-.plat-select-card{border:2px solid #e2e8f0;transition:.25s}
-.plat-select-card.plat-active{border-color:#22c55e;box-shadow:0 8px 24px rgba(34,197,94,.15)}
-.plat-select-card .plat-img{height:180px;object-fit:cover}
-.sticky-summary{position:sticky;bottom:16px;z-index:10;border:2px solid #e2e8f0}
+.menu-order-page{padding-bottom:120px}
+.menu-order-page .menu-order-header{margin-bottom:1.5rem}
+.menu-order-page .menu-price{font-size:1.75rem;font-weight:700;color:#c0392b;margin-bottom:.75rem}
+.menu-order-page .card-custom{background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+
+/* Wizard stepper */
+.menu-wizard{position:sticky;top:72px;z-index:200;background:#fff}
+.wizard-stepper{align-items:center}
+.wizard-step-btn{
+    display:inline-flex;align-items:center;gap:6px;
+    border:2px solid #e8ecf1;border-radius:999px;
+    padding:6px 12px;background:#fff;
+    font-size:.82rem;color:#64748b;cursor:pointer;
+    transition:.2s;
+}
+.wizard-step-btn .step-badge{
+    width:22px;height:22px;font-size:.75rem;margin:0;
+    background:#e8ecf1;color:#64748b;
+}
+.wizard-step-btn.active{
+    border-color:var(--vg-gold,#c9a227);
+    background:#fffbeb;color:#1a1a2e;font-weight:600;
+}
+.wizard-step-btn.active .step-badge{background:var(--vg-gold,#c9a227);color:#1a1a2e}
+.wizard-step-btn.done{border-color:#22c55e;color:#166534}
+.wizard-step-btn.done .step-badge{background:#22c55e;color:#fff}
+.wizard-step-btn.locked{opacity:.45;cursor:not-allowed}
+.wizard-step-sep{color:#cbd5e1;font-size:1.1rem}
+
+.wizard-panel{
+    scroll-margin-top:140px;
+    border:2px solid transparent;border-radius:16px;
+    transition:border-color .3s,box-shadow .3s;
+    background:#fff;padding:20px;
+    box-shadow:0 4px 16px rgba(0,0,0,.06);
+}
+.wizard-panel-active{
+    border-color:var(--vg-gold,#c9a227);
+    box-shadow:0 0 0 4px rgba(201,162,39,.15);
+}
+.wizard-panel-active .wizard-focus-field,
+.wizard-panel-active#step-invites #invites{
+    border-color:var(--vg-gold,#c9a227);
+    box-shadow:0 0 0 3px rgba(201,162,39,.25);
+}
+@keyframes wizardPulse{
+    0%,100%{box-shadow:0 0 0 4px rgba(201,162,39,.15)}
+    50%{box-shadow:0 0 0 8px rgba(201,162,39,.25)}
+}
+.wizard-panel-active#step-invites{animation:wizardPulse 2s ease 2}
+.wizard-shake{animation:wizardShake .5s ease}
+@keyframes wizardShake{
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(-6px)}
+    75%{transform:translateX(6px)}
+}
+.wizard-nav{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding-top:8px;border-top:1px solid #f1f5f9}
+.btn-wizard-next:disabled,
+#sticky-next:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+    pointer-events:none;
+}
+.wizard-sticky-bar{
+    position:fixed;bottom:0;left:0;right:0;
+    background:#fff;border-top:1px solid #e8ecf1;
+    padding:10px 0;z-index:300;
+    box-shadow:0 -4px 20px rgba(0,0,0,.08);
+}
+.recap-detail .list-group-item{border-color:#f1f5f9}
+.menu-order-page .step-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--vg-gold,#c9a227);color:#1a1a2e;font-weight:700;font-size:.85rem;margin-right:6px}
+.menu-order-page .menu-category{margin-bottom:2rem}
+.menu-order-page .menu-category h3{font-size:1.25rem;font-weight:700;color:#1a1a2e}
+
+.plat-allergenes{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.allergen-badge{background:#fef3c7;color:#92400e;font-size:.68rem;font-weight:600;padding:2px 6px}
+.allergen-none{background:#f1f5f9;color:#64748b;font-size:.68rem;font-weight:500;padding:2px 6px}
+
+.boisson-list{font-size:.92rem}
+.boisson-list thead th{font-size:.78rem;text-transform:uppercase;letter-spacing:.03em;color:#64748b;border-bottom-width:1px}
+.boisson-list tbody tr:hover{background:#f8fafc}
+.boisson-list td,.boisson-list th{padding:.65rem .75rem;vertical-align:middle}
+.boisson-list .boisson-qty{max-width:90px;margin-left:auto}
+
+/* Grille plats compacte */
+.plat-grid{align-items:stretch}
+.plat-select-card{
+    background:#fff;
+    border:2px solid #e8ecf1;
+    border-radius:14px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    height:100%;
+    transition:border-color .2s,box-shadow .2s;
+}
+.plat-select-card.plat-active{
+    border-color:#22c55e;
+    box-shadow:0 6px 20px rgba(34,197,94,.12);
+}
+.plat-select-card.plat-slider-capped{
+    opacity:.75;
+}
+.plat-select-card.plat-slider-capped .plat-card-controls{
+    opacity:.85;
+}
+.plat-card-controls .form-range:disabled{
+    opacity:.4;
+}
+.plat-img-wrap{
+    position:relative;
+    width:100%;
+    height:150px;
+    flex-shrink:0;
+    overflow:hidden;
+    background:#f1f5f9;
+}
+.plat-img-wrap .plat-img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:center;
+    display:block;
+}
+.plat-card-body{
+    display:flex;
+    flex-direction:column;
+    flex:1;
+    padding:12px 14px 14px;
+    gap:10px;
+    min-height:0;
+}
+.plat-card-info{flex:0 0 auto}
+.plat-card-title{
+    font-size:.95rem;
+    font-weight:700;
+    line-height:1.3;
+    margin:0 0 6px;
+    color:#1a1a2e;
+}
+.plat-card-badges{margin-bottom:6px}
+.plat-card-badges .badge{font-size:.7rem;padding:4px 8px}
+.plat-desc{
+    font-size:.78rem;
+    color:#64748b;
+    line-height:1.4;
+    margin:0;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+}
+.plat-card-controls{
+    margin-top:auto;
+    padding-top:10px;
+    border-top:1px solid #f1f5f9;
+}
+.plat-card-controls .form-range{
+    height:4px;
+    margin:4px 0;
+}
+.plat-card-controls .form-range::-webkit-slider-thumb{
+    width:16px;height:16px;
+}
+.plat-qty{
+    text-align:center;
+    font-size:.85rem;
+    font-weight:700;
+    color:#c0392b;
+}
+
+.sticky-summary{
+    position:sticky;
+    bottom:12px;
+    z-index:100;
+    border:2px solid #e8ecf1;
+    border-radius:16px;
+    box-shadow:0 8px 32px rgba(0,0,0,.12);
+    background:#fff;
+}
+
 .plat-check-card{cursor:pointer;border:2px solid #e2e8f0;border-radius:12px;padding:12px;transition:.2s;background:#fff;position:relative}
 .plat-check-card input{position:absolute;opacity:0;pointer-events:none}
 .plat-check-card.is-selected,.plat-check-card:has(input:checked){border-color:#6366f1;background:#eef2ff}
 .plat-check-body{display:block}
+
+.boisson-card{
+    border:1px solid #e8ecf1;
+    border-radius:12px;
+    padding:12px 14px!important;
+    background:#fff;
+}
+.boisson-card .form-control-sm{max-width:80px}
+
+@media(max-width:575px){
+    .plat-img-wrap{height:130px}
+    .menu-order-page .menu-order-header h1{font-size:1.5rem}
+    .sticky-summary{bottom:8px;padding:16px!important}
+}
+
+/* ================= PREMIUM SECTIONS ================= */
+.stat-card{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.stat-number{font-size:2rem;font-weight:700;color:var(--vg-gold,#c9a227)}
+.boisson-card{transition:.2s}
+.boisson-card:hover{border-color:var(--vg-gold,#c9a227)!important}
+
+/* ================= MENU GALLERY ================= */
+.menu-gallery .menu-gallery-img{
+    height:220px;
+    object-fit:cover;
+    box-shadow:0 4px 16px rgba(0,0,0,.08);
+}
+.menu-gallery .col-md-8 .menu-gallery-img{height:280px}
+@media(max-width:767px){
+    .menu-gallery .menu-gallery-img,
+    .menu-gallery .col-md-8 .menu-gallery-img{height:180px}
+}
+
+.btn-hero{background:var(--vg-gold,#c9a227);color:#1a1a2e;border:none;font-weight:600;padding:12px 32px;border-radius:50px}
+.btn-hero:hover{background:var(--vg-gold-light,#e8c547);color:#1a1a2e}
+
+/* ================= USER SPACE ================= */
+.user-space .user-sidebar{border-radius:16px}
+.user-space .user-avatar{width:64px;height:64px;border-radius:50%;background:var(--vg-gold,#c9a227);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#fff}
+.user-space .user-nav .nav-link{color:#555;border-radius:10px;padding:10px 14px;margin-bottom:4px}
+.user-space .user-nav .nav-link.active,.user-space .user-nav .nav-link:hover{background:#1a1a2e;color:#fff}
+.user-space .order-card{border-left:4px solid var(--vg-gold,#c9a227)!important}
+.user-space .notification-unread{background:#fffbeb;border-left:4px solid var(--vg-gold,#c9a227)}
+.admin-chart-wrap{min-height:220px}

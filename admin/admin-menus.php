@@ -1,9 +1,7 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'employe'])) {
-    header('Location: ../index.php');
-    exit();
-}
+require __DIR__ . '/partials/auth.php';
+requireAdminAccess();
+
 require '../includes/db.php';
 
 $menus = $pdo->query('
@@ -58,7 +56,11 @@ $ok = (int)$m['nb_entrees'] === 3 && (int)$m['nb_plats'] === 3 && (int)$m['nb_de
 
 <td>
 <a href="edit-menu.php?id=<?= $m["id"] ?>" class="btn btn-sm btn-primary">Modifier</a>
-<a href="delete-menu.php?id=<?= $m["id"] ?>" class="btn btn-sm btn-danger">Supprimer</a>
+<form method="POST" action="delete-menu.php" class="d-inline" onsubmit="return confirm('Supprimer ce menu ?')">
+<?= csrfField() ?>
+<input type="hidden" name="id" value="<?= (int)$m['id'] ?>">
+<button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+</form>
 </td>
 </tr>
 
