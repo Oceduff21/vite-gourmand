@@ -587,6 +587,9 @@ font-size:1.75rem;
     75%{transform:translateX(6px)}
 }
 .wizard-nav{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding-top:8px;border-top:1px solid #f1f5f9}
+button[aria-disabled="true"]{opacity:.72;cursor:not-allowed}
+button[aria-disabled="true"].btn-success{opacity:.85}
+.wizard-field-error{border-color:#dc3545!important;box-shadow:0 0 0 3px rgba(220,53,69,.25)!important}
 .btn-wizard-next:disabled,
 #sticky-next:disabled{
     opacity:.55;

@@ -398,7 +398,7 @@ foreach ($group as $type => $items):
         <p class="small text-muted mb-0 mt-1"><i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Les allergenes sont indiques sur chaque plat. Signalez toute intolerance lors de la commande.</p>
     </div>
     <div id="recap-detail" class="recap-detail mb-4"></div>
-    <div id="validation-msg" class="alert alert-warning py-2 small d-none mb-3"></div>
+    <div id="validation-msg" class="alert alert-warning py-2 small d-none mb-3" role="alert" aria-live="assertive"></div>
     <div class="recap-totals p-3 bg-light rounded mb-4">
         <div class="d-flex justify-content-between mb-1"><span>Adultes (<span id="recap-adultes"><?= $min ?></span> pers.)</span><span><span id="recap-adultes-total">0.00</span> EUR</span></div>
         <div class="d-flex justify-content-between mb-1 d-none" id="recap-enfants-line"><span>Enfants (<span id="recap-enfants-n">0</span> pers.)</span><span><span id="recap-enfants-total">0.00</span> EUR</span></div>
@@ -410,7 +410,7 @@ foreach ($group as $type => $items):
         <button type="button" class="btn btn-outline-secondary btn-wizard-prev" data-prev="<?= $hasBoissons ? 'step-boissons' : 'step-dessert' ?>"><i class="fa-solid fa-arrow-up me-1"></i> Precedent</button>
         <div class="d-flex gap-2 flex-wrap">
             <button type="button" class="btn btn-outline-primary" id="btn-autofill">Tout remplir auto</button>
-            <button type="button" class="btn btn-success btn-lg" id="btn-commander" disabled>Continuer la commande</button>
+            <button type="button" class="btn btn-success btn-lg" id="btn-commander" aria-disabled="true" aria-describedby="validation-msg">Continuer la commande</button>
         </div>
     </div>
 </section>
@@ -421,7 +421,7 @@ foreach ($group as $type => $items):
             <strong id="sticky-step-label">Etape 1 — Invites</strong>
             <span class="text-muted ms-2">Total : <span id="sticky-total">0.00</span> EUR</span>
         </div>
-        <button type="button" class="btn btn-sm btn-primary" id="sticky-next">Suite</button>
+        <button type="button" class="btn btn-sm btn-primary" id="sticky-next" aria-disabled="true">Suite</button>
     </div>
 </div>
 
@@ -658,14 +658,117 @@ function buildDetailedRecap() {
     return html;
 }
 
+function setActionButtonState(btn, ok) {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.setAttribute('aria-disabled', ok ? 'false' : 'true');
+    if (btn.id === 'btn-commander') {
+        btn.classList.toggle('btn-success', ok);
+        btn.classList.toggle('btn-secondary', !ok);
+        btn.title = ok ? '' : 'Cliquez pour revenir au champ manquant';
+    } else {
+        btn.classList.toggle('btn-primary', ok);
+        btn.classList.toggle('btn-secondary', !ok);
+    }
+}
+
+function showValidationMsg(text) {
+    const msg = document.getElementById('validation-msg');
+    if (!msg) return;
+    msg.textContent = text;
+    msg.classList.remove('d-none');
+}
+
+function hideValidationMsg() {
+    document.getElementById('validation-msg')?.classList.add('d-none');
+}
+
+function clearFieldErrors() {
+    document.querySelectorAll('.wizard-field-error').forEach(el => el.classList.remove('wizard-field-error'));
+}
+
+function markFieldError(el) {
+    if (!el) return;
+    el.classList.add('wizard-field-error');
+    el.addEventListener('input', () => el.classList.remove('wizard-field-error'), { once: true });
+    el.addEventListener('change', () => el.classList.remove('wizard-field-error'), { once: true });
+}
+
+function focusCategoryField(type) {
+    const sum = sumType(type);
+    const needed = cart.invites - sum;
+    let target = null;
+
+    document.querySelectorAll('.plat-slider[data-type="' + type + '"]').forEach(slider => {
+        if (target) return;
+        const val = parseInt(slider.value, 10) || 0;
+        const maxAllowed = parseInt(slider.max, 10) || 0;
+        if (needed > 0 && val < maxAllowed) target = slider;
+        else if (needed < 0 && val > 0) target = slider;
+    });
+
+    if (!target) {
+        target = document.querySelector('.plat-slider[data-type="' + type + '"]');
+    }
+
+    if (target) {
+        markFieldError(target);
+        setTimeout(() => {
+            target.focus();
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 250);
+    }
+}
+
+function focusStepField(stepId) {
+    if (stepId === 'invites') {
+        const inp = document.getElementById('invites');
+        markFieldError(inp);
+        inp?.focus();
+        inp?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    if (TYPES.includes(stepId)) {
+        focusCategoryField(stepId);
+        return;
+    }
+    document.getElementById('step-' + stepId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function shakePanel(stepId) {
+    const panel = document.getElementById('step-' + stepId);
+    if (!panel) return;
+    panel.classList.add('wizard-shake');
+    setTimeout(() => panel.classList.remove('wizard-shake'), 600);
+}
+
+function focusFirstInvalidField() {
+    clearFieldErrors();
+    if (!validateStep('invites')) {
+        goToStep(WIZARD_STEPS.indexOf('invites'));
+        showValidationMsg(stepMessage('invites'));
+        shakePanel('invites');
+        focusStepField('invites');
+        return false;
+    }
+    for (const type of TYPES) {
+        if (sumType(type) !== cart.invites) {
+            goToStep(WIZARD_STEPS.indexOf(type));
+            showValidationMsg(stepMessage(type));
+            shakePanel(type);
+            focusStepField(type);
+            return false;
+        }
+    }
+    hideValidationMsg();
+    return true;
+}
+
 function updateWizardNextButtons() {
     document.querySelectorAll('.btn-wizard-next').forEach(btn => {
         const stepId = btn.dataset.validate || btn.closest('.wizard-panel')?.id?.replace('step-', '') || '';
         const ok = stepId ? validateStep(stepId) : false;
-        btn.disabled = !ok;
-        btn.classList.toggle('btn-primary', ok);
-        btn.classList.toggle('btn-secondary', !ok);
-        btn.setAttribute('aria-disabled', ok ? 'false' : 'true');
+        setActionButtonState(btn, ok);
     });
     const sticky = document.getElementById('sticky-next');
     if (sticky) {
@@ -674,9 +777,7 @@ function updateWizardNextButtons() {
         } else {
             sticky.classList.remove('d-none');
             const ok = validateStep(WIZARD_STEPS[currentStepIndex]);
-            sticky.disabled = !ok;
-            sticky.classList.toggle('btn-primary', ok);
-            sticky.classList.toggle('btn-secondary', !ok);
+            setActionButtonState(sticky, ok);
         }
     }
 }
@@ -685,21 +786,30 @@ function updateStepperUI() {
     document.querySelectorAll('.wizard-step-btn').forEach(btn => {
         const idx = parseInt(btn.dataset.step, 10);
         btn.classList.remove('active', 'done', 'locked');
-        if (idx === currentStepIndex) btn.classList.add('active');
-        else if (idx < currentStepIndex || (idx > 0 && WIZARD_STEPS.slice(0, idx).every(s => validateStep(s)))) {
+        btn.removeAttribute('aria-current');
+        if (idx === currentStepIndex) {
+            btn.classList.add('active');
+            btn.setAttribute('aria-current', 'step');
+        } else if (idx < currentStepIndex || (idx > 0 && WIZARD_STEPS.slice(0, idx).every(s => validateStep(s)))) {
             btn.classList.add('done');
         } else if (idx > currentStepIndex + 1) {
             btn.classList.add('locked');
         }
+        const locked = btn.classList.contains('locked');
+        btn.setAttribute('aria-disabled', locked ? 'true' : 'false');
+        btn.tabIndex = locked ? -1 : 0;
     });
     const stepId = WIZARD_STEPS[currentStepIndex];
     const stickyLabel = document.getElementById('sticky-step-label');
     if (stickyLabel) {
         stickyLabel.textContent = 'Etape ' + (currentStepIndex + 1) + ' — ' + (WIZARD_LABELS[stepId] || stepId);
     }
-    document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('wizard-panel-active'));
-    const panel = document.getElementById('step-' + stepId);
-    if (panel) panel.classList.add('wizard-panel-active');
+    document.querySelectorAll('.wizard-panel').forEach(p => {
+        const isActive = p.id === 'step-' + stepId;
+        p.classList.toggle('wizard-panel-active', isActive);
+        p.toggleAttribute('inert', !isActive);
+        p.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+    });
     updateWizardNextButtons();
 }
 
@@ -723,19 +833,12 @@ function goToStep(index, scroll = true) {
 function tryGoNext(fromBtn) {
     const currentId = WIZARD_STEPS[currentStepIndex];
     if (!validateStep(currentId)) {
-        const msg = document.getElementById('validation-msg');
-        if (msg) {
-            msg.textContent = stepMessage(currentId);
-            msg.classList.remove('d-none');
-        }
-        const panel = document.getElementById('step-' + currentId);
-        if (panel) {
-            panel.classList.add('wizard-shake');
-            setTimeout(() => panel.classList.remove('wizard-shake'), 600);
-        }
+        showValidationMsg(stepMessage(currentId));
+        shakePanel(currentId);
+        focusStepField(currentId);
         return;
     }
-    document.getElementById('validation-msg')?.classList.add('d-none');
+    hideValidationMsg();
     let nextIndex = currentStepIndex + 1;
     if (fromBtn && fromBtn.dataset.next) {
         const target = fromBtn.dataset.next.replace('step-', '');
@@ -812,18 +915,14 @@ function updateUI() {
     document.getElementById('recap-detail').innerHTML = buildDetailedRecap();
 
     const btn = document.getElementById('btn-commander');
-    const msg = document.getElementById('validation-msg');
-    if (allValid) {
-        if (WIZARD_STEPS[currentStepIndex] === 'recap') msg?.classList.add('d-none');
-        btn.disabled = false;
-    } else {
+    const orderOk = TYPES.every(t => sumType(t) === cart.invites);
+    if (btn) {
+        setActionButtonState(btn, orderOk);
         if (WIZARD_STEPS[currentStepIndex] === 'recap') {
-            msg?.classList.remove('d-none');
-            msg.textContent = 'Repartissez exactement ' + cart.invites + ' invites pour chaque categorie.';
+            if (orderOk) hideValidationMsg();
+            else showValidationMsg('Repartissez exactement ' + cart.invites + ' invites pour chaque categorie.');
         }
-        btn.disabled = true;
     }
-    updateWizardNextButtons();
     updateStepperUI();
 }
 
@@ -897,7 +996,13 @@ document.querySelectorAll('.boisson-qty').forEach(input => {
 
 document.querySelectorAll('.btn-wizard-next').forEach(btn => {
     btn.addEventListener('click', () => {
-        if (btn.disabled) return;
+        if (btn.getAttribute('aria-disabled') === 'true') {
+            const stepId = btn.dataset.validate || WIZARD_STEPS[currentStepIndex];
+            showValidationMsg(stepMessage(stepId));
+            shakePanel(stepId);
+            focusStepField(stepId);
+            return;
+        }
         tryGoNext(btn);
     });
 });
@@ -910,6 +1015,10 @@ document.querySelectorAll('.btn-wizard-prev').forEach(btn => {
 });
 document.querySelectorAll('.wizard-step-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+        if (btn.classList.contains('locked') || btn.getAttribute('aria-disabled') === 'true') {
+            focusFirstInvalidField();
+            return;
+        }
         const idx = parseInt(btn.dataset.step, 10);
         if (idx <= currentStepIndex) {
             goToStep(idx);
@@ -929,8 +1038,30 @@ document.querySelectorAll('.wizard-step-btn').forEach(btn => {
 
 document.getElementById('sticky-next').addEventListener('click', () => {
     const sticky = document.getElementById('sticky-next');
-    if (sticky?.disabled || currentStepIndex >= WIZARD_STEPS.length - 1) return;
+    if (currentStepIndex >= WIZARD_STEPS.length - 1) return;
+    if (sticky?.getAttribute('aria-disabled') === 'true') {
+        const stepId = WIZARD_STEPS[currentStepIndex];
+        showValidationMsg(stepMessage(stepId));
+        shakePanel(stepId);
+        focusStepField(stepId);
+        return;
+    }
     tryGoNext({ dataset: { next: 'step-' + WIZARD_STEPS[currentStepIndex + 1] } });
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const msg = document.getElementById('validation-msg');
+    if (msg && !msg.classList.contains('d-none')) {
+        hideValidationMsg();
+        clearFieldErrors();
+        e.preventDefault();
+        return;
+    }
+    if (currentStepIndex > 0) {
+        goToStep(currentStepIndex - 1);
+        e.preventDefault();
+    }
 });
 
 document.getElementById('btn-commander-top')?.addEventListener('click', () => {
@@ -939,7 +1070,10 @@ document.getElementById('btn-commander-top')?.addEventListener('click', () => {
 });
 
 document.getElementById('btn-autofill').addEventListener('click', autoFill);
-document.getElementById('btn-commander').addEventListener('click', submitOrder);
+document.getElementById('btn-commander').addEventListener('click', () => {
+    if (!focusFirstInvalidField()) return;
+    submitOrder();
+});
 
 syncSlidersMax();
 updateUI();
