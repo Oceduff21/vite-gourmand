@@ -24,9 +24,10 @@ Responsable de la publication : Julie / José
 <h2>2. Hébergement</h2>
 <p>
 Le site est hébergé par :<br>
-Nom de l’hébergeur : OVHcloud<br>
-Adresse : 2 rue Kellermann, 59100 Roubaix, France<br>
-Téléphone : 1007
+Nom de l'hébergeur : <strong>InfinityFree</strong> (iFastNet Limited)<br>
+Site web : <a href="https://www.infinityfree.net">https://www.infinityfree.net</a><br>
+Adresse : iFastNet Limited, Unit 36, Vista Business Centre, Salisbury Avenue, Hounslow, TW4 6JQ, Royaume-Uni<br>
+URL du site : <a href="https://vitegourmand.infinityfree.io/">https://vitegourmand.infinityfree.io/</a>
 </p>
 
 <h2>3. Propriété intellectuelle</h2>

@@ -18,11 +18,46 @@ $ca = $pdo->query('SELECT SUM(prix_total) FROM commandes')->fetchColumn();
 $users = $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
 $menus = $pdo->query('SELECT id, titre FROM menus ORDER BY titre')->fetchAll();
 
-$mongoCA = mongoGetCAparMenu($filterMenu ?: null, $filterDebut ?: null, $filterFin ?: null);
-$mongoLabels = array_column($mongoCA, 'titre');
-$mongoTotals = array_column($mongoCA, 'total');
-$mongoCounts = array_column($mongoCA, 'count');
 $mongoOk = mongoIsAvailable();
+
+$chartLabels = [];
+$chartTotals = [];
+$chartCounts = [];
+$chartSource = 'MongoDB';
+
+if ($mongoOk) {
+    $mongoCA = mongoGetCAparMenu($filterMenu ?: null, $filterDebut ?: null, $filterFin ?: null);
+    $chartLabels = array_column($mongoCA, 'titre');
+    $chartTotals = array_column($mongoCA, 'total');
+    $chartCounts = array_column($mongoCA, 'count');
+} else {
+    $chartSource = 'MySQL';
+    $sql = 'SELECT m.titre, COALESCE(SUM(c.prix_total), 0) AS total, COUNT(c.id) AS count
+            FROM commandes c
+            JOIN menus m ON c.menu_id = m.id
+            WHERE 1=1';
+    $params = [];
+    if ($filterMenu) {
+        $sql .= ' AND c.menu_id = ?';
+        $params[] = $filterMenu;
+    }
+    if ($filterDebut) {
+        $sql .= ' AND DATE(c.created_at) >= ?';
+        $params[] = $filterDebut;
+    }
+    if ($filterFin) {
+        $sql .= ' AND DATE(c.created_at) <= ?';
+        $params[] = $filterFin;
+    }
+    $sql .= ' GROUP BY m.id, m.titre ORDER BY m.titre';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    foreach ($stmt->fetchAll() as $row) {
+        $chartLabels[] = $row['titre'];
+        $chartTotals[] = (float)$row['total'];
+        $chartCounts[] = (int)$row['count'];
+    }
+}
 
 $data = $pdo->query('SELECT DATE(created_at) as date, COUNT(*) as total FROM commandes GROUP BY DATE(created_at) ORDER BY date ASC')->fetchAll();
 $dates = array_column($data, 'date');
@@ -59,7 +94,7 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif}
 <h2 class="mb-4">Dashboard</h2>
 
 <?php if (!$mongoOk): ?>
-<div class="alert alert-warning">MongoDB non disponible. Activez l'extension PHP mongodb ou lancez <code>docker-compose up</code>.</div>
+<div class="alert alert-info">Statistiques avancees via MySQL (MongoDB indisponible sur cet hebergeur — normal sur InfinityFree).</div>
 <?php endif; ?>
 
 <div class="row mb-4">
@@ -80,16 +115,16 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif}
 </div>
 <div class="col-md-3"><label class="form-label">Date debut</label><input type="date" name="date_debut" class="form-control" value="<?= htmlspecialchars($filterDebut) ?>"></div>
 <div class="col-md-3"><label class="form-label">Date fin</label><input type="date" name="date_fin" class="form-control" value="<?= htmlspecialchars($filterFin) ?>"></div>
-<div class="col-md-3 d-flex align-items-end"><button class="btn btn-primary w-100">Filtrer CA MongoDB</button></div>
+<div class="col-md-3 d-flex align-items-end"><button class="btn btn-primary w-100">Filtrer</button></div>
 </form>
 
 <div class="row g-4 mb-4">
 <div class="col-md-6 chart-box">
-<h5>CA par menu (MongoDB - NoSQL)</h5>
+<h5>CA par menu (<?= htmlspecialchars($chartSource) ?>)</h5>
 <canvas id="chartMongoCA" aria-label="Graphique chiffre affaires par menu"></canvas>
 </div>
 <div class="col-md-6 chart-box">
-<h5>Commandes par menu (MongoDB)</h5>
+<h5>Commandes par menu (<?= htmlspecialchars($chartSource) ?>)</h5>
 <canvas id="chartMongoCount" aria-label="Graphique nombre commandes par menu"></canvas>
 </div>
 </div>
@@ -100,8 +135,8 @@ body{background:#f1f5f9;font-family:'Segoe UI',sans-serif}
 </div>
 </div>
 <script>
-new Chart(document.getElementById('chartMongoCA'), {type:'bar', data:{labels:<?= json_encode($mongoLabels) ?>, datasets:[{label:'CA (EUR)', data:<?= json_encode($mongoTotals) ?>, backgroundColor:'#6366f1'}]}});
-new Chart(document.getElementById('chartMongoCount'), {type:'bar', data:{labels:<?= json_encode($mongoLabels) ?>, datasets:[{label:'Nb commandes', data:<?= json_encode($mongoCounts) ?>, backgroundColor:'#22c55e'}]}});
+new Chart(document.getElementById('chartMongoCA'), {type:'bar', data:{labels:<?= json_encode($chartLabels) ?>, datasets:[{label:'CA (EUR)', data:<?= json_encode($chartTotals) ?>, backgroundColor:'#6366f1'}]}});
+new Chart(document.getElementById('chartMongoCount'), {type:'bar', data:{labels:<?= json_encode($chartLabels) ?>, datasets:[{label:'Nb commandes', data:<?= json_encode($chartCounts) ?>, backgroundColor:'#22c55e'}]}});
 new Chart(document.getElementById('chartSQL'), {type:'line', data:{labels:<?= json_encode($dates) ?>, datasets:[{label:'Commandes', data:<?= json_encode($totaux) ?>, borderColor:'#f59e0b', fill:true, tension:0.4}]}});
 </script>
 </body>

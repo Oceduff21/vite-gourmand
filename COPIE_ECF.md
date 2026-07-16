@@ -4,18 +4,33 @@
 
 ## Lien de deploiement (OBLIGATOIRE)
 
-Apres deploiement Render/Railway, coller l'URL publique, par exemple :
-`https://vite-gourmand.onrender.com`
+Coller cette URL dans la copie ODT :
 
-## Stack technique (corriger dans la copie)
+```
+https://vitegourmand.infinityfree.io/
+```
 
-| Declarer | Valeur reelle |
-|----------|---------------|
-| Langages | HTML, CSS, JavaScript, **PHP 8** |
-| BDD | **MySQL** + **MongoDB** |
-| Hebergement | **Render** ou **Railway** (pas Netlify/Vercel) |
+Pages de demonstration :
+
+| Page | URL |
+|------|-----|
+| Accueil | https://vitegourmand.infinityfree.io/ |
+| Menus | https://vitegourmand.infinityfree.io/menus.php |
+| Connexion | https://vitegourmand.infinityfree.io/login.php |
+| Admin | https://vitegourmand.infinityfree.io/admin/login.php |
+
+## Stack technique (a declarer dans la copie ODT)
+
+| Element | Valeur reelle |
+|---------|---------------|
+| Langages | HTML, CSS, JavaScript, **PHP 8.3** |
+| BDD relationnelle | **MySQL** (InfinityFree — `sql112.infinityfree.com`) |
+| BDD NoSQL | **MongoDB** (statistiques — **en local** Docker/XAMPP ; fallback MySQL en production) |
+| Hebergement production | **InfinityFree** (https://vitegourmand.infinityfree.io/) |
 | Git | https://github.com/Oceduff21/vite-gourmand |
-| Local | XAMPP (Apache + MySQL) |
+| Environnement local | XAMPP (Apache + MySQL + extension MongoDB) |
+
+> **Note soutenance :** MongoDB n'est pas disponible sur l'hebergement gratuit InfinityFree. Les statistiques NoSQL sont demontrees en local ; le dashboard admin utilise MySQL en production.
 
 ## Comptes de demonstration
 
@@ -30,12 +45,17 @@ Apres deploiement Render/Railway, coller l'URL publique, par exemple :
 2. **Charte graphique** — couleurs (#c0392b, Bootstrap), typo, logo
 3. **Documentation technique** — architecture, BDD, deploiement
 
-Voir `docs/` pour les versions Markdown a convertir en PDF.
+Sources Markdown a convertir en PDF : dossier `docs/`
 
 ## Checklist avant depot (23 juillet)
 
-- [ ] Lien de deploiement fonctionnel
-- [ ] GitHub public a jour (branches main/develop)
-- [ ] Copie ODT completee
+- [x] Lien de deploiement fonctionnel — https://vitegourmand.infinityfree.io/
+- [ ] GitHub public a jour (merger `feature/admin` vers `main` si necessaire)
+- [ ] Copie ODT completee (URL + stack ci-dessus)
 - [ ] 3 PDF livrables
 - [ ] Test parcours : inscription → commande → suivi → avis
+- [x] Mentions legales : hebergeur InfinityFree
+
+## Texte type pour la copie ODT (stack)
+
+> Application web PHP/MySQL de commande de prestations traiteur. Front Bootstrap 5, back-office admin/employe, authentification, commandes, avis moderes. Base MySQL hebergee sur InfinityFree. Statistiques MongoDB en environnement local (Docker/XAMPP). Depot GitHub : https://github.com/Oceduff21/vite-gourmand
