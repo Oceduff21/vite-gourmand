@@ -2,6 +2,7 @@
 session_start();
 require 'includes/db.php';
 require 'includes/helpers.php';
+require 'includes/menu-helpers.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
@@ -9,9 +10,9 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['data'])) {
-    $cart = json_decode($_POST['data'], true);
+    $cart = normalizeCartFromPost($_POST['data']);
     $postedMenuId = (int)($_POST['menu_id'] ?? 0);
-    if (is_array($cart) && $postedMenuId > 0) {
+    if ($postedMenuId > 0 && !empty($cart)) {
         $_SESSION['menu_cart'] = $cart;
         $_SESSION['menu_cart_menu_id'] = $postedMenuId;
     }
@@ -32,10 +33,6 @@ if (!$menu) {
     die('Menu introuvable');
 }
 
-$stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-$stmt->execute([$_SESSION['user_id']]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
-
 $min = (int)$menu['min_personnes'];
 $prix = (float)$menu['prix'];
 $stock = (int)($menu['stock'] ?? 0);
@@ -44,6 +41,25 @@ $cart = [];
 if (!empty($_SESSION['menu_cart']) && (int)($_SESSION['menu_cart_menu_id'] ?? 0) === $menu_id) {
     $cart = $_SESSION['menu_cart'];
 }
+
+$quantiteDefault = max($min, (int)($cart['invites'] ?? $min));
+$cartError = null;
+
+if (empty($cart) || !cartHasValidSelection($cart, $quantiteDefault)) {
+    $cartError = 'Veuillez d\'abord selectionner et repartir les plats pour ce menu.';
+} else {
+    $cartError = validatePlatSelection($pdo, $menu_id, $cart, $quantiteDefault, $min);
+}
+
+if ($cartError) {
+    $_SESSION['menu_cart_error'] = $cartError;
+    header('Location: menu.php?id=' . $menu_id);
+    exit();
+}
+
+$stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
+$stmt->execute([$_SESSION['user_id']]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $platLabels = [];
 if ($cart) {
@@ -67,7 +83,7 @@ if ($cart) {
     }
 }
 
-$quantiteDefault = (int)($cart['invites'] ?? $min);
+$quantiteDefault = max($min, (int)($cart['invites'] ?? $min));
 
 include 'includes/header.php';
 ?>
@@ -92,19 +108,24 @@ include 'includes/header.php';
         <input type="hidden" name="cart_json" value="<?= htmlspecialchars(json_encode($cart), ENT_QUOTES) ?>">
 
         <?php if ($cart): ?>
-        <div class="alert alert-info mb-4">
-            <strong>Plats selectionnes :</strong>
-            <ul class="mb-0 mt-2">
-            <?php foreach (['entree', 'plat', 'dessert'] as $type): ?>
-                <?php if (!empty($cart[$type]) && is_array($cart[$type])): ?>
-                    <?php foreach ($cart[$type] as $platId => $qty): ?>
-                        <?php if ((int)$qty > 0 && isset($platLabels[(int)$platId])): ?>
-                        <li><?= htmlspecialchars(ucfirst($type)) ?> : <?= htmlspecialchars($platLabels[(int)$platId]['nom']) ?> — <?= (int)$qty ?> invite(s)</li>
+        <div class="alert alert-success mb-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <strong>Plats selectionnes (<?= (int)$quantiteDefault ?> invites) :</strong>
+                    <ul class="mb-0 mt-2">
+                    <?php foreach (['entree', 'plat', 'dessert'] as $type): ?>
+                        <?php if (!empty($cart[$type]) && is_array($cart[$type])): ?>
+                            <?php foreach ($cart[$type] as $platId => $qty): ?>
+                                <?php if ((int)$qty > 0 && isset($platLabels[(int)$platId])): ?>
+                                <li><?= htmlspecialchars(ucfirst($type)) ?> : <?= htmlspecialchars($platLabels[(int)$platId]['nom']) ?> &mdash; <?= (int)$qty ?> invite(s)</li>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
                         <?php endif; ?>
                     <?php endforeach; ?>
-                <?php endif; ?>
-            <?php endforeach; ?>
-            </ul>
+                    </ul>
+                </div>
+                <a href="menu.php?id=<?= $menu_id ?>" class="btn btn-sm btn-outline-primary">Modifier la selection</a>
+            </div>
         </div>
         <?php endif; ?>
 
@@ -168,7 +189,8 @@ include 'includes/header.php';
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Nombre de personnes (min. <?= $min ?>)</label>
-                        <input type="number" name="quantite" id="quantite" class="form-control" min="<?= $min ?>" value="<?= max($min, $quantiteDefault) ?>" required>
+                        <input type="number" name="quantite" id="quantite" class="form-control" min="<?= $min ?>" value="<?= max($min, $quantiteDefault) ?>" required readonly>
+                        <small class="text-muted">Defini lors de la selection des plats</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Date de livraison</label>

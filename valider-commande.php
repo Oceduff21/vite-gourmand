@@ -2,6 +2,7 @@
 session_start();
 require 'includes/db.php';
 require 'includes/helpers.php';
+require 'includes/menu-helpers.php';
 require 'includes/mongo.php';
 
 if (!isset($_SESSION['user_id'])) {
@@ -44,6 +45,20 @@ if ($stock <= 0) {
     die('Stock insuffisant pour ce menu.');
 }
 
+$cart = normalizeCartFromPost($_POST['cart_json'] ?? '');
+$cartError = validatePlatSelection($pdo, $menu_id, $cart, $quantite, $min);
+if ($cartError) {
+    $_SESSION['menu_cart_error'] = $cartError;
+    header('Location: menu.php?id=' . $menu_id);
+    exit();
+}
+
+if ((int)($cart['invites'] ?? 0) !== $quantite) {
+    $_SESSION['menu_cart_error'] = 'Le nombre de personnes doit correspondre a la repartition des plats.';
+    header('Location: menu.php?id=' . $menu_id);
+    exit();
+}
+
 $totalMenu = $quantite * $prix;
 $ville_lower = strtolower($ville);
 $livraison = 0.0;
@@ -76,8 +91,8 @@ $commande_id = (int)$pdo->lastInsertId();
 
 enregistrerHistorique($pdo, $commande_id, 'en_attente');
 
-$cart = json_decode($_POST['cart_json'] ?? '', true);
-if (is_array($cart)) {
+$cart = normalizeCartFromPost($_POST['cart_json'] ?? '');
+if ($cart) {
     foreach (['entree', 'plat', 'dessert'] as $type) {
         if (empty($cart[$type]) || !is_array($cart[$type])) {
             continue;

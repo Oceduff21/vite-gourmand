@@ -142,7 +142,9 @@ if($page === 'menu.php' && isset($_GET['id'])){
         'contact.php' => 'Contact',
         'commande.php' => 'Commande',
         'login.php' => 'Connexion',
-        'espace-utilisateur.php' => 'Mon espace'
+        'espace-utilisateur.php' => 'Mon espace',
+        'mentions-legales.php' => 'Mentions legales',
+        'cgv.php' => 'CGV'
     ];
 
     $current = $pages[$page] ?? 'Page';

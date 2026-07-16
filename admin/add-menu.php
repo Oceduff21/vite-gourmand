@@ -1,131 +1,85 @@
 <?php
 session_start();
-require '../includes/db.php';
-
-/* DATA */
-$entrees = $pdo->query("SELECT * FROM plats WHERE type='entree'")->fetchAll();
-$plats = $pdo->query("SELECT * FROM plats WHERE type='plat'")->fetchAll();
-$desserts = $pdo->query("SELECT * FROM plats WHERE type='dessert'")->fetchAll();
-$boissons = $pdo->query("SELECT * FROM boissons")->fetchAll();
-
-/* SAVE */
-if($_SERVER["REQUEST_METHOD"] === "POST"){
-
-    if(count($_POST["entrees"] ?? []) != 3) die("3 entrées obligatoires");
-    if(count($_POST["plats"] ?? []) != 3) die("3 plats obligatoires");
-    if(count($_POST["desserts"] ?? []) != 3) die("3 desserts obligatoires");
-
-    $pdo->beginTransaction();
-
-    $stmt = $pdo->prepare("
-        INSERT INTO menus (titre, prix, min_personnes)
-        VALUES (?, ?, ?)
-    ");
-    $stmt->execute([
-        $_POST["titre"],
-        $_POST["prix"],
-        $_POST["min"]
-    ]);
-
-    $menu_id = $pdo->lastInsertId();
-
-    /* OPTIONS */
-    foreach($_POST["entrees"] as $e){
-        $pdo->prepare("
-            INSERT INTO menu_options (menu_id, plat_id, type)
-            VALUES (?, ?, 'entree')
-        ")->execute([$menu_id,$e]);
-    }
-
-    foreach($_POST["plats"] as $p){
-        $pdo->prepare("
-            INSERT INTO menu_options (menu_id, plat_id, type)
-            VALUES (?, ?, 'plat')
-        ")->execute([$menu_id,$p]);
-    }
-
-    foreach($_POST["desserts"] as $d){
-        $pdo->prepare("
-            INSERT INTO menu_options (menu_id, plat_id, type)
-            VALUES (?, ?, 'dessert')
-        ")->execute([$menu_id,$d]);
-    }
-
-    /* BOISSONS */
-    foreach($_POST["boissons"] ?? [] as $b){
-        $pdo->prepare("
-            INSERT INTO menu_boissons (menu_id, boisson_id)
-            VALUES (?, ?)
-        ")->execute([$menu_id,$b]);
-    }
-
-    $pdo->commit();
-
-    header("Location: admin-menus.php");
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'employe'])) {
+    header('Location: ../index.php');
     exit();
 }
-?>
+require '../includes/db.php';
+require '../includes/menu-helpers.php';
 
-<?php include 'partials/layout.php'; ?>
+$entrees = $pdo->query("SELECT * FROM plats WHERE type='entree' ORDER BY nom")->fetchAll();
+$plats = $pdo->query("SELECT * FROM plats WHERE type='plat' ORDER BY nom")->fetchAll();
+$desserts = $pdo->query("SELECT * FROM plats WHERE type='dessert' ORDER BY nom")->fetchAll();
+$boissons = $pdo->query('SELECT * FROM boissons ORDER BY nom')->fetchAll();
+$menu = [];
+$selected = ['entree' => [], 'plat' => [], 'dessert' => []];
+$selectedBoissons = [];
 
-<h2>Créer un menu</h2>
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $errors = [];
+    if (count($_POST['entrees'] ?? []) !== MENU_OPTIONS_REQUIRED) {
+        $errors[] = '3 entrees obligatoires';
+    }
+    if (count($_POST['plats'] ?? []) !== MENU_OPTIONS_REQUIRED) {
+        $errors[] = '3 plats obligatoires';
+    }
+    if (count($_POST['desserts'] ?? []) !== MENU_OPTIONS_REQUIRED) {
+        $errors[] = '3 desserts obligatoires';
+    }
 
-<form method="POST">
+    if ($errors) {
+        $errorMsg = implode(', ', $errors);
+    } else {
+        $pdo->beginTransaction();
+        $stmt = $pdo->prepare('
+            INSERT INTO menus (titre, description, theme, regime, prix, min_personnes, stock, conditions, delai_jours)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ');
+        $stmt->execute([
+            trim($_POST['titre']),
+            trim($_POST['description'] ?? ''),
+            trim($_POST['theme'] ?? ''),
+            $_POST['regime'] ?? 'classique',
+            (float)$_POST['prix'],
+            (int)$_POST['min'],
+            (int)($_POST['stock'] ?? 0),
+            trim($_POST['conditions'] ?? ''),
+            (int)($_POST['delai_jours'] ?? 7),
+        ]);
+        $menu_id = (int)$pdo->lastInsertId();
 
-<input name="titre" placeholder="Titre" class="form-control mb-3" required>
-<input name="prix" type="number" step="0.01" class="form-control mb-3" required>
-<input name="min" type="number" class="form-control mb-3" required>
+        foreach ($_POST['entrees'] as $e) {
+            $pdo->prepare("INSERT INTO menu_options (menu_id, plat_id, type) VALUES (?, ?, 'entree')")->execute([$menu_id, (int)$e]);
+        }
+        foreach ($_POST['plats'] as $p) {
+            $pdo->prepare("INSERT INTO menu_options (menu_id, plat_id, type) VALUES (?, ?, 'plat')")->execute([$menu_id, (int)$p]);
+        }
+        foreach ($_POST['desserts'] as $d) {
+            $pdo->prepare("INSERT INTO menu_options (menu_id, plat_id, type) VALUES (?, ?, 'dessert')")->execute([$menu_id, (int)$d]);
+        }
+        foreach ($_POST['boissons'] ?? [] as $b) {
+            $pdo->prepare('INSERT INTO menu_boissons (menu_id, boisson_id) VALUES (?, ?)')->execute([$menu_id, (int)$b]);
+        }
 
-<h5>Entrées (3 obligatoires)</h5>
-<?php foreach($entrees as $e): ?>
-<label>
-<input type="checkbox" name="entrees[]" value="<?= $e["id"] ?>">
-<?= $e["nom"] ?>
-</label><br>
-<?php endforeach; ?>
-
-<h5>Plats (3 obligatoires)</h5>
-<?php foreach($plats as $p): ?>
-<label>
-<input type="checkbox" name="plats[]" value="<?= $p["id"] ?>">
-<?= $p["nom"] ?>
-</label><br>
-<?php endforeach; ?>
-
-<h5>Desserts (3 obligatoires)</h5>
-<?php foreach($desserts as $d): ?>
-<label>
-<input type="checkbox" name="desserts[]" value="<?= $d["id"] ?>">
-<?= $d["nom"] ?>
-</label><br>
-<?php endforeach; ?>
-
-<h5>Boissons</h5>
-<?php foreach($boissons as $b): ?>
-<label>
-<input type="checkbox" name="boissons[]" value="<?= $b["id"] ?>">
-<?= $b["nom"] ?>
-</label><br>
-<?php endforeach; ?>
-
-<button class="btn btn-success mt-3">Créer</button>
-
-</form>
-
-<script>
-document.querySelectorAll('input[type=checkbox]').forEach(cb => {
-cb.addEventListener('change', function(){
-
-let name = this.name;
-let checked = document.querySelectorAll(`input[name="${name}"]:checked`);
-
-if(checked.length > 3){
-this.checked = false;
-alert("Maximum 3 choix");
+        $pdo->commit();
+        header('Location: admin-menus.php');
+        exit();
+    }
 }
 
-});
-});
-</script>
+require __DIR__ . '/partials/layout.php';
+?>
+
+<h2 class="mb-4">Creer un menu</h2>
+
+<?php if (!empty($errorMsg)): ?>
+<div class="alert alert-danger"><?= htmlspecialchars($errorMsg) ?></div>
+<?php endif; ?>
+
+<form method="POST" id="menu-admin-form">
+<?php require __DIR__ . '/partials/menu-form.php'; ?>
+<button type="submit" class="btn btn-success btn-lg">Creer le menu</button>
+<a href="admin-menus.php" class="btn btn-outline-secondary">Annuler</a>
+</form>
 
 <?php require __DIR__ . '/partials/footer.php'; ?>
