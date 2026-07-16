@@ -272,6 +272,35 @@ html{
     height:220px;
     object-fit:cover;
 }
+.menu-card-img-wrap{position:relative}
+.menu-card-badge{
+    position:absolute;
+    top:12px;
+    right:12px;
+    box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+
+/* ================= MENU CAROUSEL ================= */
+.menu-carousel .menu-carousel-img{
+    height:min(460px, 55vh);
+    object-fit:cover;
+}
+.menu-carousel-caption{
+    background:linear-gradient(transparent, rgba(0,0,0,.75));
+    left:0;right:0;bottom:0;
+    padding:2rem 1rem 1rem;
+}
+.menu-carousel-caption p{
+    font-weight:600;
+    text-shadow:0 1px 4px rgba(0,0,0,.5);
+}
+.menu-carousel .carousel-indicators [data-bs-target]{
+    width:10px;height:10px;border-radius:50%;
+}
+@media(max-width:767px){
+    .menu-carousel .menu-carousel-img{height:240px}
+}
+.menu-conditions-alert{border-width:3px!important}
 
 /* ================= MENU HERO ================= */
 .menu-hero{
@@ -706,18 +735,6 @@ font-size:1.75rem;
 .stat-number{font-size:2rem;font-weight:700;color:var(--vg-gold,#c9a227)}
 .boisson-card{transition:.2s}
 .boisson-card:hover{border-color:var(--vg-gold,#c9a227)!important}
-
-/* ================= MENU GALLERY ================= */
-.menu-gallery .menu-gallery-img{
-    height:220px;
-    object-fit:cover;
-    box-shadow:0 4px 16px rgba(0,0,0,.08);
-}
-.menu-gallery .col-md-8 .menu-gallery-img{height:280px}
-@media(max-width:767px){
-    .menu-gallery .menu-gallery-img,
-    .menu-gallery .col-md-8 .menu-gallery-img{height:180px}
-}
 
 .btn-hero{background:var(--vg-gold,#c9a227);color:#1a1a2e;border:none;font-weight:600;padding:12px 32px;border-radius:50px}
 .btn-hero:hover{background:var(--vg-gold-light,#e8c547);color:#1a1a2e}

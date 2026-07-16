@@ -36,10 +36,10 @@ include 'includes/header.php';
 <!-- HERO -->
 <section class="hero">
 
-    <div class="hero-slide active" style="background-image:url('assets/images/presentation.jpg')"></div>
-    <div class="hero-slide" style="background-image:url('assets/images/hero1.jpg')"></div>
-    <div class="hero-slide" style="background-image:url('assets/images/hero2.jpg')"></div>
-    <div class="hero-slide" style="background-image:url('assets/images/hero3.jpg')"></div>
+    <div class="hero-slide active" style="background-image:url('<?= htmlspecialchars(assetImageUrl('assets/images/presentation.jpg')) ?>')"></div>
+    <div class="hero-slide" style="background-image:url('<?= htmlspecialchars(assetImageUrl('assets/images/hero1.jpg')) ?>')"></div>
+    <div class="hero-slide" style="background-image:url('<?= htmlspecialchars(assetImageUrl('assets/images/hero2.jpg')) ?>')"></div>
+    <div class="hero-slide" style="background-image:url('<?= htmlspecialchars(assetImageUrl('assets/images/hero3.jpg')) ?>')"></div>
 
     <div class="hero-overlay"></div>
 
@@ -74,7 +74,7 @@ include 'includes/header.php';
 
 <div class="col-md-4">
     <div class="team-card">
-        <img src="assets/images/chef.jpg" alt="Chef experimente en cuisine">
+        <img src="<?= htmlspecialchars(assetImageUrl('assets/images/chef.jpg')) ?>" alt="Chef experimente en cuisine">
         <div class="p-3">
             <h5>Chef experimente</h5>
             <p>15 ans d'experience en gastronomie.</p>
@@ -84,7 +84,7 @@ include 'includes/header.php';
 
 <div class="col-md-4">
     <div class="team-card">
-        <img src="assets/images/chef.jpg" alt="Service traiteur">
+        <img src="<?= htmlspecialchars(assetImageUrl('assets/images/chef.jpg')) ?>" alt="Service traiteur">
         <div class="p-3">
             <h5>Service haut de gamme</h5>
             <p>Professionnalisme et discretion.</p>
@@ -94,7 +94,7 @@ include 'includes/header.php';
 
 <div class="col-md-4">
     <div class="team-card">
-        <img src="assets/images/presentation.jpg" alt="Organisation evenementielle">
+        <img src="<?= htmlspecialchars(assetImageUrl('assets/images/presentation.jpg')) ?>" alt="Organisation evenementielle">
         <div class="p-3">
             <h5>Organisation</h5>
             <p>Accompagnement sur mesure.</p>
@@ -132,15 +132,13 @@ include 'includes/header.php';
 <p class="text-center text-muted">Catalogue en cours de mise a jour.</p>
 <?php else: ?>
 <div class="row g-4">
-<?php foreach ($featuredMenus as $menu):
-    $cover = getMenuCoverImage($menu);
-?>
+<?php foreach ($featuredMenus as $menu): ?>
 <div class="col-md-6 col-lg-4">
     <div class="menu-card h-100 shadow-sm">
-        <img src="<?= htmlspecialchars($cover) ?>" alt="<?= htmlspecialchars($menu['titre']) ?>" class="card-img-top" style="height:180px;object-fit:cover" loading="lazy">
+        <img src="<?= htmlspecialchars(menuCoverUrl($menu)) ?>" alt="<?= htmlspecialchars($menu['titre']) ?>" class="card-img-top" style="height:180px;object-fit:cover" loading="lazy">
         <div class="p-3 d-flex flex-column">
             <h5><?= htmlspecialchars($menu['titre']) ?></h5>
-            <p class="text-muted small flex-grow-1 mb-2"><?= htmlspecialchars(mb_substr($menu['description'] ?? '', 0, 90)) ?><?= mb_strlen($menu['description'] ?? '') > 90 ? '...' : '' ?></p>
+            <p class="text-muted small flex-grow-1 mb-2"><?= htmlspecialchars(formatMenuExcerpt($menu['description'] ?? '')) ?></p>
             <p class="mb-1 small"><i class="fa-solid fa-users me-1"></i> Min. <?= (int)$menu['min_personnes'] ?> pers.</p>
             <p class="text-danger fw-bold mb-3"><?= number_format((float)$menu['prix'], 2) ?> EUR / pers.</p>
             <a href="menu.php?id=<?= (int)$menu['id'] ?>" class="btn btn-outline-dark w-100 mt-auto">Composer ce menu</a>

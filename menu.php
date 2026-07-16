@@ -41,7 +41,13 @@ $stmt->execute([$id]);
 $menu = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$menu) {
-    die('Menu introuvable');
+    http_response_code(404);
+    $pageTitle = 'Menu introuvable — Vite & Gourmand';
+    include 'includes/header.php';
+    echo '<div class="container py-5"><div class="alert alert-warning">Ce menu n\'existe pas ou n\'est plus disponible.</div>';
+    echo '<a href="menus.php" class="btn btn-primary">Retour aux menus</a></div>';
+    include 'includes/footer.php';
+    exit();
 }
 
 $prix = (float)$menu['prix'];
@@ -93,24 +99,7 @@ if ($hasBoissons) {
 }
 $wizardSteps[] = ['id' => 'recap', 'label' => 'Commande', 'num' => count($wizardSteps) + 1];
 
-$galleryImages = [];
-$seenImages = [];
-if (!empty($menu['image']) && $menu['image'] !== 'default.jpg') {
-    $galleryImages[] = ['src' => $menu['image'], 'label' => 'Presentation du menu'];
-    $seenImages[$menu['image']] = true;
-}
-foreach ($group as $type => $items) {
-    foreach ($items as $item) {
-        $img = $item['image'] ?? '';
-        if ($img !== '' && $img !== 'default.jpg' && empty($seenImages[$img])) {
-            $galleryImages[] = ['src' => $img, 'label' => ucfirst($type) . ' : ' . ($item['nom'] ?? '')];
-            $seenImages[$img] = true;
-        }
-    }
-}
-if (empty($galleryImages) && !empty($menu['image'])) {
-    $galleryImages[] = ['src' => $menu['image'], 'label' => 'Menu ' . ($menu['titre'] ?? '')];
-}
+$galleryImages = getMenuGalleryImages($menu, $group, 10);
 
 function platBadge(string $regime): string
 {
@@ -130,7 +119,7 @@ function platBadge(string $regime): string
 
 $pageTitle = htmlspecialchars($menu['titre']) . ' — Menu traiteur | Vite & Gourmand';
 $pageDescription = mb_substr(strip_tags($menu['description'] ?? 'Menu traiteur evenementiel a Bordeaux.'), 0, 160);
-$pageOgImage = !empty($menu['image']) ? 'assets/images/' . $menu['image'] : 'assets/images/presentation.jpg';
+$pageOgImage = getMenuCoverImage($menu);
 
 include 'includes/header.php';
 ?>
@@ -138,21 +127,21 @@ include 'includes/header.php';
 <div class="container py-5 menu-order-page">
 <?php showFlash(); ?>
 
+<nav aria-label="Fil d'Ariane" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="menus.php">Menus</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><?= htmlspecialchars($menu['titre']) ?></li>
+    </ol>
+</nav>
+
 <?php if (!empty($galleryImages)): ?>
-<div class="menu-gallery mb-4">
-    <div class="row g-3">
-        <?php foreach ($galleryImages as $i => $img): ?>
-        <div class="col-6 col-md-<?= $i === 0 ? '8' : '4' ?>">
-            <figure class="menu-gallery-item mb-0 h-100">
-                <img src="assets/images/<?= htmlspecialchars($img['src']) ?>" alt="<?= htmlspecialchars($img['label']) ?>" class="img-fluid rounded w-100 menu-gallery-img" loading="lazy">
-                <figcaption class="small text-muted mt-1"><?= htmlspecialchars($img['label']) ?></figcaption>
-            </figure>
-        </div>
-        <?php if ($i === 0 && count($galleryImages) === 1) break; ?>
-        <?php if ($i >= 2) break; ?>
-        <?php endforeach; ?>
-    </div>
+<?php if (function_exists('renderMenuCarousel')): ?>
+<?= renderMenuCarousel($galleryImages, 'menuCarousel-' . $id) ?>
+<?php else: ?>
+<div class="mb-4">
+    <img src="<?= htmlspecialchars(assetImageUrl('assets/images/' . $galleryImages[0]['src'])) ?>" class="img-fluid rounded w-100 menu-carousel-img" alt="<?= htmlspecialchars($galleryImages[0]['label']) ?>">
 </div>
+<?php endif; ?>
 <?php endif; ?>
 
 <div class="menu-order-header text-center mb-4">
@@ -160,12 +149,19 @@ include 'includes/header.php';
     <?php if (!empty($menu['description'])): ?>
     <p class="text-muted mb-2"><?= htmlspecialchars($menu['description']) ?></p>
     <?php endif; ?>
-    <p class="menu-price mb-3"><?= number_format($prix, 2) ?> &euro; <small class="text-muted">/ personne</small></p>
-    <div class="d-flex flex-wrap justify-content-center gap-2">
+    <p class="menu-price mb-2"><?= formatMenuPriceLabel($menu) ?></p>
+    <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
+        <?php if (!empty($menu['theme'])): ?>
+        <span class="badge bg-secondary"><?= htmlspecialchars(ucfirst($menu['theme'])) ?></span>
+        <?php endif; ?>
+        <?php if (!empty($menu['regime'])): ?>
+        <span class="badge bg-warning text-dark"><?= htmlspecialchars(ucfirst($menu['regime'])) ?></span>
+        <?php endif; ?>
         <span class="badge bg-dark">Min. <?= $min ?> personnes</span>
         <span class="badge bg-info text-dark">Delai <?= $delai ?> jours</span>
+        <span class="badge bg-success">Reduction -10% si +5 pers.</span>
         <?php if ($stock > 0): ?>
-        <span class="badge bg-success"><?= $stock ?> menu(x) disponible(s)</span>
+        <span class="badge bg-success"><?= $stock ?> commande(s) possible(s)</span>
         <?php else: ?>
         <span class="badge bg-danger">Rupture de stock</span>
         <?php endif; ?>
@@ -180,11 +176,41 @@ include 'includes/header.php';
         </form>
         <?php endif; ?>
     </div>
+    <?php if ($stock > 0 && $hasOptions): ?>
+    <button type="button" class="btn btn-success btn-lg" id="btn-commander-top">
+        <i class="fa-solid fa-cart-shopping me-2"></i>Commander ce menu
+    </button>
+    <?php endif; ?>
 </div>
 
 <?php if (!empty($menu['conditions'])): ?>
-<div class="alert alert-warning">
-    <strong>Conditions :</strong> <?= nl2br(htmlspecialchars($menu['conditions'])) ?>
+<div class="alert alert-warning border border-warning border-3 shadow-sm menu-conditions-alert mb-4" role="alert">
+    <h2 class="h5 alert-heading"><i class="fa-solid fa-triangle-exclamation me-2"></i>Conditions importantes — a lire avant commande</h2>
+    <?= nl2br(htmlspecialchars($menu['conditions'])) ?>
+</div>
+<?php endif; ?>
+
+<?php if ($hasOptions): ?>
+<div class="card-custom mb-4">
+    <h2 class="h5 mb-3">Composition du menu</h2>
+    <div class="row g-3">
+        <?php foreach (['entree' => 'Entrees', 'plat' => 'Plats', 'dessert' => 'Desserts'] as $type => $label): ?>
+        <?php if (!empty($group[$type])): ?>
+        <div class="col-md-4">
+            <h3 class="h6 text-uppercase text-muted"><?= $label ?></h3>
+            <ul class="list-unstyled small mb-0">
+                <?php foreach ($group[$type] as $item): ?>
+                <li class="mb-2 pb-2 border-bottom">
+                    <strong><?= htmlspecialchars($item['nom']) ?></strong>
+                    <?= platBadge($item['regime'] ?? 'classique') ?>
+                    <div class="plat-allergenes mt-1"><?= renderAllergenesBadges($item['allergenes'] ?? null) ?></div>
+                </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+        <?php endif; ?>
+        <?php endforeach; ?>
+    </div>
 </div>
 <?php endif; ?>
 
@@ -296,7 +322,7 @@ foreach ($group as $type => $items):
         <div class="col-sm-6 col-lg-4">
             <div class="plat-select-card" id="card-<?= $type ?>-<?= (int)$item['id'] ?>">
                 <div class="plat-img-wrap">
-                    <img src="assets/images/<?= htmlspecialchars($item['image'] ?? 'default.jpg') ?>" class="plat-img" alt="<?= htmlspecialchars($item['nom']) ?>" loading="lazy">
+                    <img src="<?= htmlspecialchars(assetImageUrl('assets/images/' . ($item['image'] ?? 'default.jpg'))) ?>" class="plat-img" alt="<?= htmlspecialchars($item['nom']) ?>" loading="lazy">
                 </div>
                 <div class="plat-card-body">
                     <div class="plat-card-info">
@@ -841,6 +867,14 @@ document.getElementById('invites').addEventListener('input', e => {
     syncSlidersMax();
     updateUI();
 });
+document.getElementById('invites').addEventListener('blur', e => {
+    if ((parseInt(e.target.value, 10) || 0) < MIN_GUESTS) {
+        e.target.value = MIN_GUESTS;
+        cart.invites = MIN_GUESTS;
+        syncSlidersMax();
+        updateUI();
+    }
+});
 
 if (HAS_ENFANT_OPTION) {
     document.getElementById('has-enfants')?.addEventListener('change', updateUI);
@@ -898,6 +932,11 @@ document.getElementById('sticky-next').addEventListener('click', () => {
     const sticky = document.getElementById('sticky-next');
     if (sticky?.disabled || currentStepIndex >= WIZARD_STEPS.length - 1) return;
     tryGoNext({ dataset: { next: 'step-' + WIZARD_STEPS[currentStepIndex + 1] } });
+});
+
+document.getElementById('btn-commander-top')?.addEventListener('click', () => {
+    goToStep(0);
+    document.getElementById('step-invites')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 document.getElementById('btn-autofill').addEventListener('click', autoFill);

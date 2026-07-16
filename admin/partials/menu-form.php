@@ -30,13 +30,13 @@ $menu = $menu ?? [];
     </div>
     <div class="col-md-4">
         <label class="form-label">Theme</label>
-        <input name="theme" class="form-control" value="<?= htmlspecialchars($menu['theme'] ?? '') ?>" placeholder="Noel, Mariage...">
-    </div>
-    <div class="col-md-4">
-        <label class="form-label">Regime</label>
-        <select name="regime" class="form-select">
-            <?php foreach (['classique', 'vegan', 'vegetarien'] as $r): ?>
-            <option value="<?= $r ?>" <?= ($menu['regime'] ?? '') === $r ? 'selected' : '' ?>><?= ucfirst($r) ?></option>
+        <select name="theme" class="form-select">
+            <?php
+            $themes = ['noel', 'paques', 'mariage', 'anniversaire', 'gastronomique', 'oriental', 'brunch', 'business', 'enfant', 'classique', 'evenement'];
+            $curTheme = strtolower($menu['theme'] ?? '');
+            foreach ($themes as $t):
+            ?>
+            <option value="<?= $t ?>" <?= $curTheme === $t ? 'selected' : '' ?>><?= ucfirst($t) ?></option>
             <?php endforeach; ?>
         </select>
     </div>
@@ -45,17 +45,33 @@ $menu = $menu ?? [];
         <input name="stock" type="number" min="0" class="form-control" value="<?= htmlspecialchars($menu['stock'] ?? '10') ?>">
     </div>
     <div class="col-md-2">
-        <label class="form-label">Delai reservation (horaires, jours)</label>
+        <label class="form-label">Delai (jours)</label>
         <input name="delai_jours" type="number" min="1" class="form-control" value="<?= htmlspecialchars($menu['delai_jours'] ?? '7') ?>">
-        <div class="form-text">Nombre de jours ouvres minimum avant la date de livraison.</div>
+        <div class="form-text">Jours minimum avant livraison.</div>
     </div>
     <div class="col-md-12">
         <label class="form-label">Description</label>
         <textarea name="description" class="form-control" rows="2"><?= htmlspecialchars($menu['description'] ?? '') ?></textarea>
     </div>
+    <div class="col-md-6">
+        <?php
+        $imgField = normalizeMenuImageFilename($menu['image_principale'] ?? $menu['image'] ?? '') ?? '';
+        ?>
+        <label class="form-label">Image principale (fichier dans assets/images/)</label>
+        <input name="image_principale" class="form-control" value="<?= htmlspecialchars($imgField) ?>" placeholder="menu-gastronomique.jpg">
+        <div class="form-text">Laissez vide pour choisir automatiquement selon le theme. Remplacez le fichier sur le serveur puis Ctrl+F5 pour voir la nouvelle photo.</div>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Regime (affichage public)</label>
+        <select name="regime" class="form-select">
+            <?php foreach (['classique', 'vegan', 'vegetarien', 'sans gluten', 'halal', 'premium'] as $r): ?>
+            <option value="<?= $r ?>" <?= ($menu['regime'] ?? '') === $r ? 'selected' : '' ?>><?= ucfirst($r) ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
     <div class="col-md-12">
         <label class="form-label">Conditions particulieres</label>
-        <textarea name="conditions" class="form-control" rows="2" placeholder="Allergies, materiel requis..."><?= htmlspecialchars($menu['conditions'] ?? '') ?></textarea>
+        <textarea name="conditions" class="form-control" rows="2" placeholder="Delai de commande, stockage, materiel..."><?= htmlspecialchars($menu['conditions'] ?? '') ?></textarea>
     </div>
 </div>
 

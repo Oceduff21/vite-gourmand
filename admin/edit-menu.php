@@ -46,20 +46,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errorMsg = implode(', ', $errors);
     } else {
         $pdo->beginTransaction();
-        $pdo->prepare('
-            UPDATE menus SET titre=?, description=?, theme=?, regime=?, prix=?, min_personnes=?, stock=?, conditions=?, delai_jours=? WHERE id=?
-        ')->execute([
-            trim($_POST['titre']),
-            trim($_POST['description'] ?? ''),
-            trim($_POST['theme'] ?? ''),
-            $_POST['regime'] ?? 'classique',
-            (float)$_POST['prix'],
-            (int)$_POST['min'],
-            (int)($_POST['stock'] ?? 0),
-            trim($_POST['conditions'] ?? ''),
-            (int)($_POST['delai_jours'] ?? 7),
-            $id,
-        ]);
+        $fields = [
+            'titre' => trim($_POST['titre']),
+            'description' => trim($_POST['description'] ?? ''),
+            'theme' => trim($_POST['theme'] ?? ''),
+            'regime' => $_POST['regime'] ?? 'classique',
+            'prix' => (float)$_POST['prix'],
+            'min_personnes' => (int)$_POST['min'],
+            'stock' => (int)($_POST['stock'] ?? 0),
+            'conditions' => trim($_POST['conditions'] ?? ''),
+            'delai_jours' => (int)($_POST['delai_jours'] ?? 7),
+        ];
+        $img = normalizeMenuImageFilename(trim($_POST['image_principale'] ?? ''));
+        updateMenuWithImage($pdo, $id, $fields, $img ?? '');
 
         $pdo->prepare('DELETE FROM menu_options WHERE menu_id = ?')->execute([$id]);
         $pdo->prepare('DELETE FROM menu_boissons WHERE menu_id = ?')->execute([$id]);

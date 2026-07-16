@@ -32,22 +32,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errorMsg = implode(', ', $errors);
     } else {
         $pdo->beginTransaction();
-        $stmt = $pdo->prepare('
-            INSERT INTO menus (titre, description, theme, regime, prix, min_personnes, stock, conditions, delai_jours)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ');
-        $stmt->execute([
-            trim($_POST['titre']),
-            trim($_POST['description'] ?? ''),
-            trim($_POST['theme'] ?? ''),
-            $_POST['regime'] ?? 'classique',
-            (float)$_POST['prix'],
-            (int)$_POST['min'],
-            (int)($_POST['stock'] ?? 0),
-            trim($_POST['conditions'] ?? ''),
-            (int)($_POST['delai_jours'] ?? 7),
-        ]);
-        $menu_id = (int)$pdo->lastInsertId();
+        $fields = [
+            'titre' => trim($_POST['titre']),
+            'description' => trim($_POST['description'] ?? ''),
+            'theme' => trim($_POST['theme'] ?? ''),
+            'regime' => $_POST['regime'] ?? 'classique',
+            'prix' => (float)$_POST['prix'],
+            'min_personnes' => (int)$_POST['min'],
+            'stock' => (int)($_POST['stock'] ?? 0),
+            'conditions' => trim($_POST['conditions'] ?? ''),
+            'delai_jours' => (int)($_POST['delai_jours'] ?? 7),
+        ];
+        $menu_id = insertMenuWithImage($pdo, $fields, trim($_POST['image_principale'] ?? ''));
 
         foreach ($_POST['entrees'] as $e) {
             $pdo->prepare("INSERT INTO menu_options (menu_id, plat_id, type) VALUES (?, ?, 'entree')")->execute([$menu_id, (int)$e]);

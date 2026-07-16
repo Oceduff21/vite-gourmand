@@ -1,5 +1,6 @@
 <?php
 $pageTitle = 'A propos';
+require 'includes/menu-helpers.php';
 include 'includes/header.php';
 ?>
 
@@ -13,7 +14,7 @@ include 'includes/header.php';
                 <a href="menus.php" class="btn btn-warning btn-lg mt-2">Decouvrir nos menus</a>
             </div>
             <div class="col-lg-6">
-                <img src="assets/images/chef.jpg" alt="Notre chef" class="img-fluid rounded-4 shadow">
+                <img src="<?= htmlspecialchars(assetImageUrl('assets/images/chef.jpg')) ?>" alt="Notre chef" class="img-fluid rounded-4 shadow">
             </div>
         </div>
 

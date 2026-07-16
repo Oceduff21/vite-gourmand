@@ -2,6 +2,7 @@
 session_start();
 require 'includes/db.php';
 require 'includes/helpers.php';
+require 'includes/menu-helpers.php';
 require 'includes/user-helpers.php';
 require 'includes/flash.php';
 
@@ -217,8 +218,7 @@ include 'includes/header.php';
             <?php foreach ($favoris as $m): ?>
             <div class="col-md-6 col-xl-4">
                 <div class="card h-100 shadow-sm border-0">
-                    <?php $themeImg = strtolower($m['theme'] ?? 'default'); ?>
-                    <img src="assets/images/menu-<?= htmlspecialchars($themeImg) ?>.jpg" class="card-img-top" alt="" style="height:160px;object-fit:cover" onerror="this.src='assets/images/presentation.jpg'">
+                    <img src="<?= htmlspecialchars(menuCoverUrl($m)) ?>" class="card-img-top" alt="<?= htmlspecialchars($m['titre'] ?? '') ?>" style="height:160px;object-fit:cover" loading="lazy">
                     <div class="card-body d-flex flex-column">
                         <h5><?= htmlspecialchars($m['titre']) ?></h5>
                         <p class="small text-muted flex-grow-1"><?= htmlspecialchars(substr($m['description'] ?? '', 0, 90)) ?>...</p>

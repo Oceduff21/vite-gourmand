@@ -1,113 +1,105 @@
-<?php 
+<?php
 require 'includes/db.php';
+require 'includes/menu-helpers.php';
 
-$search = $_GET["search"] ?? '';
-$theme = $_GET["theme"] ?? '';
-$regime = $_GET["regime"] ?? '';
-$prix_min = $_GET["prix_min"] ?? '';
-$prix_max = $_GET["prix_max"] ?? '';
-$personnes = $_GET["personnes"] ?? '';
-$sort = $_GET["sort"] ?? '';
+$search = $_GET['search'] ?? '';
+$theme = $_GET['theme'] ?? '';
+$regime = $_GET['regime'] ?? '';
+$prix_min = $_GET['prix_min'] ?? '';
+$prix_max = $_GET['prix_max'] ?? '';
+$personnes = $_GET['personnes'] ?? '';
+$sort = $_GET['sort'] ?? '';
 
-$sql = "SELECT * FROM menus WHERE 1=1";
+$sql = 'SELECT * FROM menus WHERE 1=1';
 $params = [];
 
-/* SEARCH */
-if(!empty($search)){
-$sql .= " AND titre LIKE ?";
-$params[] = "%$search%";
+if ($search !== '') {
+    $sql .= ' AND (titre LIKE ? OR description LIKE ?)';
+    $params[] = '%' . $search . '%';
+    $params[] = '%' . $search . '%';
 }
 
-/* THEME (safe LOWER) */
-if(!empty($theme)){
-$sql .= " AND LOWER(COALESCE(theme,'')) = ?";
-$params[] = strtolower($theme);
+if ($theme !== '') {
+    $sql .= ' AND LOWER(COALESCE(theme, \'\')) = ?';
+    $params[] = strtolower($theme);
 }
 
-/* REGIME (safe NULL) */
-if(!empty($regime)){
-$sql .= " AND LOWER(COALESCE(regime,'')) = ?";
-$params[] = strtolower($regime);
+if ($regime !== '') {
+    $sql .= ' AND LOWER(COALESCE(regime, \'\')) = ?';
+    $params[] = strtolower($regime);
 }
 
-/* PRIX */
-if($prix_min !== ''){
-$sql .= " AND prix >= ?";
-$params[] = $prix_min;
+if ($prix_min !== '' && is_numeric($prix_min)) {
+    $sql .= ' AND prix >= ?';
+    $params[] = (float)$prix_min;
 }
 
-if($prix_max !== ''){
-$sql .= " AND prix <= ?";
-$params[] = $prix_max;
+if ($prix_max !== '' && is_numeric($prix_max)) {
+    $sql .= ' AND prix <= ?';
+    $params[] = (float)$prix_max;
 }
 
-/* PERSONNES */
-if(!empty($personnes)){
-$sql .= " AND min_personnes >= ?";
-$params[] = $personnes;
+if ($personnes !== '' && is_numeric($personnes)) {
+    $sql .= ' AND min_personnes <= ?';
+    $params[] = (int)$personnes;
 }
 
-/* TRI */
-switch($sort){
-case "prix_asc":
-    $sql .= " ORDER BY prix ASC";
-    break;
-case "prix_desc":
-    $sql .= " ORDER BY prix DESC";
-    break;
-default:
-    $sql .= " ORDER BY id DESC";
+switch ($sort) {
+    case 'prix_asc':
+        $sql .= ' ORDER BY prix ASC, titre ASC';
+        break;
+    case 'prix_desc':
+        $sql .= ' ORDER BY prix DESC, titre ASC';
+        break;
+    case 'populaire':
+        $sql = '
+            SELECT m.*, COUNT(c.id) AS nb_commandes
+            FROM menus m
+            LEFT JOIN commandes c ON c.menu_id = m.id
+            WHERE 1=1
+        ';
+        $paramsPop = [];
+        if ($search !== '') {
+            $sql .= ' AND (m.titre LIKE ? OR m.description LIKE ?)';
+            $paramsPop[] = '%' . $search . '%';
+            $paramsPop[] = '%' . $search . '%';
+        }
+        if ($theme !== '') {
+            $sql .= ' AND LOWER(COALESCE(m.theme, \'\')) = ?';
+            $paramsPop[] = strtolower($theme);
+        }
+        if ($regime !== '') {
+            $sql .= ' AND LOWER(COALESCE(m.regime, \'\')) = ?';
+            $paramsPop[] = strtolower($regime);
+        }
+        if ($prix_min !== '' && is_numeric($prix_min)) {
+            $sql .= ' AND m.prix >= ?';
+            $paramsPop[] = (float)$prix_min;
+        }
+        if ($prix_max !== '' && is_numeric($prix_max)) {
+            $sql .= ' AND m.prix <= ?';
+            $paramsPop[] = (float)$prix_max;
+        }
+        if ($personnes !== '' && is_numeric($personnes)) {
+            $sql .= ' AND m.min_personnes <= ?';
+            $paramsPop[] = (int)$personnes;
+        }
+        $sql .= ' GROUP BY m.id ORDER BY nb_commandes DESC, m.titre ASC';
+        $params = $paramsPop;
+        break;
+    default:
+        $sql .= ' ORDER BY stock DESC, id DESC';
 }
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
-$menus = $stmt->fetchAll();
+$menus = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* DEBUG (TEMP) */
-// echo "<pre>"; print_r($menus); echo "</pre>";
-
-if(empty($menus)){
-echo "<p class='text-center mt-5'>Aucun menu trouvé</p>";
-exit;
+if (empty($menus)) {
+    echo '<div class="col-12"><p class="text-center text-muted py-5 mb-0">Aucun menu ne correspond a vos criteres.</p></div>';
+    exit;
 }
 
-/* DISPLAY */
-foreach($menus as $menu){
-
-$themeImg = strtolower($menu["theme"] ?? "default");
-
-echo '
-<div class="col-xl-3 col-lg-4 col-md-6">
-
-    <div class="card menu-card h-100 shadow-sm">
-
-        <img src="assets/images/menu-'.$themeImg.'.jpg"
-                class="card-img-top"
-                onerror="this.src=\'assets/images/default.jpg\'">
-
-        <div class="card-body d-flex flex-column">
-
-            <h5 class="fw-bold">'.htmlspecialchars($menu["titre"]).'</h5>
-
-            <p class="text-muted small flex-grow-1">
-                '.htmlspecialchars(substr($menu["description"] ?? "",0,80)).'...
-            </p>
-
-            <p>👥 '.($menu["min_personnes"] ?? 0).' pers</p>
-
-            <p class="text-danger fw-bold">
-                '.number_format($menu["prix"],2).' €
-            </p>
-
-            <a href="menu.php?id='.$menu["id"].'"
-                class="btn btn-danger w-100 mt-auto">
-                Voir
-            </a>
-
-        </div>
-
-    </div>
-
-</div>
-';
+foreach ($menus as $menu) {
+    echo renderMenuCard($menu);
 }
