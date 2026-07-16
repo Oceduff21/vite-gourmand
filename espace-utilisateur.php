@@ -45,28 +45,28 @@ $commandes = $stmt->fetchAll();
 <div class="col-md-4">
 <label for="nom" class="form-label">Nom</label>
 <input type="text" id="nom" name="nom" class="form-control"
-value="<?= $user["nom"] ?>" required>
+value="<?= htmlspecialchars($user['nom'] ?? '') ?>" required>
 </div>
 
 <!-- PRENOM -->
 <div class="col-md-4">
 <label for="prenom" class="form-label">Prénom</label>
 <input type="text" id="prenom" name="prenom" class="form-control"
-value="<?= $user["prenom"] ?>" required>
+value="<?= htmlspecialchars($user['prenom'] ?? '') ?>" required>
 </div>
 
 <!-- EMAIL -->
 <div class="col-md-4">
 <label for="email" class="form-label">Email</label>
 <input type="email" id="email" name="email" class="form-control"
-value="<?= $user["email"] ?>" required>
+value="<?= htmlspecialchars($user['email'] ?? '') ?>" required>
 </div>
 
 <!-- TELEPHONE -->
 <div class="col-md-4">
 <label for="telephone" class="form-label">Téléphone</label>
 <input type="tel" id="telephone" name="telephone" class="form-control"
-value="<?= $user["telephone"] ?? '' ?>"
+value="<?= htmlspecialchars($user['telephone'] ?? '') ?>"
 pattern="[0-9]{10}" 
 placeholder="0612345678"
 required>
@@ -77,7 +77,7 @@ required>
 <label for="date_naissance" class="form-label">Date de naissance</label>
 <input type="date" id="date_naissance" name="date_naissance"
 class="form-control"
-value="<?= $user["date_naissance"] ?? '' ?>"
+value="<?= htmlspecialchars($user['date_naissance'] ?? '') ?>"
 required>
 </div>
 
@@ -93,7 +93,7 @@ required>
 <div class="col-md-6">
 <label for="rue" class="form-label">Rue</label>
 <input type="text" id="rue" name="rue" class="form-control"
-value="<?= $user["rue"] ?? '' ?>"
+value="<?= htmlspecialchars($user['rue'] ?? '') ?>"
 required>
 </div>
 
@@ -101,7 +101,7 @@ required>
 <div class="col-md-2">
 <label for="numero" class="form-label">Numéro</label>
 <input type="text" id="numero" name="numero" class="form-control"
-value="<?= $user["numero"] ?? '' ?>"
+value="<?= htmlspecialchars($user['numero'] ?? '') ?>"
 required>
 </div>
 
@@ -109,7 +109,7 @@ required>
 <div class="col-md-4">
 <label for="complement" class="form-label">Complément</label>
 <input type="text" id="complement" name="complement" class="form-control"
-value="<?= $user["complement"] ?? '' ?>">
+value="<?= htmlspecialchars($user['complement'] ?? '') ?>">
 </div>
 
 <!-- CODE POSTAL -->
@@ -119,7 +119,7 @@ value="<?= $user["complement"] ?? '' ?>">
 class="form-control"
 pattern="[0-9]{5}"
 placeholder="33000"
-value="<?= $user["code_postal"] ?? '' ?>"
+value="<?= htmlspecialchars($user['code_postal'] ?? '') ?>"
 required>
 </div>
 
@@ -127,7 +127,7 @@ required>
 <div class="col-md-8">
 <label for="ville" class="form-label">Ville</label>
 <input type="text" id="ville" name="ville" class="form-control"
-value="<?= $user["ville"] ?? '' ?>"
+value="<?= htmlspecialchars($user['ville'] ?? '') ?>"
 required>
 </div>
 

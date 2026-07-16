@@ -148,3 +148,5 @@ alert("Maximum 3 choix");
 });
 });
 </script>
+
+<?php require __DIR__ . '/partials/footer.php'; ?>

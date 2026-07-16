@@ -17,6 +17,11 @@ $user = $stmt->fetch();
 
 if($user && password_verify($password, $user["password"])){
 
+$active = (int)($user["is_active"] ?? $user["actif"] ?? 1);
+if (!$active) {
+    $message = "Compte desactive";
+} else {
+
 $_SESSION["user_id"] = $user["id"];
 $_SESSION["user_role"] = $user["role"];
 $_SESSION["user_nom"] = $user["nom"];
@@ -27,6 +32,8 @@ if (preg_match('#^(https?://|//)#i', $redirect) || str_contains($redirect, '..')
 }
 header("Location: " . $redirect);
 exit();
+
+}
 
 }else{
 

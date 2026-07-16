@@ -78,9 +78,9 @@ function isActive($pages, $currentPage){
                         </a>
                     </li>
 
-                    <?php if($_SESSION["user_role"] === "admin"): ?>
+                    <?php if(in_array($_SESSION["user_role"] ?? '', ['admin', 'employe'])): ?>
                         <li class="nav-item me-2">
-                            <a class="nav-link text-danger fw-semibold" href="admin/">
+                            <a class="nav-link text-danger fw-semibold" href="admin/index.php">
                                 <i class="fa-solid fa-shield-halved me-1"></i> Admin
                             </a>
                         </li>
@@ -184,4 +184,5 @@ if($page === 'menu.php' && isset($_GET['id'])){
 </div>
 
 <!-- CONTENU -->
-<main id="main-content" class="container mt-4">
+<?php $mainClass = ($page === 'index.php') ? '' : ' class="container mt-4"'; ?>
+<main id="main-content"<?= $mainClass ?>>

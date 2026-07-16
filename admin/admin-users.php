@@ -1,94 +1,74 @@
 <?php
 session_start();
-if(($_SESSION['user_role'] ?? '') !== 'admin'){ header('Location: index.php'); exit(); }
-require __DIR__ . '/partials/layout.php';
+if (($_SESSION['user_role'] ?? '') !== 'admin') {
+    header('Location: index.php');
+    exit();
+}
+
 require '../includes/db.php';
 
-/* AJOUT EMPLOYE */
-if(isset($_POST["create"])){
-
-    $email = $_POST["email"];
-    $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
+if (isset($_POST['create'])) {
+    $nom = trim($_POST['nom'] ?? 'Employe');
+    $prenom = trim($_POST['prenom'] ?? 'Nouveau');
+    $email = trim($_POST['email'] ?? '');
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
     $stmt = $pdo->prepare("
-    INSERT INTO users (email, password, role, is_active)
-    VALUES (?, ?, 'employe', 1)
+        INSERT INTO users (nom, prenom, email, password, role, is_active)
+        VALUES (?, ?, ?, ?, 'employe', 1)
     ");
+    $stmt->execute([$nom, $prenom, $email, $password]);
 
-    $stmt->execute([$email, $password]);
-
-    /* EMAIL */
-    mail($email, "Compte créé",
-    "Un compte employé a été créé pour vous.\nContactez l'admin pour votre mot de passe.");
-
+    @mail($email, 'Compte cree', "Un compte employe a ete cree pour vous.\nContactez l'admin pour votre mot de passe.");
 }
 
-/* DESACTIVER */
-if(isset($_GET["disable"])){
-    $pdo->prepare("UPDATE users SET is_active = 0 WHERE id=?")
-        ->execute([$_GET["disable"]]);
+if (isset($_GET['disable'])) {
+    $pdo->prepare('UPDATE users SET is_active = 0 WHERE id = ?')->execute([(int)$_GET['disable']]);
 }
 
-/* ACTIVER */
-if(isset($_GET["enable"])){
-    $pdo->prepare("UPDATE users SET is_active = 1 WHERE id=?")
-        ->execute([$_GET["enable"]]);
+if (isset($_GET['enable'])) {
+    $pdo->prepare('UPDATE users SET is_active = 1 WHERE id = ?')->execute([(int)$_GET['enable']]);
 }
 
-$users = $pdo->query("SELECT * FROM users")->fetchAll();
+$users = $pdo->query('SELECT * FROM users')->fetchAll();
+
+require __DIR__ . '/partials/layout.php';
 ?>
 
 <h2>Gestion des utilisateurs</h2>
 
 <div class="card-custom mb-4">
 <form method="POST">
-
-<h5>Créer un employé</h5>
-
-<input type="email" name="email" class="form-control mb-2" placeholder="Email" required>
-<input type="password" name="password" class="form-control mb-2" placeholder="Mot de passe" required>
-
-<button name="create" class="btn btn-success">Créer</button>
-
+<h5>Creer un employe</h5>
+<div class="row g-2">
+<div class="col-md-3"><input type="text" name="nom" class="form-control" placeholder="Nom" required></div>
+<div class="col-md-3"><input type="text" name="prenom" class="form-control" placeholder="Prenom" required></div>
+<div class="col-md-3"><input type="email" name="email" class="form-control" placeholder="Email" required></div>
+<div class="col-md-3"><input type="password" name="password" class="form-control" placeholder="Mot de passe" required></div>
+</div>
+<button name="create" class="btn btn-success mt-2">Creer</button>
 </form>
 </div>
 
 <div class="card-custom">
 <table class="table">
-
+<tr><th>Email</th><th>Role</th><th>Statut</th><th>Action</th></tr>
+<?php foreach ($users as $u): ?>
 <tr>
-<th>Email</th>
-<th>Role</th>
-<th>Statut</th>
-<th>Action</th>
-</tr>
-
-<?php foreach($users as $u): ?>
-
-<tr>
-<td><?= $u["email"] ?></td>
-<td><?= $u["role"] ?></td>
+<td><?= htmlspecialchars($u['email']) ?></td>
+<td><?= htmlspecialchars($u['role']) ?></td>
+<td><?= !empty($u['is_active']) ? 'Actif' : 'Desactive' ?></td>
 <td>
-<?= isset($u["is_active"]) && $u["is_active"] ? "Actif" : "Désactivé" ?></td>
-
-<td>
-
-<?php if($u["role"] !== "admin"): ?>
-
-<?php if(isset($u["is_active"]) && $u["is_active"]): ?>
-<a href="?disable=<?= $u["id"] ?>" class="btn btn-danger btn-sm">Désactiver</a>
+<?php if ($u['role'] !== 'admin'): ?>
+<?php if (!empty($u['is_active'])): ?>
+<a href="?disable=<?= (int)$u['id'] ?>" class="btn btn-danger btn-sm">Desactiver</a>
 <?php else: ?>
-<a href="?enable=<?= $u["id"] ?>" class="btn btn-success btn-sm">Activer</a>
+<a href="?enable=<?= (int)$u['id'] ?>" class="btn btn-success btn-sm">Activer</a>
 <?php endif; ?>
-
 <?php endif; ?>
-
 </td>
-
 </tr>
-
 <?php endforeach; ?>
-
 </table>
 </div>
 

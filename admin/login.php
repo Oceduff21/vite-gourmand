@@ -2,8 +2,12 @@
 session_start();
 require '../includes/db.php';
 
-$error = "";
+if (isset($_SESSION['user_id']) && in_array($_SESSION['user_role'] ?? '', ['admin', 'employe'])) {
+    header('Location: index.php');
+    exit();
+}
 
+$error = "";
 if($_SERVER["REQUEST_METHOD"] === "POST"){
 
     $email = $_POST["email"];
@@ -18,6 +22,8 @@ if($_SERVER["REQUEST_METHOD"] === "POST"){
         if($user["role"] !== "admin" && $user["role"] !== "employe"){
             $error = "Acces refuse";
         } elseif(isset($user["is_active"]) && !$user["is_active"]){
+            $error = "Compte desactive";
+        } elseif(isset($user["actif"]) && !$user["actif"]){
             $error = "Compte desactive";
         } else {
             $_SESSION["user_id"] = $user["id"];

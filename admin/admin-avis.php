@@ -1,5 +1,9 @@
 <?php
 session_start();
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'employe'])) {
+    header('Location: ../index.php');
+    exit();
+}
 require '../includes/db.php';
 
 /* FILTRE */
@@ -61,7 +65,10 @@ ORDER BY avis.id DESC
 </td>
 
 <td>
-<?= substr(htmlspecialchars($a["commentaire"]),0,40) ?>...
+<?php
+$comment = htmlspecialchars($a['commentaire']);
+echo mb_strlen($comment) > 40 ? mb_substr($comment, 0, 40) . '...' : $comment;
+?>
 </td>
 
 <td>
@@ -146,4 +153,4 @@ Supprimer
 
 </div>
 
-</div>
+<?php require __DIR__ . '/partials/footer.php'; ?>

@@ -86,5 +86,5 @@ require __DIR__ . '/partials/layout.php';
 </table>
 </div>
 
-</div>
 <?php require __DIR__ . '/partials/footer.php'; ?>
+

@@ -1,4 +1,9 @@
 <?php
+session_start();
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'employe'])) {
+    header('Location: ../index.php');
+    exit();
+}
 require '../includes/db.php';
 
 $menus = $pdo->query("SELECT * FROM menus")->fetchAll();
@@ -50,4 +55,4 @@ $menus = $pdo->query("SELECT * FROM menus")->fetchAll();
 
 </div>
 
-</div>
+<?php require __DIR__ . '/partials/footer.php'; ?>
