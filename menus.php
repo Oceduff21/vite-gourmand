@@ -9,23 +9,18 @@ require 'includes/menu-helpers.php';
 
 <div class="container py-5">
 
-<nav aria-label="Fil d'Ariane" class="mb-3">
-    <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a href="index.php">Accueil</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Menus</li>
-    </ol>
-</nav>
-
 <h1 class="text-center mb-2">Nos menus traiteur</h1>
 <p class="text-center text-muted mb-5">Composez votre menu et commandez en ligne — livraison sur Bordeaux Metropole.</p>
 
 <div class="row mb-4">
     <div class="col-lg-8 mx-auto">
-        <input type="search" id="search-menu" class="form-control form-control-lg" placeholder="Rechercher un menu..." autocomplete="off">
+        <label for="search-menu" class="form-label visually-hidden">Rechercher un menu</label>
+        <input type="search" id="search-menu" class="form-control form-control-lg" placeholder="Rechercher un menu..." autocomplete="off" aria-controls="menus-container">
     </div>
 </div>
 
-<div class="row g-3 mb-4 align-items-end">
+<fieldset class="row g-3 mb-4 align-items-end border-0 p-0 m-0">
+    <legend class="visually-hidden">Filtrer les menus</legend>
     <div class="col-md-2">
         <label for="filtre-theme" class="form-label small mb-1">Theme</label>
         <select id="filtre-theme" class="form-select">
@@ -72,14 +67,14 @@ require 'includes/menu-helpers.php';
             <option value="populaire">Populaires</option>
         </select>
     </div>
+</fieldset>
+
+<div id="menus-loading" class="text-center text-muted py-4 d-none" role="status" aria-live="polite" aria-busy="true">
+    <div class="spinner-border spinner-border-sm me-2" aria-hidden="true"></div>
+    <span>Chargement des menus...</span>
 </div>
 
-<div id="menus-loading" class="text-center text-muted py-4 d-none">
-    <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
-    Chargement des menus...
-</div>
-
-<div class="row g-4" id="menus-container"></div>
+<div class="row g-4" id="menus-container" aria-live="polite" aria-relevant="additions"></div>
 
 </div>
 

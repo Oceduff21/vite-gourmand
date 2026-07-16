@@ -127,13 +127,6 @@ include 'includes/header.php';
 <div class="container py-5 menu-order-page">
 <?php showFlash(); ?>
 
-<nav aria-label="Fil d'Ariane" class="mb-3">
-    <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a href="menus.php">Menus</a></li>
-        <li class="breadcrumb-item active" aria-current="page"><?= htmlspecialchars($menu['titre']) ?></li>
-    </ol>
-</nav>
-
 <?php if (!empty($galleryImages)): ?>
 <?php if (function_exists('renderMenuCarousel')): ?>
 <?= renderMenuCarousel($galleryImages, 'menuCarousel-' . $id) ?>
@@ -228,13 +221,14 @@ $cartFlash = $_SESSION['menu_cart_error'] ?? null;
 unset($_SESSION['menu_cart_error']);
 if ($cartFlash):
 ?>
-<div class="alert alert-danger"><?= htmlspecialchars($cartFlash) ?></div>
+<div class="alert alert-danger" role="alert"><?= htmlspecialchars($cartFlash) ?></div>
 <?php endif; ?>
 
 <div class="menu-wizard card-custom mb-4" id="wizard-stepper">
-    <div class="wizard-stepper d-flex flex-wrap justify-content-center gap-1 gap-md-2">
+    <nav class="wizard-stepper d-flex flex-wrap justify-content-center gap-1 gap-md-2" aria-label="Etapes de composition du menu">
         <?php foreach ($wizardSteps as $i => $ws): ?>
-        <button type="button" class="wizard-step-btn" data-step="<?= (int)$i ?>" data-target="step-<?= htmlspecialchars($ws['id']) ?>" <?= $i === 0 ? 'data-active="1"' : '' ?>>
+        <button type="button" class="wizard-step-btn" data-step="<?= (int)$i ?>" data-target="step-<?= htmlspecialchars($ws['id']) ?>" <?= $i === 0 ? 'data-active="1" aria-current="step"' : '' ?>
+            aria-label="Etape <?= (int)$ws['num'] ?> : <?= htmlspecialchars($ws['label']) ?>">
             <span class="step-badge"><?= (int)$ws['num'] ?></span>
             <span class="wizard-step-label"><?= htmlspecialchars($ws['label']) ?></span>
         </button>
@@ -242,7 +236,7 @@ if ($cartFlash):
         <span class="wizard-step-sep d-none d-md-inline" aria-hidden="true">›</span>
         <?php endif; ?>
         <?php endforeach; ?>
-    </div>
+    </nav>
 </div>
 
 <section id="step-invites" class="wizard-panel card-custom mb-4 menu-guests-card wizard-panel-active">
@@ -337,6 +331,7 @@ foreach ($group as $type => $items):
                         <label class="form-label small mb-1" for="<?= $type ?>-<?= (int)$item['id'] ?>">Invites</label>
                         <input type="range" class="form-range plat-slider" min="0" max="<?= $min ?>" value="0"
                             id="<?= $type ?>-<?= (int)$item['id'] ?>"
+                            aria-valuemin="0" aria-valuemax="<?= $min ?>" aria-valuenow="0" aria-valuetext="0 invite"
                             data-type="<?= $type ?>" data-id="<?= (int)$item['id'] ?>"
                             data-nom="<?= htmlspecialchars($item['nom'], ENT_QUOTES) ?>"
                             data-regime="<?= htmlspecialchars($item['regime'] ?? 'classique', ENT_QUOTES) ?>">
@@ -589,7 +584,11 @@ function updateChoice(type, id, val) {
     if (val > maxAllowed) val = maxAllowed;
 
     const slider = document.getElementById(type + '-' + id);
-    if (slider) slider.value = val;
+    if (slider) {
+        slider.value = val;
+        slider.setAttribute('aria-valuenow', String(val));
+        slider.setAttribute('aria-valuetext', val + (val > 1 ? ' invites' : ' invite'));
+    }
 
     if (val <= 0) delete cart[type][id];
     else cart[type][id] = val;

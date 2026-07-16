@@ -37,7 +37,7 @@ include 'includes/header.php';
 <h1 class="mb-4">Contact</h1>
 
 <?php if ($message): ?>
-<div class="alert alert-<?= htmlspecialchars($type) ?>"><?= htmlspecialchars($message) ?></div>
+<div class="alert alert-<?= htmlspecialchars($type) ?>" role="alert"><?= htmlspecialchars($message) ?></div>
 <?php endif; ?>
 
 <div class="row">
@@ -45,30 +45,30 @@ include 'includes/header.php';
 <form method="POST">
 <?= csrfField() ?>
 <div class="mb-3">
-<label class="form-label">Titre de la demande</label>
-<input type="text" name="titre" class="form-control" required value="<?= htmlspecialchars($_POST['titre'] ?? '') ?>">
+<label class="form-label" for="contact-titre">Titre de la demande <span class="text-danger" aria-hidden="true">*</span></label>
+<input type="text" name="titre" id="contact-titre" class="form-control" required value="<?= htmlspecialchars($_POST['titre'] ?? '') ?>">
 </div>
 <div class="mb-3">
-<label class="form-label">Nom</label>
-<input type="text" name="nom" class="form-control" required value="<?= htmlspecialchars($_POST['nom'] ?? '') ?>">
+<label class="form-label" for="contact-nom">Nom <span class="text-danger" aria-hidden="true">*</span></label>
+<input type="text" name="nom" id="contact-nom" class="form-control" required value="<?= htmlspecialchars($_POST['nom'] ?? '') ?>" autocomplete="name">
 </div>
 <div class="mb-3">
-<label class="form-label">Email</label>
-<input type="email" name="email" class="form-control" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>">
+<label class="form-label" for="contact-email">Email <span class="text-danger" aria-hidden="true">*</span></label>
+<input type="email" name="email" id="contact-email" class="form-control" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" autocomplete="email">
 </div>
 <div class="mb-3">
-<label class="form-label">Description</label>
-<textarea name="description" class="form-control" rows="5" required><?= htmlspecialchars($_POST['description'] ?? '') ?></textarea>
+<label class="form-label" for="contact-description">Description <span class="text-danger" aria-hidden="true">*</span></label>
+<textarea name="description" id="contact-description" class="form-control" rows="5" required><?= htmlspecialchars($_POST['description'] ?? '') ?></textarea>
 </div>
 <button type="submit" class="btn btn-primary">Envoyer</button>
 </form>
 </div>
 
 <div class="col-md-6">
-<h4>Informations</h4>
-<p>📍 11 Rue Verteuil, 33000 Bordeaux</p>
-<p>📞 04 12 34 56 78</p>
-<p>📧 contact@vite-gourmand.fr</p>
+<h2 class="h4">Informations</h2>
+<p><span class="visually-hidden">Adresse : </span>11 Rue Verteuil, 33000 Bordeaux</p>
+<p><span class="visually-hidden">Telephone : </span><a href="tel:+33412345678">04 12 34 56 78</a></p>
+<p><span class="visually-hidden">Email : </span><a href="mailto:contact@vite-gourmand.fr">contact@vite-gourmand.fr</a></p>
 </div>
 </div>
 </div>

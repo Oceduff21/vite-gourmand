@@ -34,19 +34,19 @@ include 'includes/header.php';
 ?>
 
 <!-- HERO -->
-<section class="hero">
+<section class="hero" aria-label="Presentation Vite et Gourmand">
 
-    <div class="hero-slide active" style="background-image:url('<?= htmlspecialchars(assetImageUrl('assets/images/presentation.jpg')) ?>')"></div>
-    <div class="hero-slide" style="background-image:url('<?= htmlspecialchars(assetImageUrl('assets/images/hero1.jpg')) ?>')"></div>
-    <div class="hero-slide" style="background-image:url('<?= htmlspecialchars(assetImageUrl('assets/images/hero2.jpg')) ?>')"></div>
-    <div class="hero-slide" style="background-image:url('<?= htmlspecialchars(assetImageUrl('assets/images/hero3.jpg')) ?>')"></div>
+    <div class="hero-slide active" aria-hidden="true" style="background-image:url('<?= htmlspecialchars(assetImageUrl('assets/images/presentation.jpg')) ?>')"></div>
+    <div class="hero-slide" aria-hidden="true" style="background-image:url('<?= htmlspecialchars(assetImageUrl('assets/images/hero1.jpg')) ?>')"></div>
+    <div class="hero-slide" aria-hidden="true" style="background-image:url('<?= htmlspecialchars(assetImageUrl('assets/images/hero2.jpg')) ?>')"></div>
+    <div class="hero-slide" aria-hidden="true" style="background-image:url('<?= htmlspecialchars(assetImageUrl('assets/images/hero3.jpg')) ?>')"></div>
 
-    <div class="hero-overlay"></div>
+    <div class="hero-overlay" aria-hidden="true"></div>
 
-    <button class="hero-btn prev" aria-label="Image precedente">&#10094;</button>
-    <button class="hero-btn next" aria-label="Image suivante">&#10095;</button>
+    <button type="button" class="hero-btn prev" aria-label="Diapositive precedente">&#10094;</button>
+    <button type="button" class="hero-btn next" aria-label="Diapositive suivante">&#10095;</button>
 
-    <div class="hero-content">
+    <div class="hero-content" aria-live="polite" aria-atomic="true">
         <h1 id="hero-title">Une cuisine elegante</h1>
 
         <p id="hero-text">

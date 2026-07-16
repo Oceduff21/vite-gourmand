@@ -18,9 +18,13 @@ $staffName = getStaffDisplayName();
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="icon" href="../assets/images/favicon.svg" type="image/svg+xml">
 <?= $extraHead ?? '' ?>
 
 <style>
+.skip-link{position:absolute;top:0;left:240px;z-index:10001;padding:.5rem 1rem;background:#1a1a2e;color:#fff;text-decoration:none;border-radius:0 0 8px 8px}
+.skip-link:focus-visible{outline:3px solid #c9a227;outline-offset:2px}
+.sidebar a:focus-visible,.content a:focus-visible,.content button:focus-visible,.content input:focus-visible,.content select:focus-visible,.content textarea:focus-visible{outline:3px solid #6366f1;outline-offset:2px}
 
 body{
     background:#f5f7fb;
@@ -117,7 +121,9 @@ body{
 
 <body>
 
-<div class="sidebar">
+<a href="#admin-main" class="skip-link visually-hidden-focusable">Aller au contenu principal</a>
+
+<nav class="sidebar" aria-label="Navigation administration">
 
 <h4><?= $isEmploye ? 'Espace Employe' : 'Administration' ?></h4>
 <?php if ($isEmploye): ?>
@@ -139,6 +145,6 @@ body{
 <a href="../index.php">← Retour site</a>
 <a href="../logout.php" class="text-danger">Deconnexion</a>
 
-</div>
+</nav>
 
-<div class="content">
+<main id="admin-main" class="content">

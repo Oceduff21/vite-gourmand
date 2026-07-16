@@ -21,7 +21,9 @@ $faqs = [
                     <?php foreach ($faqs as $i => $faq): ?>
                     <div class="accordion-item border-0 shadow-sm mb-3 rounded overflow-hidden">
                         <h2 class="accordion-header">
-                            <button class="accordion-button <?= $i > 0 ? 'collapsed' : '' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#faq-<?= $i ?>">
+                            <button class="accordion-button <?= $i > 0 ? 'collapsed' : '' ?>" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#faq-<?= $i ?>"
+                            aria-expanded="<?= $i === 0 ? 'true' : 'false' ?>" aria-controls="faq-<?= $i ?>">
                                 <?= htmlspecialchars($faq['q']) ?>
                             </button>
                         </h2>

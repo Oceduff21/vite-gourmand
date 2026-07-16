@@ -57,7 +57,7 @@ Sources Markdown a convertir en PDF : dossier `docs/`
 - [x] Galerie images sur fiche menu
 - [x] Inscription avec adresse structuree (rue, CP, ville)
 - [x] Documentation livrables MD (docs/GESTION_PROJET.md, UML, wireframes)
-- [ ] GitHub public a jour (merger `feature/admin` vers `main` si necessaire)
+- [x] GitHub public a jour
 - [ ] Copie ODT completee (URL + stack ci-dessus)
 - [ ] 3 PDF livrables (exporter depuis docs/*.md)
 - [ ] Upload prod des fichiers modifies (FileZilla)

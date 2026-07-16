@@ -52,6 +52,7 @@ function isActive($pages, $currentPage){
 
 <!-- CSS Perso -->
 <link rel="stylesheet" href="assets/css/style.css">
+<link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
 
 <script type="application/ld+json">
 {
@@ -77,21 +78,22 @@ function isActive($pages, $currentPage){
 </head>
 
 <body>
-<a href="#main-content" class="visually-hidden-focusable btn btn-sm btn-primary position-absolute m-2">Aller au contenu</a>
+<a href="#main-content" class="skip-link visually-hidden-focusable">Aller au contenu principal</a>
 
 <!-- NAVBAR MODERNE -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top custom-navbar">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top custom-navbar" aria-label="Navigation principale">
     <div class="container">
 
         <!-- Logo -->
         <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="index.php">
-            <i class="fa-solid fa-utensils text-warning"></i>
+            <i class="fa-solid fa-utensils text-warning" aria-hidden="true"></i>
             Vite & Gourmand
         </a>
 
         <!-- Mobile button -->
-        <button class="navbar-toggler border-0" data-bs-toggle="collapse" data-bs-target="#nav">
-            <i class="fa-solid fa-bars"></i>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#nav"
+            aria-controls="nav" aria-expanded="false" aria-label="Ouvrir ou fermer le menu">
+            <i class="fa-solid fa-bars" aria-hidden="true"></i>
         </button>
 
         <div class="collapse navbar-collapse" id="nav">
@@ -141,9 +143,9 @@ function isActive($pages, $currentPage){
 
                     <li class="nav-item me-2">
                         <a class="nav-link position-relative" href="espace-utilisateur.php">
-                            <i class="fa-regular fa-user me-1"></i> Mon espace
+                            <i class="fa-regular fa-user me-1" aria-hidden="true"></i> Mon espace
                             <?php if ($headerNotifCount > 0): ?>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"><?= $headerNotifCount ?></span>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" aria-label="<?= (int)$headerNotifCount ?> notification(s) non lue(s)"><?= $headerNotifCount ?></span>
                             <?php endif; ?>
                         </a>
                     </li>
@@ -226,34 +228,20 @@ if($page === 'menu.php' && isset($_GET['id'])){
 
 <div class="breadcrumb-container py-2 bg-light border-bottom">
     <div class="container">
-        <nav class="small">
-
-            <a href="index.php" class="text-decoration-none text-muted">
-                <i class="fa-solid fa-house"></i>
-            </a>
-
+        <nav aria-label="Fil d'Ariane">
+            <ol class="breadcrumb small mb-0">
+                <li class="breadcrumb-item">
+                    <a href="index.php"><span class="visually-hidden">Accueil</span><i class="fa-solid fa-house" aria-hidden="true"></i></a>
+                </li>
             <?php if($page !== 'index.php'): ?>
-
-                <span class="mx-2 text-muted"></span>
-
                 <?php if(isset($sub)): ?>
-
-                    <a href="menus.php" class="text-decoration-none text-muted">
-                        <?= $current ?>
-                    </a>
-
-                    <span class="mx-2 text-muted"></span>
-
-                    <span class="fw-semibold"><?= htmlspecialchars($sub) ?></span>
-
+                <li class="breadcrumb-item"><a href="menus.php"><?= htmlspecialchars($current) ?></a></li>
+                <li class="breadcrumb-item active" aria-current="page"><?= htmlspecialchars($sub) ?></li>
                 <?php else: ?>
-
-                    <span class="fw-semibold"><?= $current ?></span>
-
+                <li class="breadcrumb-item active" aria-current="page"><?= htmlspecialchars($current) ?></li>
                 <?php endif; ?>
-
             <?php endif; ?>
-
+            </ol>
         </nav>
     </div>
 </div>

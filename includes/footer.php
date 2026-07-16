@@ -39,9 +39,9 @@ Des menus raffinés pour tous vos événements.
 <div class="col-md-3">
 <h5 class="footer-title">Contact</h5>
 <p>
-📍 11 Rue Verteuil 33000 Bordeaux, France<br>
-📞 04 12 34 56 78<br>
-📧 contact@vite-gourmand.fr
+<span class="visually-hidden">Adresse : </span>11 Rue Verteuil 33000 Bordeaux, France<br>
+<span class="visually-hidden">Telephone : </span><a href="tel:+33412345678" class="text-decoration-none" style="color:inherit">04 12 34 56 78</a><br>
+<span class="visually-hidden">Email : </span><a href="mailto:contact@vite-gourmand.fr" class="text-decoration-none" style="color:inherit">contact@vite-gourmand.fr</a>
 </p>
 </div>
 
@@ -49,12 +49,12 @@ Des menus raffinés pour tous vos événements.
 <div class="col-md-3">
 <h5 class="footer-title">Localisation</h5>
 
-<iframe 
+<iframe
+    title="Carte — localisation Vite et Gourmand a Bordeaux"
     src="https://www.google.com/maps?q=Bordeaux&output=embed"
-    width="100%" 
-    height="150" 
-    style="border:0; border-radius:10px;" 
-    allowfullscreen="" 
+    width="100%"
+    height="150"
+    style="border:0; border-radius:10px;"
     loading="lazy">
 </iframe>
 
@@ -70,8 +70,8 @@ Des menus raffinés pour tous vos événements.
 © <?= date('Y') ?> Vite & Gourmand
 </p>
 
-<p class="mb-0 small text-light">
-Site réalisé avec ❤️
+<p class="mb-0 small" style="color:#cbd5e1">
+Site realise pour Vite &amp; Gourmand
 </p>
 
 </div>
@@ -81,12 +81,12 @@ Site réalisé avec ❤️
 </footer>
 
 <!-- COOKIE BANNER -->
-<div id="cookie-banner" class="cookie-banner">
+<div id="cookie-banner" class="cookie-banner" role="region" aria-label="Information sur les cookies" hidden>
     <div class="cookie-content">
-        <p>Ce site utilise des cookies pour améliorer votre expérience.</p>
+        <p id="cookie-banner-text">Ce site utilise des cookies pour ameliorer votre experience de navigation.</p>
         <div class="cookie-buttons">
-            <button id="accept-cookies" class="btn btn-success btn-sm">Accepter</button>
-            <button id="refuse-cookies" class="btn btn-danger btn-sm">Refuser</button>
+            <button type="button" id="accept-cookies" class="btn btn-success btn-sm">Accepter</button>
+            <button type="button" id="refuse-cookies" class="btn btn-outline-light btn-sm">Refuser</button>
         </div>
     </div>
 </div>
@@ -105,6 +105,7 @@ let slides = document.querySelectorAll(".hero-slide");
 if(slides.length > 0){
 
     let index = 0;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const texts = [
         {
@@ -147,6 +148,7 @@ if(slides.length > 0){
     }
 
     setInterval(() => {
+        if (reduceMotion) return;
         index = (index + 1) % slides.length;
         showSlide(index);
     }, 5000);
@@ -168,16 +170,18 @@ if(slides.length > 0){
         };
     }
 
-    document.addEventListener("mousemove", (e) => {
+    if(!reduceMotion){
+        document.addEventListener("mousemove", (e) => {
 
-        let x = (e.clientX / window.innerWidth - 0.5) * 20;
-        let y = (e.clientY / window.innerHeight - 0.5) * 20;
+            let x = (e.clientX / window.innerWidth - 0.5) * 20;
+            let y = (e.clientY / window.innerHeight - 0.5) * 20;
 
-        slides.forEach(slide => {
-            slide.style.transform = `scale(1.1) translate(${x}px, ${y}px)`;
+            slides.forEach(slide => {
+                slide.style.transform = `scale(1.1) translate(${x}px, ${y}px)`;
+            });
+
         });
-
-    });
+    }
 
     showSlide(index);
 }
@@ -218,6 +222,7 @@ window.addEventListener("scroll", function(){
 const banner = document.getElementById("cookie-banner");
 
 if(banner && !localStorage.getItem("cookieConsent")){
+    banner.hidden = false;
     banner.style.display = "block";
 }
 

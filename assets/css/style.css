@@ -747,3 +747,64 @@ font-size:1.75rem;
 .user-space .order-card{border-left:4px solid var(--vg-gold,#c9a227)!important}
 .user-space .notification-unread{background:#fffbeb;border-left:4px solid var(--vg-gold,#c9a227)}
 .admin-chart-wrap{min-height:220px}
+
+/* ================= RGAA / ACCESSIBILITE ================= */
+.skip-link{
+    position:absolute;
+    top:0;
+    left:0;
+    z-index:10000;
+    padding:.5rem 1rem;
+    background:#1a1a2e;
+    color:#fff;
+    text-decoration:none;
+    border-radius:0 0 8px 0;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible{
+    outline:3px solid #c9a227;
+    outline-offset:2px;
+}
+
+:focus-visible{
+    outline:3px solid #1a1a2e;
+    outline-offset:2px;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible{
+    outline:3px solid #1a1a2e;
+    outline-offset:2px;
+    box-shadow:0 0 0 .2rem rgba(26,26,46,.2);
+}
+
+.btn:focus-visible{
+    outline:3px solid #1a1a2e;
+    outline-offset:2px;
+}
+
+.text-muted{color:#5c6370!important}
+
+.breadcrumb-item+.breadcrumb-item::before{color:#5c6370}
+
+@media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{
+        animation-duration:.01ms!important;
+        animation-iteration-count:1!important;
+        transition-duration:.01ms!important;
+    }
+    .hero-slide{
+        filter:none!important;
+        transition:none!important;
+    }
+}
+
+.hero-slide[aria-hidden="true"]{
+    pointer-events:none;
+}

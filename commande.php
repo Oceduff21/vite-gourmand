@@ -191,8 +191,8 @@ include 'includes/header.php';
                             <input type="email" class="form-control" value="<?= htmlspecialchars($user['email'] ?? '') ?>" readonly>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Telephone</label>
-                            <input type="tel" name="gsm" class="form-control" value="<?= htmlspecialchars($user['telephone'] ?? $user['gsm'] ?? '') ?>" required>
+                            <label class="form-label" for="cmd-gsm">Telephone <span class="text-danger" aria-hidden="true">*</span></label>
+                            <input type="tel" name="gsm" id="cmd-gsm" class="form-control" value="<?= htmlspecialchars($user['telephone'] ?? $user['gsm'] ?? '') ?>" required autocomplete="tel">
                         </div>
                     </div>
                 </div>
@@ -201,24 +201,24 @@ include 'includes/header.php';
                     <h4>Adresse de livraison</h4>
                     <div class="row g-3">
                         <div class="col-md-8">
-                            <label class="form-label">Rue</label>
-                            <input type="text" name="rue" class="form-control" value="<?= htmlspecialchars($user['rue'] ?? '') ?>" required>
+                            <label class="form-label" for="cmd-rue">Rue <span class="text-danger" aria-hidden="true">*</span></label>
+                            <input type="text" name="rue" id="cmd-rue" class="form-control" value="<?= htmlspecialchars($user['rue'] ?? '') ?>" required autocomplete="street-address">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Numero</label>
-                            <input type="text" name="numero" class="form-control" value="<?= htmlspecialchars($user['numero'] ?? '') ?>" required>
+                            <label class="form-label" for="cmd-numero">Numero <span class="text-danger" aria-hidden="true">*</span></label>
+                            <input type="text" name="numero" id="cmd-numero" class="form-control" value="<?= htmlspecialchars($user['numero'] ?? '') ?>" required>
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label">Complement</label>
-                            <input type="text" name="complement" class="form-control" value="<?= htmlspecialchars($user['complement'] ?? '') ?>">
+                            <label class="form-label" for="cmd-complement">Complement</label>
+                            <input type="text" name="complement" id="cmd-complement" class="form-control" value="<?= htmlspecialchars($user['complement'] ?? '') ?>" autocomplete="address-line2">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Code postal</label>
-                            <input type="text" name="code_postal" id="code_postal" class="form-control" value="<?= htmlspecialchars($user['code_postal'] ?? '') ?>" required>
+                            <label class="form-label" for="code_postal">Code postal <span class="text-danger" aria-hidden="true">*</span></label>
+                            <input type="text" name="code_postal" id="code_postal" class="form-control" value="<?= htmlspecialchars($user['code_postal'] ?? '') ?>" required autocomplete="postal-code">
                         </div>
                         <div class="col-md-8">
-                            <label class="form-label">Ville</label>
-                            <input type="text" name="ville" id="ville" class="form-control" value="<?= htmlspecialchars($user['ville'] ?? '') ?>" required>
+                            <label class="form-label" for="ville">Ville <span class="text-danger" aria-hidden="true">*</span></label>
+                            <input type="text" name="ville" id="ville" class="form-control" value="<?= htmlspecialchars($user['ville'] ?? '') ?>" required autocomplete="address-level2">
                         </div>
                     </div>
                 </div>
@@ -232,22 +232,22 @@ include 'includes/header.php';
                         <input type="text" class="form-control" value="<?= htmlspecialchars($menu['titre']) ?> — <?= number_format($prix, 2) ?> EUR/pers." readonly>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Nombre de personnes (min. <?= $min ?>)</label>
-                        <input type="number" name="quantite" id="quantite" class="form-control" min="<?= $min ?>" value="<?= max($min, $quantiteDefault) ?>" required readonly>
-                        <small class="text-muted">Defini lors de la selection des plats</small>
+                        <label class="form-label" for="quantite">Nombre de personnes (min. <?= $min ?>)</label>
+                        <input type="number" name="quantite" id="quantite" class="form-control" min="<?= $min ?>" value="<?= max($min, $quantiteDefault) ?>" required readonly aria-readonly="true" aria-describedby="quantite-help">
+                        <small class="text-muted" id="quantite-help">Defini lors de la selection des plats</small>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Date de livraison</label>
-                        <input type="date" name="date" class="form-control" required min="<?= htmlspecialchars($dateMinLivraison) ?>">
+                        <label class="form-label" for="cmd-date">Date de livraison <span class="text-danger" aria-hidden="true">*</span></label>
+                        <input type="date" name="date" id="cmd-date" class="form-control" required min="<?= htmlspecialchars($dateMinLivraison) ?>">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Heure souhaitee</label>
-                        <input type="time" name="heure" class="form-control" required>
+                        <label class="form-label" for="cmd-heure">Heure souhaitee <span class="text-danger" aria-hidden="true">*</span></label>
+                        <input type="time" name="heure" id="cmd-heure" class="form-control" required>
                     </div>
                 </div>
 
-                <div class="card p-4 mt-3 bg-light">
-                    <h4>Recapitulatif prix</h4>
+                <div class="card p-4 mt-3 bg-light" aria-live="polite" aria-atomic="true">
+                    <h2 class="h4">Recapitulatif prix</h2>
                     <div class="d-flex justify-content-between"><span>Adultes (<span id="recap-adultes-n"><?= $adultes ?></span> pers.)</span><span><span id="prixAdultes">0.00</span> EUR</span></div>
                     <div class="d-flex justify-content-between<?= $nbEnfants > 0 ? '' : ' d-none' ?>" id="recap-enfants-price-line"><span>Enfants (<span id="recap-enfants-n"><?= $nbEnfants ?></span> pers.)</span><span><span id="prixEnfants">0.00</span> EUR</span></div>
                     <div class="d-flex justify-content-between fw-semibold"><span>Total menu</span><span><span id="prixMenu">0.00</span> EUR</span></div>

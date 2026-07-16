@@ -44,26 +44,27 @@ include 'includes/header.php';
 
 <div class="container mt-5">
 
-<h2>Connexion</h2>
+<h1 class="h2">Connexion</h1>
 
 <?php if ($message): ?>
-<div class="alert alert-danger"><?= htmlspecialchars($message) ?></div>
+<div class="alert alert-danger" role="alert"><?= htmlspecialchars($message) ?></div>
 <?php endif; ?>
 
-<form method="POST">
+<form method="POST" aria-describedby="login-help">
 <?= csrfField() ?>
+<p id="login-help" class="visually-hidden">Connectez-vous avec votre email et mot de passe.</p>
 
 <div class="mb-3">
-<label>Email</label>
-<input type="email" name="email" class="form-control" required>
+<label class="form-label" for="login-email">Email <span class="text-danger" aria-hidden="true">*</span></label>
+<input type="email" name="email" id="login-email" class="form-control" required autocomplete="email">
 </div>
 
 <div class="mb-3">
-<label>Mot de passe</label>
-<input type="password" name="password" class="form-control" required>
+<label class="form-label" for="login-password">Mot de passe <span class="text-danger" aria-hidden="true">*</span></label>
+<input type="password" name="password" id="login-password" class="form-control" required autocomplete="current-password">
 </div>
 
-<button class="btn btn-primary">Se connecter</button>
+<button type="submit" class="btn btn-primary">Se connecter</button>
 
 </form>
 
