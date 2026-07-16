@@ -1,4 +1,6 @@
 <?php
+$pageTitle = 'Nos menus traiteur — Vite & Gourmand';
+$pageDescription = 'Parcourez nos menus evenementiels : mariage, Noel, business, vegan, enfant. Filtrez par theme, regime et budget.';
 require 'includes/db.php';
 ?>
 

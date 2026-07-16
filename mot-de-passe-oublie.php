@@ -6,6 +6,10 @@ $message = '';
 $type = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
+        $message = 'Session expiree. Rechargez la page.';
+        $type = 'danger';
+    } else {
     $email = trim($_POST['email'] ?? '');
     $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
     $stmt->execute([$email]);
@@ -19,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $message = 'Si cet email existe, un lien de reinitialisation a ete envoye.';
     $type = 'info';
+    }
 }
 
 include 'includes/header.php';
@@ -27,6 +32,7 @@ include 'includes/header.php';
 <h2>Mot de passe oublie</h2>
 <?php if ($message): ?><div class="alert alert-<?= $type ?>"><?= htmlspecialchars($message) ?></div><?php endif; ?>
 <form method="POST" class="col-md-6">
+<?= csrfField() ?>
 <label class="form-label">Votre email</label>
 <input type="email" name="email" class="form-control mb-3" required>
 <button class="btn btn-primary">Envoyer le lien</button>

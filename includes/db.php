@@ -1,9 +1,17 @@
 <?php
 
-$host = getenv('DB_HOST') ?: 'localhost';
-$dbname = getenv('DB_NAME') ?: 'vite_gourmand';
-$user = getenv('DB_USER') ?: 'root';
-$password = getenv('DB_PASS') !== false ? getenv('DB_PASS') : '';
+$config = [];
+$localConfig = __DIR__ . '/config.local.php';
+if (file_exists($localConfig)) {
+    $config = require $localConfig;
+}
+
+$host = $config['host'] ?? (getenv('DB_HOST') ?: 'localhost');
+$dbname = $config['dbname'] ?? (getenv('DB_NAME') ?: 'vite_gourmand');
+$user = $config['user'] ?? (getenv('DB_USER') ?: 'root');
+$password = array_key_exists('password', $config)
+    ? $config['password']
+    : (getenv('DB_PASS') !== false ? getenv('DB_PASS') : '');
 
 try {
 
@@ -19,6 +27,9 @@ try {
 
 } catch(PDOException $e) {
 
-    die("Erreur connexion : " . $e->getMessage());
+    $msg = file_exists(__DIR__ . '/config.local.php')
+        ? 'Erreur connexion base de donnees. Verifiez includes/config.local.php'
+        : 'Erreur connexion base de donnees.';
+    die($msg);
 
 }

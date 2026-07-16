@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /includes/
+Disallow: /database/
+Disallow: /scripts/
+Disallow: /valider-commande.php
+Disallow: /commande.php
+Disallow: /espace-utilisateur.php
+
+Sitemap: https://vitegourmand.infinityfree.io/sitemap.php

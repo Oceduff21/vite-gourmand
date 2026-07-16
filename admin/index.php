@@ -1,108 +1,192 @@
 ﻿<?php
-session_start();
-require '../includes/db.php';
-require '../includes/helpers.php';
-require '../includes/mongo.php';
+require_once __DIR__ . '/partials/auth.php';
+requireAdminAccess();
 
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'employe'])) {
-    header('Location: ../index.php');
-    exit();
+require '../includes/db.php';
+
+$canViewFinancials = canViewAdminFinancials();
+$staffId = (int)($_SESSION['user_id'] ?? 0);
+$pageTitle = $canViewFinancials ? 'Dashboard' : 'Espace employe';
+$extraHead = '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>';
+$dashboardError = null;
+
+$enAttente = 0;
+$avisEnAttente = 0;
+$statutsBreakdown = [];
+$dates = [];
+$totaux = [];
+$prochainesLivraisons = [];
+$enPreparation = 0;
+$enLivraison = 0;
+$livraisonsAujourdhui = 0;
+$mesActions = countStaffActions($pdo, $staffId);
+
+if (!$canViewFinancials && (empty($_SESSION['user_prenom']) && $staffId > 0)) {
+    $u = $pdo->prepare('SELECT prenom, nom FROM users WHERE id = ?');
+    $u->execute([$staffId]);
+    if ($row = $u->fetch(PDO::FETCH_ASSOC)) {
+        $_SESSION['user_prenom'] = $row['prenom'] ?? '';
+        $_SESSION['user_nom'] = $row['nom'] ?? '';
+    }
 }
 
-$filterMenu = (int)($_GET['menu_id'] ?? 0);
-$filterDebut = $_GET['date_debut'] ?? '';
-$filterFin = $_GET['date_fin'] ?? '';
+try {
+    $enAttente = (int)$pdo->query("SELECT COUNT(*) FROM commandes WHERE statut = 'en_attente'")->fetchColumn();
+    $enPreparation = (int)$pdo->query("SELECT COUNT(*) FROM commandes WHERE statut = 'en_preparation'")->fetchColumn();
+    $enLivraison = (int)$pdo->query("SELECT COUNT(*) FROM commandes WHERE statut = 'en_livraison'")->fetchColumn();
+    $livraisonsAujourdhui = (int)$pdo->query("
+        SELECT COUNT(*) FROM commandes
+        WHERE statut NOT IN ('annulee', 'terminee')
+        AND DATE(date_livraison) = CURRENT_DATE()
+    ")->fetchColumn();
 
-$totalCommandes = $pdo->query('SELECT COUNT(*) FROM commandes')->fetchColumn();
-$ca = $pdo->query('SELECT SUM(prix_total) FROM commandes')->fetchColumn();
-$users = $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
-$menus = $pdo->query('SELECT id, titre FROM menus ORDER BY titre')->fetchAll();
+    try {
+        $avisEnAttente = (int)$pdo->query('SELECT COUNT(*) FROM avis WHERE is_validated = 0')->fetchColumn();
+    } catch (Throwable $e) {
+        $avisEnAttente = 0;
+    }
 
-$mongoCA = mongoGetCAparMenu($filterMenu ?: null, $filterDebut ?: null, $filterFin ?: null);
-$mongoLabels = array_column($mongoCA, 'titre');
-$mongoTotals = array_column($mongoCA, 'total');
-$mongoCounts = array_column($mongoCA, 'count');
-$mongoOk = mongoIsAvailable();
+    foreach ($pdo->query('SELECT statut, COUNT(*) AS nb FROM commandes GROUP BY statut')->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $statutsBreakdown[] = [
+            'label' => getStatutLabel($row['statut']),
+            'count' => (int)$row['nb'],
+        ];
+    }
 
-$data = $pdo->query('SELECT DATE(created_at) as date, COUNT(*) as total FROM commandes GROUP BY DATE(created_at) ORDER BY date ASC')->fetchAll();
-$dates = array_column($data, 'date');
-$totaux = array_map('intval', array_column($data, 'total'));
-?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>Dashboard Admin</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-body{background:#f1f5f9;font-family:'Segoe UI',sans-serif}
-.sidebar{position:fixed;width:220px;height:100vh;background:white;border-right:1px solid #e5e7eb;padding:20px}
-.sidebar a{display:block;padding:10px;margin-bottom:8px;border-radius:10px;color:#374151;text-decoration:none}
-.sidebar a:hover,.sidebar .active{background:#6366f1;color:white}
-.content{margin-left:240px;padding:30px}
-.card-kpi,.chart-box{background:white;border-radius:15px;padding:20px;box-shadow:0 5px 15px rgba(0,0,0,0.05)}
-</style>
-</head>
-<body>
-<div class="sidebar">
-<h4 class="mb-4">Admin</h4>
-<a href="index.php" class="active">Dashboard</a>
-<a href="admin-commandes.php">Commandes</a>
-<a href="admin-menus.php">Menus</a>
-<a href="admin-plats.php">Plats</a>
-<a href="admin-users.php">Utilisateurs</a>
-<a href="admin-avis.php">Avis</a>
-<hr><a href="../index.php">Retour site</a>
-</div>
-<div class="content">
-<h2 class="mb-4">Dashboard</h2>
+    $data = $pdo->query('SELECT DATE(created_at) AS date, COUNT(*) AS total FROM commandes GROUP BY DATE(created_at) ORDER BY date ASC LIMIT 30')->fetchAll(PDO::FETCH_ASSOC);
+    $dates = array_column($data, 'date');
+    $totaux = array_map('intval', array_column($data, 'total'));
 
-<?php if (!$mongoOk): ?>
-<div class="alert alert-warning">MongoDB non disponible. Activez l'extension PHP mongodb ou lancez <code>docker-compose up</code>.</div>
-<?php endif; ?>
+    $prochainesLivraisons = $pdo->query("
+        SELECT c.id, c.date_livraison, c.heure_livraison, c.statut, u.nom, u.prenom, m.titre AS menu_titre
+        FROM commandes c
+        JOIN users u ON c.user_id = u.id
+        JOIN menus m ON c.menu_id = m.id
+        WHERE c.statut NOT IN ('annulee', 'terminee')
+        AND c.date_livraison >= CURRENT_DATE()
+        ORDER BY c.date_livraison ASC, c.heure_livraison ASC
+        LIMIT 10
+    ")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    $dashboardError = 'Erreur chargement statistiques : ' . $e->getMessage();
+}
 
-<div class="row mb-4">
-<div class="col-md-4"><div class="card-kpi"><h6>Chiffre d'affaires (MySQL)</h6><strong><?= number_format($ca ?? 0, 2) ?> EUR</strong></div></div>
-<div class="col-md-4"><div class="card-kpi"><h6>Commandes</h6><strong><?= (int)$totalCommandes ?></strong></div></div>
-<div class="col-md-4"><div class="card-kpi"><h6>Utilisateurs</h6><strong><?= (int)$users ?></strong></div></div>
-</div>
+if ($canViewFinancials) {
+    $mongoOk = false;
+    try {
+        if (is_file(__DIR__ . '/../includes/mongo.php')) {
+            require_once __DIR__ . '/../includes/mongo.php';
+            $mongoOk = function_exists('mongoIsAvailable') && mongoIsAvailable();
+        }
+    } catch (Throwable $e) {
+        $mongoOk = false;
+    }
 
-<form method="GET" class="row g-3 mb-4 chart-box">
-<div class="col-md-3">
-<label class="form-label">Menu</label>
-<select name="menu_id" class="form-select">
-<option value="">Tous les menus</option>
-<?php foreach ($menus as $m): ?>
-<option value="<?= (int)$m['id'] ?>" <?= $filterMenu === (int)$m['id'] ? 'selected' : '' ?>><?= htmlspecialchars($m['titre']) ?></option>
-<?php endforeach; ?>
-</select>
-</div>
-<div class="col-md-3"><label class="form-label">Date debut</label><input type="date" name="date_debut" class="form-control" value="<?= htmlspecialchars($filterDebut) ?>"></div>
-<div class="col-md-3"><label class="form-label">Date fin</label><input type="date" name="date_fin" class="form-control" value="<?= htmlspecialchars($filterFin) ?>"></div>
-<div class="col-md-3 d-flex align-items-end"><button class="btn btn-primary w-100">Filtrer CA MongoDB</button></div>
-</form>
+    $filterMenu = (int)($_GET['menu_id'] ?? 0);
+    $filterDebut = $_GET['date_debut'] ?? '';
+    $filterFin = $_GET['date_fin'] ?? '';
 
-<div class="row g-4 mb-4">
-<div class="col-md-6 chart-box">
-<h5>CA par menu (MongoDB - NoSQL)</h5>
-<canvas id="chartMongoCA" aria-label="Graphique chiffre affaires par menu"></canvas>
-</div>
-<div class="col-md-6 chart-box">
-<h5>Commandes par menu (MongoDB)</h5>
-<canvas id="chartMongoCount" aria-label="Graphique nombre commandes par menu"></canvas>
-</div>
-</div>
+    $totalCommandes = 0;
+    $ca = 0.0;
+    $users = 0;
+    $menusCount = 0;
+    $caMois = 0.0;
+    $commandesMois = 0;
+    $panierMoyen = 0.0;
+    $menus = [];
+    $topMenus = [];
+    $caParMois = [];
+    $chartLabels = [];
+    $chartTotals = [];
+    $chartCounts = [];
+    $chartSource = 'MySQL';
 
-<div class="chart-box mb-4">
-<h5>Commandes par jour (MySQL)</h5>
-<canvas id="chartSQL" aria-label="Graphique commandes par jour"></canvas>
-</div>
-</div>
-<script>
-new Chart(document.getElementById('chartMongoCA'), {type:'bar', data:{labels:<?= json_encode($mongoLabels) ?>, datasets:[{label:'CA (EUR)', data:<?= json_encode($mongoTotals) ?>, backgroundColor:'#6366f1'}]}});
-new Chart(document.getElementById('chartMongoCount'), {type:'bar', data:{labels:<?= json_encode($mongoLabels) ?>, datasets:[{label:'Nb commandes', data:<?= json_encode($mongoCounts) ?>, backgroundColor:'#22c55e'}]}});
-new Chart(document.getElementById('chartSQL'), {type:'line', data:{labels:<?= json_encode($dates) ?>, datasets:[{label:'Commandes', data:<?= json_encode($totaux) ?>, borderColor:'#f59e0b', fill:true, tension:0.4}]}});
-</script>
-</body>
-</html>
+    try {
+        $totalCommandes = (int)$pdo->query('SELECT COUNT(*) FROM commandes')->fetchColumn();
+        $ca = (float)$pdo->query("SELECT COALESCE(SUM(prix_total), 0) FROM commandes WHERE statut <> 'annulee'")->fetchColumn();
+        $users = (int)$pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
+        $menusCount = (int)$pdo->query('SELECT COUNT(*) FROM menus')->fetchColumn();
+
+        $caMois = (float)$pdo->query("
+            SELECT COALESCE(SUM(prix_total), 0) FROM commandes
+            WHERE statut <> 'annulee'
+            AND MONTH(created_at) = MONTH(CURRENT_DATE())
+            AND YEAR(created_at) = YEAR(CURRENT_DATE())
+        ")->fetchColumn();
+
+        $commandesMois = (int)$pdo->query("
+            SELECT COUNT(*) FROM commandes
+            WHERE MONTH(created_at) = MONTH(CURRENT_DATE())
+            AND YEAR(created_at) = YEAR(CURRENT_DATE())
+        ")->fetchColumn();
+
+        $nbActives = (int)$pdo->query("SELECT COUNT(*) FROM commandes WHERE statut <> 'annulee'")->fetchColumn();
+        $panierMoyen = $nbActives > 0 ? round($ca / $nbActives, 2) : 0.0;
+
+        $menus = $pdo->query('SELECT id, titre FROM menus ORDER BY titre')->fetchAll(PDO::FETCH_ASSOC);
+
+        $topMenus = $pdo->query("
+            SELECT m.titre, COUNT(c.id) AS nb, COALESCE(SUM(c.prix_total), 0) AS ca
+            FROM menus m
+            LEFT JOIN commandes c ON c.menu_id = m.id AND c.statut <> 'annulee'
+            GROUP BY m.id, m.titre
+            ORDER BY nb DESC, ca DESC
+            LIMIT 5
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        $caParMois = $pdo->query("
+            SELECT DATE_FORMAT(created_at, '%Y-%m') AS mois, COALESCE(SUM(prix_total), 0) AS total
+            FROM commandes
+            WHERE statut <> 'annulee'
+            AND created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 6 MONTH)
+            GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+            ORDER BY mois ASC
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        if ($mongoOk) {
+            $chartSource = 'MongoDB';
+            $mongoCA = mongoGetCAparMenu($filterMenu ?: null, $filterDebut ?: null, $filterFin ?: null);
+            $chartLabels = array_column($mongoCA, 'titre');
+            $chartTotals = array_column($mongoCA, 'total');
+            $chartCounts = array_column($mongoCA, 'count');
+        } else {
+            $sql = "SELECT m.titre, COALESCE(SUM(c.prix_total), 0) AS total, COUNT(c.id) AS count
+                    FROM commandes c
+                    JOIN menus m ON c.menu_id = m.id
+                    WHERE c.statut <> 'annulee'";
+            $params = [];
+            if ($filterMenu) {
+                $sql .= ' AND c.menu_id = ?';
+                $params[] = $filterMenu;
+            }
+            if ($filterDebut) {
+                $sql .= ' AND DATE(c.created_at) >= ?';
+                $params[] = $filterDebut;
+            }
+            if ($filterFin) {
+                $sql .= ' AND DATE(c.created_at) <= ?';
+                $params[] = $filterFin;
+            }
+            $sql .= ' GROUP BY m.id, m.titre ORDER BY total DESC';
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $chartLabels[] = $row['titre'];
+                $chartTotals[] = (float)$row['total'];
+                $chartCounts[] = (int)$row['count'];
+            }
+        }
+    } catch (Throwable $e) {
+        $dashboardError = 'Erreur chargement statistiques : ' . $e->getMessage();
+    }
+}
+
+include 'partials/layout.php';
+
+if ($canViewFinancials) {
+    include 'partials/dashboard-admin.php';
+} else {
+    include 'partials/dashboard-employee.php';
+}
+
+include 'partials/footer.php';

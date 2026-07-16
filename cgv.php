@@ -1,91 +1,99 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Conditions Générales de Vente</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
+<?php include 'includes/header.php'; ?>
+<?php include 'includes/legal-styles.php'; ?>
 
-<h1>Conditions Générales de Vente (CGV)</h1>
+<section class="legal-page py-5">
+<div class="container">
+<div class="legal-card">
 
+<h1 class="legal-title">Conditions Generales de Vente</h1>
+<p class="legal-intro">Conditions applicables aux prestations de restauration et d'evenementiel Vite &amp; Gourmand — Bordeaux.</p>
+
+<div class="legal-section">
 <h2>1. Objet</h2>
-<p>
-Les présentes Conditions Générales de Vente régissent les relations contractuelles
-entre Vite & Gourmand et ses clients dans le cadre de la vente de prestations
-de restauration et d’événementiel.
-</p>
+<p>Les presentes Conditions Generales de Vente regissent les relations contractuelles entre Vite &amp; Gourmand (Julie et Jose, Bordeaux) et ses clients dans le cadre de la vente de prestations traiteur et d'evenementiel via le site vitegourmand.infinityfree.io.</p>
+</div>
 
-<h2>2. Produits et services</h2>
-<p>
-Vite & Gourmand propose des services de restauration (menus, buffets, événements).
-Les offres sont présentées sur le site et peuvent être modifiées à tout moment.
-</p>
+<div class="legal-section">
+<h2>2. Commande et delais de reservation</h2>
+<p>Chaque menu comporte un <strong>delai minimum de reservation</strong> (nombre de jours avant la date de livraison), indique sur la fiche menu et lors de la commande.</p>
+<p>Le client s'engage a respecter ce delai. Vite &amp; Gourmand se reserve le droit de refuser toute commande dont la date de prestation ne respecte pas ce delai, apres contact avec le client.</p>
+<p>Toute commande est confirmee apres validation par l'equipe (statut « acceptee »).</p>
+</div>
 
-<h2>3. Commande</h2>
-<p>
-Toute commande implique l’acceptation des présentes CGV.
-La commande est validée après confirmation par Vite & Gourmand.
-</p>
-
-<h2>4. Prix</h2>
-<p>
-Les prix sont indiqués en euros (€) et toutes taxes comprises (TTC).
-Vite & Gourmand se réserve le droit de modifier ses tarifs à tout moment.
-</p>
-
-<h2>5. Paiement</h2>
-<p>
-Le paiement peut s’effectuer :
-</p>
-<ul>
-    <li>Par carte bancaire</li>
-    <li>Par virement</li>
-    <li>En espèces (selon conditions)</li>
+<div class="legal-section">
+<h2>3. Tarification</h2>
+<ul class="legal-list">
+<li>Les prix sont indiques en euros (EUR), toutes taxes comprises (TTC), par personne pour le menu selectionne.</li>
+<li>Le nombre minimum de convives par menu est indique sur la fiche produit et doit etre respecte.</li>
+<li><strong>Reduction de 10 %</strong> : appliquee automatiquement lorsque le nombre de personnes commande est egal ou superieur au minimum requis <strong>plus 5 convives</strong> (ex. : minimum 10 personnes → reduction des 15 personnes et plus).</li>
+<li>Les boissons selectionnees en supplement sont facturees en sus du menu.</li>
 </ul>
+</div>
 
-<p>
-Un acompte peut être demandé pour valider une réservation.
-</p>
-
-<h2>6. Annulation</h2>
-<p>
-Toute annulation doit être signalée au plus tôt.
-</p>
-
-<ul>
-    <li>Plus de 7 jours avant : remboursement possible</li>
-    <li>Moins de 7 jours : acompte non remboursé</li>
+<div class="legal-section">
+<h2>4. Livraison</h2>
+<ul class="legal-list">
+<li><strong>Bordeaux</strong> : livraison gratuite.</li>
+<li><strong>Hors Bordeaux</strong> : forfait de <strong>5,00 EUR</strong> majore de <strong>0,59 EUR par kilometre parcouru</strong> (estimation calculee selon la zone de livraison).</li>
 </ul>
+<p>La date et l'heure de livraison sont choisies par le client lors de la commande et peuvent etre modifiees tant que la commande est en statut « en attente ».</p>
+</div>
 
-<h2>7. Livraison / prestation</h2>
-<p>
-Les prestations sont réalisées à la date convenue.
-Vite & Gourmand s’engage à respecter les délais, sauf cas de force majeure.
-</p>
+<div class="legal-section">
+<h2>5. Allergenes et regimes alimentaires</h2>
+<p>Les allergenes declares pour chaque plat sont affiches sur le site. Le client est responsable de signaler toute allergie ou intolerance lors de la commande.</p>
+<p>Vite &amp; Gourmand s'efforce de proposer des options par regime (classique, vegetarien, vegan, sans gluten, etc.) selon les menus disponibles.</p>
+</div>
 
-<h2>8. Responsabilité</h2>
-<p>
-Vite & Gourmand ne pourra être tenu responsable des dommages indirects
-liés à l’utilisation de ses services.
-</p>
+<div class="legal-section">
+<h2>6. Pret de materiel et restitution</h2>
+<p>Lorsqu'un materiel (vaisselle, chauffe-plats, barnums, etc.) est prete au client, le statut de commande passe en « en attente du retour de materiel » apres la livraison.</p>
+<p>Le client doit <strong>restituer le materiel sous 10 jours ouvrables</strong> apres la prestation, en prenant contact avec Vite &amp; Gourmand (telephone ou email indiques sur le site).</p>
+<p><strong>En l'absence de restitution dans ce delai</strong>, des frais de <strong>600,00 EUR</strong> seront factures au client, correspondant a la valeur du materiel confie, sans prejudice d'autres recours.</p>
+</div>
 
-<h2>9. Données personnelles</h2>
-<p>
-Les données collectées sont utilisées uniquement dans le cadre de la relation commerciale,
-conformément au RGPD.
-</p>
+<div class="legal-section">
+<h2>7. Annulation et modification</h2>
+<h3 class="h6">Par le client</h3>
+<ul class="legal-list">
+<li>Tant que la commande est « en attente », le client peut <strong>modifier</strong> (nombre de personnes, adresse, date, heure — le menu choisi reste identique) ou <strong>annuler</strong> depuis son espace personnel.</li>
+<li>Apres acceptation par Vite &amp; Gourmand, l'annulation est soumise a accord prealable.</li>
+</ul>
+<h3 class="h6">Par Vite &amp; Gourmand</h3>
+<p>Toute annulation ou refus de la part de Vite &amp; Gourmand intervient apres <strong>contact telephonique (GSM) ou par email</strong> avec le client. Un motif est communique et enregistre.</p>
+</div>
 
-<h2>10. Litiges</h2>
-<p>
-En cas de litige, une solution amiable sera privilégiée.
-À défaut, les tribunaux compétents seront saisis.
-</p>
+<div class="legal-section">
+<h2>8. Paiement</h2>
+<p>Le paiement peut s'effectuer par carte bancaire, virement ou especes selon conditions convenues. Un acompte peut etre demande pour valider une reservation importante.</p>
+</div>
 
-<h2>11. Droit applicable</h2>
-<p>
-Les présentes CGV sont soumises au droit français.
-</p>
+<div class="legal-section">
+<h2>9. Avis clients</h2>
+<p>Apres une commande « terminee », le client peut deposer un avis (note de 1 a 5 et commentaire). Les avis sont moderes avant publication sur la page d'accueil.</p>
+</div>
 
-</body>
-</html>
+<div class="legal-section">
+<h2>10. Donnees personnelles (RGPD)</h2>
+<p>Les donnees collectees (identite, coordonnees, commandes) sont utilisees uniquement pour la gestion de la relation commerciale. Consultez notre <a href="politique-confidentialite.php">politique de confidentialite</a>.</p>
+</div>
+
+<div class="legal-section">
+<h2>11. Responsabilite</h2>
+<p>Vite &amp; Gourmand ne pourra etre tenu responsable des dommages indirects lies a l'utilisation de ses services, sauf faute lourde ou cas de force majeure.</p>
+</div>
+
+<div class="legal-section mb-0">
+<h2>12. Litiges et droit applicable</h2>
+<p>En cas de litige, une solution amiable sera privilegiee. A defaut, les tribunaux de Bordeaux seront competents. Les presentes CGV sont soumises au droit francais.</p>
+</div>
+
+<div class="legal-back mt-4">
+<a href="index.php" class="btn btn-outline-dark">Retour a l'accueil</a>
+</div>
+
+</div>
+</div>
+</section>
+
+<?php include 'includes/footer.php'; ?>

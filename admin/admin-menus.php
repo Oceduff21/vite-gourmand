@@ -1,7 +1,16 @@
 <?php
+require __DIR__ . '/partials/auth.php';
+requireAdminAccess();
+
 require '../includes/db.php';
 
-$menus = $pdo->query("SELECT * FROM menus")->fetchAll();
+$menus = $pdo->query('
+    SELECT m.*,
+        (SELECT COUNT(*) FROM menu_options mo WHERE mo.menu_id = m.id AND mo.type = "entree") AS nb_entrees,
+        (SELECT COUNT(*) FROM menu_options mo WHERE mo.menu_id = m.id AND mo.type = "plat") AS nb_plats,
+        (SELECT COUNT(*) FROM menu_options mo WHERE mo.menu_id = m.id AND mo.type = "dessert") AS nb_desserts
+    FROM menus m ORDER BY m.titre
+')->fetchAll();
 ?>
 
 <?php include 'partials/layout.php'; ?>
@@ -16,10 +25,11 @@ $menus = $pdo->query("SELECT * FROM menus")->fetchAll();
 
 <thead class="table-light">
 <tr>
-<th>ID</th>
 <th>Titre</th>
+<th>Theme</th>
 <th>Prix</th>
 <th>Min</th>
+<th>Plats (E/P/D)</th>
 <th>Stock</th>
 <th>Actions</th>
 </tr>
@@ -30,15 +40,27 @@ $menus = $pdo->query("SELECT * FROM menus")->fetchAll();
 <?php foreach($menus as $m): ?>
 
 <tr>
-<td><?= $m["id"] ?></td>
-<td><?= $m["titre"] ?></td>
-<td><?= $m["prix"] ?> €</td>
-<td><?= $m["min_personnes"] ?></td>
-<td><?= $m["stock"] ?></td>
+<td><?= htmlspecialchars($m['titre']) ?></td>
+<td><?= htmlspecialchars($m['theme'] ?? '-') ?></td>
+<td><?= number_format((float)$m['prix'], 2) ?> &euro;</td>
+<td><?= (int)$m['min_personnes'] ?></td>
+<td>
+<?php
+$ok = (int)$m['nb_entrees'] === 3 && (int)$m['nb_plats'] === 3 && (int)$m['nb_desserts'] === 3;
+?>
+<span class="badge bg-<?= $ok ? 'success' : 'warning text-dark' ?>">
+<?= (int)$m['nb_entrees'] ?>/<?= (int)$m['nb_plats'] ?>/<?= (int)$m['nb_desserts'] ?>
+</span>
+</td>
+<td><?= (int)$m['stock'] ?></td>
 
 <td>
 <a href="edit-menu.php?id=<?= $m["id"] ?>" class="btn btn-sm btn-primary">Modifier</a>
-<a href="delete-menu.php?id=<?= $m["id"] ?>" class="btn btn-sm btn-danger">Supprimer</a>
+<form method="POST" action="delete-menu.php" class="d-inline" onsubmit="return confirm('Supprimer ce menu ?')">
+<?= csrfField() ?>
+<input type="hidden" name="id" value="<?= (int)$m['id'] ?>">
+<button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+</form>
 </td>
 </tr>
 
@@ -50,4 +72,4 @@ $menus = $pdo->query("SELECT * FROM menus")->fetchAll();
 
 </div>
 
-</div>
+<?php require __DIR__ . '/partials/footer.php'; ?>

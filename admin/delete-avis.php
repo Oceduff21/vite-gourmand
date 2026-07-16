@@ -1,20 +1,18 @@
 <?php
-session_start();
+require __DIR__ . '/partials/auth.php';
+requireAdminAccess();
+
 require '../includes/db.php';
 
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'employe'])) {
-    header('Location: ../index.php');
-    exit();
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !verifyCsrf($_POST['csrf_token'] ?? '')) {
+    http_response_code(405);
+    die('Action non autorisee.');
 }
 
-if (!isset($_GET['id'])) {
-    header('Location: admin-avis.php');
-    exit();
+$id = (int)($_POST['id'] ?? 0);
+if ($id > 0) {
+    $pdo->prepare('DELETE FROM avis WHERE id = ?')->execute([$id]);
 }
-
-$id = (int)$_GET['id'];
-
-$pdo->prepare('DELETE FROM avis WHERE id = ?')->execute([$id]);
 
 header('Location: admin-avis.php');
 exit();

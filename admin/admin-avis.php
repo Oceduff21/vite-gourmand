@@ -1,5 +1,7 @@
 <?php
-session_start();
+require __DIR__ . '/partials/auth.php';
+requireAdminAccess();
+
 require '../includes/db.php';
 
 /* FILTRE */
@@ -61,7 +63,10 @@ ORDER BY avis.id DESC
 </td>
 
 <td>
-<?= substr(htmlspecialchars($a["commentaire"]),0,40) ?>...
+<?php
+$comment = htmlspecialchars($a['commentaire']);
+echo mb_strlen($comment) > 40 ? mb_substr($comment, 0, 40) . '...' : $comment;
+?>
 </td>
 
 <td>
@@ -80,17 +85,18 @@ Voir
 </button>
 
 <?php if(!$a["is_validated"]): ?>
-<a href="validate-avis.php?id=<?= $a["id"] ?>" 
-class="btn btn-sm btn-success">
-Valider
-</a>
+<form method="POST" action="validate-avis.php" class="d-inline">
+<?= csrfField() ?>
+<input type="hidden" name="id" value="<?= (int)$a['id'] ?>">
+<button type="submit" class="btn btn-sm btn-success">Valider</button>
+</form>
 <?php endif; ?>
 
-<a href="delete-avis.php?id=<?= $a["id"] ?>" 
-class="btn btn-sm btn-danger"
-onclick="return confirm('Supprimer cet avis ?')">
-Supprimer
-</a>
+<form method="POST" action="delete-avis.php" class="d-inline" onsubmit="return confirm('Supprimer cet avis ?')">
+<?= csrfField() ?>
+<input type="hidden" name="id" value="<?= (int)$a['id'] ?>">
+<button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+</form>
 
 </td>
 
@@ -123,14 +129,18 @@ Supprimer
 <div class="modal-footer">
 
 <?php if(!$a["is_validated"]): ?>
-<a href="validate-avis.php?id=<?= $a["id"] ?>" class="btn btn-success">
-Valider
-</a>
+<form method="POST" action="validate-avis.php" class="d-inline">
+<?= csrfField() ?>
+<input type="hidden" name="id" value="<?= (int)$a['id'] ?>">
+<button type="submit" class="btn btn-success">Valider</button>
+</form>
 <?php endif; ?>
 
-<a href="delete-avis.php?id=<?= $a["id"] ?>" class="btn btn-danger">
-Supprimer
-</a>
+<form method="POST" action="delete-avis.php" class="d-inline" onsubmit="return confirm('Supprimer cet avis ?')">
+<?= csrfField() ?>
+<input type="hidden" name="id" value="<?= (int)$a['id'] ?>">
+<button type="submit" class="btn btn-danger">Supprimer</button>
+</form>
 
 </div>
 
@@ -146,4 +156,4 @@ Supprimer
 
 </div>
 
-</div>
+<?php require __DIR__ . '/partials/footer.php'; ?>

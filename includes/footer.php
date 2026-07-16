@@ -21,6 +21,8 @@ Des menus raffinés pour tous vos événements.
 <ul class="list-unstyled footer-links">
 <li><a href="menus.php">Nos menus</a></li>
 <li><a href="contact.php">Contact</a></li>
+<li><a href="faq.php">FAQ</a></li>
+<li><a href="politique-confidentialite.php">Politique de confidentialite</a></li>
 <li><a href="mentions-legales.php">Mentions légales</a></li>
 <li><a href="cgv.php">CGV</a></li>
 </ul>

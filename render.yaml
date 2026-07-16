@@ -1,7 +1,5 @@
 # Deploiement Render.com — https://render.com
-# 1. Connecter le repo GitHub Oceduff21/vite-gourmand
-# 2. New > Blueprint > coller ce fichier
-# 3. Ajouter MONGO_URI (MongoDB Atlas) dans les variables du service web
+# MySQL GRATUIT : utiliser db4free.net (Render n'a pas de MySQL free natif)
 
 services:
   - type: web
@@ -11,26 +9,12 @@ services:
     dockerfilePath: ./Dockerfile
     envVars:
       - key: DB_HOST
-        fromDatabase:
-          name: vite-gourmand-db
-          property: host
+        sync: false
       - key: DB_NAME
-        fromDatabase:
-          name: vite-gourmand-db
-          property: database
+        sync: false
       - key: DB_USER
-        fromDatabase:
-          name: vite-gourmand-db
-          property: user
+        sync: false
       - key: DB_PASS
-        fromDatabase:
-          name: vite-gourmand-db
-          property: password
+        sync: false
       - key: MONGO_URI
         sync: false
-
-databases:
-  - name: vite-gourmand-db
-    plan: free
-    databaseName: vite_gourmand
-    user: vite_gourmand
