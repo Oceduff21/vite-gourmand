@@ -136,8 +136,6 @@ INSERT INTO menu_options (menu_id, plat_id, type) VALUES
 (14,1,'entree'),(14,12,'entree'),(14,13,'entree'),
 (14,3,'plat'),(14,20,'plat'),(14,26,'plat'),
 (14,5,'dessert'),(14,33,'dessert'),(14,30,'dessert');
-
--- ========== BOISSONS ==========
 INSERT IGNORE INTO boissons (id, nom, prix) VALUES
 (1, 'Coca-Cola 33cl', 2.50),
 (2, 'Orangina 33cl', 2.50),

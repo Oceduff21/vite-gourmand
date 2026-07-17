@@ -44,7 +44,7 @@ INSERT INTO menu_options (menu_id, plat_id, type) VALUES
 (13,11,'entree'),(13,12,'entree'),(13,42,'entree'),
 (13,4,'plat'),(13,25,'plat'),(13,36,'plat'),
 (13,43,'dessert'),(13,33,'dessert'),(13,6,'dessert'),
-(14,17,'entree'),(14,12,'entree'),(14,7,'entree'),
+(14,1,'entree'),(14,12,'entree'),(14,13,'entree'),
 (14,21,'plat'),(14,26,'plat'),(14,3,'plat'),
 (14,30,'dessert'),(14,33,'dessert'),(14,5,'dessert');
 
