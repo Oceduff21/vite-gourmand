@@ -16,7 +16,7 @@ INSERT IGNORE INTO plats (id, nom, type, description, image, regime, allergenes)
 (19, 'Dos de saumon', 'plat', 'Beurre citron, legumes de saison', 'saumon.jpg', 'pescetarien', 'poisson'),
 (20, 'Poulet halal roti', 'plat', 'Epices douces, jus au thym', 'volaille.jpg', 'halal', ''),
 (21, 'Risotto aux truffes', 'plat', 'Parmesan, bouillon legumes', 'risotto.jpg', 'vegetarien', 'lactose'),
-(22, 'Curry legumes coco', 'plat', 'Riz basmati, coriandre', 'risotto.jpg', 'vegan', ''),
+(22, 'Curry legumes coco', 'plat', 'Riz basmati, coriandre', 'curry.jpg', 'vegan', ''),
 (23, 'Canard confit', 'plat', 'Pommes sarladaises, jus reduit', 'canard.jpg', 'classique', ''),
 (24, 'Bar rôti', 'plat', 'Puree de patate douce, beurre citron', 'bar.jpg', 'pescetarien', 'poisson'),
 (25, 'Poulet basquaise', 'plat', 'Poivrons, tomates, riz parfume', 'poulet.jpg', 'sans lactose', ''),

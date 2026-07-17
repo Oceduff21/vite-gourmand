@@ -17,6 +17,12 @@ UPDATE plats SET image = 'brunch-plateau.jpg' WHERE id = 42;
 UPDATE plats SET image = 'pancakes.jpg' WHERE id = 43;
 UPDATE plats SET image = 'clafoutis.jpg' WHERE id = 44;
 
+-- Apres upload de assets/images/curry.jpg (Menu Vegan, plat id 22)
+UPDATE plats SET image = 'curry.jpg' WHERE id = 22;
+
+-- Optionnel : apres upload de assets/images/mousse-chocolat.jpg (id 29)
+-- UPDATE plats SET image = 'mousse-chocolat.jpg' WHERE id = 29;
+
 -- Nettoyer les images generiques restantes
 UPDATE plats SET image = 'veloute.jpg' WHERE image IN ('presentation.jpg', 'default.jpg', 'image.jpg');
 UPDATE plats SET image = 'salade.jpg' WHERE id IN (12) AND image IN ('presentation.jpg', 'default.jpg', 'image.jpg');
