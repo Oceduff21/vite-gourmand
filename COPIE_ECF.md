@@ -58,7 +58,7 @@ Sources Markdown a convertir en PDF : dossier `docs/`
 - [x] Inscription avec adresse structuree (rue, CP, ville)
 - [x] Documentation livrables MD (docs/GESTION_PROJET.md, UML, wireframes)
 - [x] GitHub public a jour
-- [ ] Copie ODT completee (URL + stack ci-dessus)
+- [x] Copie ODT completee (URL + stack ci-dessus) — voir docs/Copie_a_rendre_TP_Vite_Gourmand.odt
 - [x] 3 PDF livrables (docs/MANUEL_UTILISATEUR.pdf, CHARTE_GRAPHIQUE.pdf, DOCUMENTATION_TECHNIQUE.pdf)
 - [ ] Upload prod des fichiers modifies (FileZilla)
 - [ ] Test parcours : inscription → commande → suivi → avis
