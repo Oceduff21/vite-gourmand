@@ -42,32 +42,34 @@ $regimes = ['classique', 'vegetarien', 'vegan', 'sans gluten', 'sans lactose', '
 require __DIR__ . '/partials/layout.php';
 ?>
 
-<h2 class="mb-4">Gestion des plats</h2>
+<h1 class="h2 mb-4">Gestion des plats</h1>
 
 <div class="card-custom mb-4">
 <form method="POST" enctype="multipart/form-data">
 <?= csrfField() ?>
 <div class="row g-3">
-<div class="col-md-4"><input type="text" name="nom" placeholder="Nom" class="form-control" required></div>
+<div class="col-md-4"><label class="form-label" for="plat-nom">Nom</label><input type="text" name="nom" id="plat-nom" placeholder="Nom du plat" class="form-control" required></div>
 <div class="col-md-2">
-<select name="type" class="form-select">
+<label class="form-label" for="plat-type-add">Type</label>
+<select name="type" id="plat-type-add" class="form-select">
 <option value="entree">Entree</option>
 <option value="plat">Plat</option>
 <option value="dessert">Dessert</option>
 </select>
 </div>
 <div class="col-md-2">
-<select name="regime" class="form-select">
+<label class="form-label" for="plat-regime-add">Regime</label>
+<select name="regime" id="plat-regime-add" class="form-select">
 <?php foreach ($regimes as $r): ?>
 <option value="<?= htmlspecialchars($r) ?>"><?= htmlspecialchars(ucfirst($r)) ?></option>
 <?php endforeach; ?>
 </select>
 </div>
-<div class="col-md-4"><input type="file" name="image" class="form-control" accept="image/*"></div>
-<div class="col-md-12"><textarea name="description" placeholder="Description" class="form-control" rows="2"></textarea></div>
+<div class="col-md-4"><label class="form-label" for="plat-image-add">Image</label><input type="file" name="image" id="plat-image-add" class="form-control" accept="image/*"></div>
+<div class="col-md-12"><label class="form-label" for="plat-desc-add">Description</label><textarea name="description" id="plat-desc-add" placeholder="Description" class="form-control" rows="2"></textarea></div>
 <div class="col-md-12">
-<label class="form-label small">Allergenes (separes par des virgules : gluten, lactose, oeufs...)</label>
-<input type="text" name="allergenes" class="form-control" placeholder="Ex. : gluten, lactose">
+<label class="form-label" for="plat-allergenes-add">Allergenes (separes par des virgules : gluten, lactose, oeufs...)</label>
+<input type="text" name="allergenes" id="plat-allergenes-add" class="form-control" placeholder="Ex. : gluten, lactose">
 </div>
 <div class="col-md-12"><button class="btn btn-success">Ajouter</button></div>
 </div>
@@ -76,7 +78,8 @@ require __DIR__ . '/partials/layout.php';
 
 <div class="card-custom">
 <table class="table align-middle">
-<thead class="table-light"><tr><th>Nom</th><th>Type</th><th>Regime</th><th>Allergenes</th><th></th></tr></thead>
+<caption class="visually-hidden">Liste des plats</caption>
+<thead class="table-light"><tr><th scope="col">Nom</th><th scope="col">Type</th><th scope="col">Regime</th><th scope="col">Allergenes</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
 <tbody>
 <?php foreach ($plats as $p): ?>
 <tr>
@@ -85,6 +88,7 @@ require __DIR__ . '/partials/layout.php';
 <td><span class="badge bg-light text-dark"><?= htmlspecialchars($p['regime'] ?? 'classique') ?></span></td>
 <td><div class="plat-allergenes"><?= renderAllergenesBadges($p['allergenes'] ?? null) ?></div></td>
 <td>
+<a href="edit-plat.php?id=<?= (int)$p['id'] ?>" class="btn btn-primary btn-sm me-1">Modifier</a>
 <form method="POST" action="delete-plat.php" class="d-inline" onsubmit="return confirm('Supprimer ce plat ?')">
 <?= csrfField() ?>
 <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">

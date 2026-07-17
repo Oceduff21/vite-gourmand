@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require 'includes/db.php';
 require 'includes/helpers.php';
 
@@ -29,12 +29,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 include 'includes/header.php';
 ?>
 <div class="container py-5">
-<h2>Mot de passe oublie</h2>
-<?php if ($message): ?><div class="alert alert-<?= $type ?>"><?= htmlspecialchars($message) ?></div><?php endif; ?>
+<h1 class="h2">Mot de passe oublie</h1>
+<?php if ($message): ?><div class="alert alert-<?= $type ?>" role="alert"><?= htmlspecialchars($message) ?></div><?php endif; ?>
 <form method="POST" class="col-md-6">
 <?= csrfField() ?>
-<label class="form-label">Votre email</label>
-<input type="email" name="email" class="form-control mb-3" required>
+<label class="form-label" for="forgot-email">Votre email</label>
+<input type="email" name="email" id="forgot-email" class="form-control mb-3" required autocomplete="email">
 <button class="btn btn-primary">Envoyer le lien</button>
 </form>
 <p class="mt-3"><a href="login.php">Retour connexion</a></p>

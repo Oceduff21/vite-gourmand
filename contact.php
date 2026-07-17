@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require 'includes/db.php';
 require 'includes/helpers.php';
 

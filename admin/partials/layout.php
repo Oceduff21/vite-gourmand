@@ -14,6 +14,7 @@ $staffName = getStaffDisplayName();
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= htmlspecialchars($pageTitle ?? 'Admin') ?></title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -130,15 +131,30 @@ body{
 <p class="small text-muted mb-3" style="margin-top:-20px">Bonjour, <?= htmlspecialchars($staffName) ?></p>
 <?php endif; ?>
 
-<a href="index.php">Dashboard</a>
-<a href="admin-commandes.php" class="<?= strpos($_SERVER['PHP_SELF'] ?? '', 'commande') !== false ? 'active' : '' ?>">Commandes</a>
-<a href="admin-menus.php">Menus</a>
-<a href="admin-plats.php">Plats</a>
-<a href="admin-boissons.php">Boissons</a>
+<?php
+$adminSelf = basename($_SERVER['PHP_SELF'] ?? '');
+$adminNavActive = static function (array $needles) use ($adminSelf): bool {
+    foreach ($needles as $needle) {
+        if (str_contains($adminSelf, $needle)) {
+            return true;
+        }
+    }
+    return false;
+};
+$adminNavCurrent = static function (bool $active): string {
+    return $active ? ' aria-current="page"' : '';
+};
+?>
+<a href="index.php" class="<?= $adminSelf === 'index.php' ? 'active' : '' ?>"<?= $adminNavCurrent($adminSelf === 'index.php') ?>>Dashboard</a>
+<a href="admin-commandes.php" class="<?= $adminNavActive(['commande']) ? 'active' : '' ?>"<?= $adminNavCurrent($adminNavActive(['commande'])) ?>>Commandes</a>
+<a href="admin-menus.php" class="<?= $adminNavActive(['admin-menus', 'add-menu', 'edit-menu']) ? 'active' : '' ?>"<?= $adminNavCurrent($adminNavActive(['admin-menus', 'add-menu', 'edit-menu'])) ?>>Menus</a>
+<a href="admin-plats.php" class="<?= $adminNavActive(['admin-plats', 'edit-plat']) ? 'active' : '' ?>"<?= $adminNavCurrent($adminNavActive(['admin-plats', 'edit-plat'])) ?>>Plats</a>
+<a href="admin-boissons.php" class="<?= $adminSelf === 'admin-boissons.php' ? 'active' : '' ?>"<?= $adminNavCurrent($adminSelf === 'admin-boissons.php') ?>>Boissons</a>
+<a href="admin-horaires.php" class="<?= $adminSelf === 'admin-horaires.php' ? 'active' : '' ?>"<?= $adminNavCurrent($adminSelf === 'admin-horaires.php') ?>>Horaires</a>
 <?php if ($isSuperAdmin): ?>
-<a href="admin-users.php" class="<?= strpos($_SERVER['PHP_SELF'] ?? '', 'admin-users') !== false || strpos($_SERVER['PHP_SELF'] ?? '', 'edit-user') !== false ? 'active' : '' ?>">Utilisateurs</a>
+<a href="admin-users.php" class="<?= $adminNavActive(['admin-users', 'edit-user']) ? 'active' : '' ?>"<?= $adminNavCurrent($adminNavActive(['admin-users', 'edit-user'])) ?>>Utilisateurs</a>
 <?php endif; ?>
-<a href="admin-avis.php">Avis</a>
+<a href="admin-avis.php" class="<?= $adminSelf === 'admin-avis.php' ? 'active' : '' ?>"<?= $adminNavCurrent($adminSelf === 'admin-avis.php') ?>>Avis</a>
 
 <hr>
 

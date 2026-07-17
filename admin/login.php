@@ -83,10 +83,23 @@ input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #6366
         <div class="mb-3">
             <label class="form-label small fw-semibold" for="admin-password">Mot de passe</label>
             <input type="password" name="password" id="admin-password" class="form-control" required autocomplete="current-password">
+            <div class="form-check mt-1">
+                <input type="checkbox" class="form-check-input password-toggle-check" id="show-admin-password" data-password-target="admin-password" aria-controls="admin-password">
+                <label class="form-check-label small" for="show-admin-password">Afficher le mot de passe</label>
+            </div>
         </div>
         <button type="submit" class="btn btn-primary w-100">Se connecter</button>
     </form>
     <p class="text-center mt-3 mb-0"><a href="../index.php" class="small text-muted">&larr; Retour au site</a></p>
 </div>
+<script>
+document.querySelectorAll('[data-password-target]').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+        var input = document.getElementById(cb.dataset.passwordTarget);
+        if (!input) return;
+        input.type = cb.checked ? 'text' : 'password';
+    });
+});
+</script>
 </body>
 </html>

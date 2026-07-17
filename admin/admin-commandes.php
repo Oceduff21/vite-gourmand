@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require __DIR__ . '/partials/auth.php';
 requireAdminAccess();
 
@@ -45,7 +45,18 @@ foreach ($commandes as $row) {
 require __DIR__ . '/partials/layout.php';
 ?>
 
-<h2 class="mb-4">Gestion des commandes</h2>
+<h1 class="h2 mb-4">Gestion des commandes</h1>
+
+<?php
+$flash = $_SESSION['admin_flash'] ?? null;
+$flashError = $_SESSION['admin_flash_error'] ?? null;
+unset($_SESSION['admin_flash'], $_SESSION['admin_flash_error']);
+if ($flash): ?>
+<div class="alert alert-success"><?= htmlspecialchars($flash) ?></div>
+<?php endif; ?>
+<?php if ($flashError): ?>
+<div class="alert alert-danger"><?= htmlspecialchars($flashError) ?></div>
+<?php endif; ?>
 
 <?php if ($isEmploye): ?>
 <div class="alert alert-warning py-2 small">
@@ -61,9 +72,10 @@ require __DIR__ . '/partials/layout.php';
 </div>
 <?php endif; ?>
 
-<form method="GET" class="row g-3 mb-4">
+<form method="GET" class="row g-3 mb-4" aria-label="Filtrer les commandes">
 <div class="col-md-3">
-<select name="statut" class="form-select">
+<label class="form-label visually-hidden" for="filtre-cmd-statut">Statut</label>
+<select name="statut" id="filtre-cmd-statut" class="form-select">
 <option value="">Tous les statuts</option>
 <?php foreach ($statuts as $k => $label): ?>
 <option value="<?= $k ?>" <?= $filterStatut === $k ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
@@ -71,7 +83,8 @@ require __DIR__ . '/partials/layout.php';
 </select>
 </div>
 <div class="col-md-4">
-<input type="text" name="client" class="form-control" placeholder="Rechercher un client..." value="<?= htmlspecialchars($filterClient) ?>">
+<label class="form-label visually-hidden" for="filtre-cmd-client">Rechercher un client</label>
+<input type="text" name="client" id="filtre-cmd-client" class="form-control" placeholder="Rechercher un client..." value="<?= htmlspecialchars($filterClient) ?>">
 </div>
 <div class="col-md-2">
 <button class="btn btn-primary w-100">Filtrer</button>
@@ -86,17 +99,18 @@ require __DIR__ . '/partials/layout.php';
 <div class="card-custom">
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
+<caption class="visually-hidden">Liste des commandes</caption>
 <thead class="table-light">
 <tr>
-<th>ID</th>
-<th>Client</th>
-<th>Menu</th>
-<th>Personnes</th>
-<th>Livraison</th>
-<th>Delai</th>
-<?php if ($canViewFinancials): ?><th>Total</th><?php endif; ?>
-<th>Statut</th>
-<th></th>
+<th scope="col">ID</th>
+<th scope="col">Client</th>
+<th scope="col">Menu</th>
+<th scope="col">Personnes</th>
+<th scope="col">Livraison</th>
+<th scope="col">Delai</th>
+<?php if ($canViewFinancials): ?><th scope="col">Total</th><?php endif; ?>
+<th scope="col">Statut</th>
+<th scope="col"><span class="visually-hidden">Actions</span></th>
 </tr>
 </thead>
 <tbody>

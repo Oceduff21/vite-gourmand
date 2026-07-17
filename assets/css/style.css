@@ -48,7 +48,7 @@ html{
 }
 
 .nav-link:hover{
-    color:#ffc107 !important;
+    color:#856404 !important;
 }
 
 /* ================= HERO ================= */
@@ -130,14 +130,13 @@ html{
     position:absolute;
     top:50%;
     transform:translateY(-50%);
-    background:rgba(255,255,255,0.2);
-    border:none;
-    color:white;
+    background:rgba(0,0,0,0.65);
+    border:2px solid #fff;
+    color:#fff;
     font-size:30px;
     padding:10px 15px;
     cursor:pointer;
     z-index:3;
-    backdrop-filter:blur(10px);
     border-radius:50%;
 }
 
@@ -258,13 +257,15 @@ html{
     background:white;
     border-radius:16px;
     overflow:hidden;
-    box-shadow:0 8px 20px rgba(0,0,0,0.08);
-    transition:0.3s;
+    border:1px solid #e8ecf1;
+    box-shadow:0 8px 20px rgba(0,0,0,0.06);
+    transition:transform .25s ease, box-shadow .25s ease;
 }
 
-.menu-card:hover{
-    transform:translateY(-8px);
-    box-shadow:0 15px 35px rgba(0,0,0,0.15);
+.menu-card:hover,
+.menu-card:focus-within{
+    transform:translateY(-4px);
+    box-shadow:0 14px 28px rgba(0,0,0,0.12);
 }
 
 .menu-card img{
@@ -279,6 +280,23 @@ html{
     right:12px;
     box-shadow:0 2px 8px rgba(0,0,0,.15);
 }
+.menu-card-price{color:#9b2335;font-size:1.05rem}
+.menu-card-meta{color:#475569}
+.menu-card-tags .badge{font-size:.75rem;font-weight:600}
+
+.menu-badge-theme{background:#334155;color:#fff}
+.menu-badge-regime{background:#fef3c7;color:#713f12;border:1px solid #fcd34d}
+.menu-badge-dark{background:#1e293b;color:#fff}
+.menu-badge-info{background:#0e7490;color:#fff}
+.menu-badge-ok{background:#166534;color:#fff}
+.menu-badge-danger{background:#991b1b;color:#fff}
+.menu-badge-muted{background:#64748b;color:#fff}
+
+.menus-listing-page .menus-intro{max-width:42rem;margin-left:auto;margin-right:auto}
+.menus-filter-panel{background:#fff;border-radius:16px;padding:1.25rem 1.5rem;box-shadow:0 4px 16px rgba(0,0,0,.06);border:1px solid #e8ecf1}
+.menus-active-filters{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+.menus-filter-pill{background:#eef2ff;color:#312e81;border:1px solid #c7d2fe;font-weight:500;padding:.45em .75em}
+.menus-results-count{font-size:.95rem;color:#475569;margin-bottom:1rem;font-weight:600}
 
 /* ================= MENU CAROUSEL ================= */
 .menu-carousel .menu-carousel-img{
@@ -531,9 +549,11 @@ font-size:1.75rem;
 
 /* ================= MENU ORDER ================= */
 .menu-order-page{padding-bottom:120px}
-.menu-order-page .menu-order-header{margin-bottom:1.5rem}
-.menu-order-page .menu-price{font-size:1.75rem;font-weight:700;color:#c0392b;margin-bottom:.75rem}
-.menu-order-page .card-custom{background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.menu-order-page .menu-order-header{margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid var(--vg-gold,#c9a227)}
+.menu-order-page .menu-order-lead{max-width:40rem;margin-left:auto;margin-right:auto;font-size:1.05rem}
+.menu-order-page .menu-price{font-size:1.75rem;font-weight:700;color:#9b2335;margin-bottom:.75rem}
+.menu-order-page .menu-meta-badges .badge{font-size:.8rem;font-weight:600;padding:.45em .7em}
+.menu-order-page .card-custom{background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,.06);border:1px solid #e8ecf1}
 
 /* Wizard stepper */
 .menu-wizard{position:sticky;top:72px;z-index:200;background:#fff}
@@ -735,12 +755,14 @@ button[aria-disabled="true"].btn-success{opacity:.85}
 
 /* ================= PREMIUM SECTIONS ================= */
 .stat-card{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.06)}
-.stat-number{font-size:2rem;font-weight:700;color:var(--vg-gold,#c9a227)}
+.stat-number{font-size:2rem;font-weight:700;color:#3d2f07}
+.stat-card .text-muted{color:#4b5563!important}
+.menu-price{color:#7f1d1d}
 .boisson-card{transition:.2s}
 .boisson-card:hover{border-color:var(--vg-gold,#c9a227)!important}
 
-.btn-hero{background:var(--vg-gold,#c9a227);color:#1a1a2e;border:none;font-weight:600;padding:12px 32px;border-radius:50px}
-.btn-hero:hover{background:var(--vg-gold-light,#e8c547);color:#1a1a2e}
+.btn-hero{background:#9b1c1c;color:#fff;border:none;font-weight:600;padding:12px 32px;border-radius:50px}
+.btn-hero:hover{background:#7f1d1d;color:#fff}
 
 /* ================= USER SPACE ================= */
 .user-space .user-sidebar{border-radius:16px}
@@ -794,6 +816,146 @@ textarea:focus-visible,
 .text-muted{color:#5c6370!important}
 
 .breadcrumb-item+.breadcrumb-item::before{color:#5c6370}
+
+.breadcrumb-container .breadcrumb-item a{
+    color:#1a1a2e;
+    text-decoration:underline;
+    text-underline-offset:2px;
+}
+
+.breadcrumb-container .breadcrumb-item a:hover{color:#000}
+
+main .container a:not(.btn):not(.nav-link):not(.navbar-brand):not(.alert-link):not(.card-img-top){
+    color:#1e3a8a;
+    text-decoration:underline;
+    text-underline-offset:2px;
+}
+
+main .container a:not(.btn):not(.nav-link):not(.navbar-brand):not(.alert-link):hover{
+    color:#1a1a2e;
+}
+
+main code{
+    color:#1a1a2e;
+    background-color:#f1f5f9;
+}
+
+.btn-outline-dark{
+    --bs-btn-color:#1a1a2e;
+    --bs-btn-border-color:#1a1a2e;
+    --bs-btn-hover-color:#fff;
+    --bs-btn-hover-bg:#1a1a2e;
+    --bs-btn-hover-border-color:#1a1a2e;
+}
+
+.btn-outline-primary{
+    --bs-btn-color:#1e3a8a;
+    --bs-btn-border-color:#1e3a8a;
+    --bs-btn-hover-color:#fff;
+    --bs-btn-hover-bg:#1e3a8a;
+    --bs-btn-hover-border-color:#1e3a8a;
+}
+
+.footer-credits{color:#e2e8f0}
+
+.bg-dark.text-white .text-muted,
+.bg-dark .review-card .text-muted{
+    color:#e2e8f0!important;
+}
+
+.star-rating{
+    display:inline-flex;
+    gap:2px;
+    vertical-align:middle;
+}
+.star-rating-char.star-filled{color:#facc15}
+.star-rating-char.star-empty{color:#cbd5e1}
+
+.bg-dark .star-rating-char.star-filled{color:#fde047}
+.bg-dark .star-rating-char.star-empty{color:#94a3b8}
+
+.chart-details summary{
+    cursor:pointer;
+    font-size:.875rem;
+    color:#1a1a2e;
+    font-weight:600;
+}
+.chart-details summary:focus-visible{
+    outline:3px solid #c9a227;
+    outline-offset:2px;
+}
+
+.cookie-banner button:focus-visible{
+    outline:3px solid #fff;
+    outline-offset:2px;
+}
+
+/* Scroll jump (haut / bas) */
+.scroll-jump-nav{
+    position:fixed;
+    right:1rem;
+    bottom:1.25rem;
+    z-index:10050;
+    display:flex;
+    flex-direction:column;
+    gap:.45rem;
+    pointer-events:none;
+}
+.scroll-jump-btn{
+    width:2.5rem;
+    height:2.5rem;
+    padding:0;
+    border-radius:999px;
+    border:1px solid #cbd5e1;
+    background:rgba(255,255,255,.96);
+    color:#334155;
+    box-shadow:0 2px 12px rgba(15,23,42,.18);
+    opacity:1;
+    pointer-events:auto;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.scroll-jump-btn:hover{
+    color:#0f172a;
+    border-color:#94a3b8;
+    transform:translateY(-2px);
+    box-shadow:0 4px 16px rgba(15,23,42,.22);
+}
+.scroll-jump-btn[hidden]{
+    display:none!important;
+}
+.scroll-jump-btn:focus-visible{
+    outline:3px solid var(--vg-gold,#c9a227);
+    outline-offset:2px;
+}
+
+body:has(#cookie-banner:not([hidden])) .scroll-jump-nav,
+body:has(#cookie-banner[style*="block"]) .scroll-jump-nav{
+    bottom:5.75rem;
+}
+
+@media (max-width:576px){
+    .scroll-jump-nav{
+        right:.75rem;
+        bottom:1rem;
+    }
+    body:has(#cookie-banner:not([hidden])) .scroll-jump-nav,
+    body:has(#cookie-banner[style*="block"]) .scroll-jump-nav{
+        bottom:5.25rem;
+    }
+    .scroll-jump-btn{
+        width:2.35rem;
+        height:2.35rem;
+        font-size:.85rem;
+    }
+}
+
+.review-card-dark{
+    color:#fff;
+}
 
 @media (prefers-reduced-motion:reduce){
     html{scroll-behavior:auto}

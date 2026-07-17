@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require __DIR__ . '/partials/layout.php';
 ?>
 
-<h2 class="mb-4">Modifier le menu</h2>
+<h1 class="h2 mb-4">Modifier le menu</h1>
 
 <?php if (!empty($errorMsg)): ?>
 <div class="alert alert-danger"><?= htmlspecialchars($errorMsg) ?></div>

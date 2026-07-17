@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+require_once __DIR__ . '/a11y-helpers.php';
 
 function getBadge($theme){
     $themeLower = strtolower($theme);
@@ -20,6 +21,26 @@ function getBadge($theme){
 function sendMail($to, $subject, $body){
     $headers = "From: contact@vite-gourmand.fr\r\nContent-Type: text/plain; charset=UTF-8";
     return @mail($to, $subject, $body, $headers);
+}
+
+/** Notification creation compte employe — le mot de passe n'est jamais envoye par email (ECF). */
+function sendEmployeWelcomeEmail(string $email, string $prenom): bool
+{
+    require_once __DIR__ . '/seo.php';
+    $base = rtrim(getSiteBaseUrl(), '/');
+    if (str_ends_with($base, '/admin')) {
+        $base = substr($base, 0, -6);
+    }
+    $loginUrl = $base . '/admin/login.php';
+    $body = "Bonjour {$prenom},\n\n"
+        . "Un compte employe Vite & Gourmand a ete cree pour vous.\n\n"
+        . "Identifiant de connexion : {$email}\n"
+        . "Espace personnel : {$loginUrl}\n\n"
+        . "Votre mot de passe initial ne figure pas dans ce message pour des raisons de securite.\n"
+        . "Rapprochez-vous de votre administrateur pour l'obtenir.\n\n"
+        . "Vite & Gourmand";
+
+    return sendMail($email, 'Compte employe cree - Vite & Gourmand', $body);
 }
 
 function validatePassword($password){
@@ -62,6 +83,37 @@ function getStatutLabel(string $statut): string
 {
     $statuts = getStatutsCommande();
     return $statuts[$statut] ?? $statut;
+}
+
+/** Prochaines etapes autorisees dans le workflow traiteur (annulation via formulaire dedie). */
+function getAllowedNextStatuts(string $currentStatut): array
+{
+    $all = array_keys(getStatutsCommande());
+    $allowed = match ($currentStatut) {
+        'en_attente' => ['en_attente', 'acceptee'],
+        'acceptee' => ['acceptee', 'en_preparation'],
+        'en_preparation' => ['en_preparation', 'en_livraison'],
+        'en_livraison' => ['en_livraison', 'livre'],
+        'livre' => ['livre', 'en_attente_materiel', 'terminee'],
+        'en_attente_materiel' => ['en_attente_materiel', 'terminee'],
+        'terminee' => ['terminee'],
+        'annulee' => ['annulee'],
+        default => $all,
+    };
+
+    return array_values(array_intersect($all, $allowed));
+}
+
+function isStatutTransitionAllowed(string $from, string $to): bool
+{
+    if ($from === $to) {
+        return true;
+    }
+    if ($to === 'annulee') {
+        return false;
+    }
+
+    return in_array($to, getAllowedNextStatuts($from), true);
 }
 
 function enregistrerHistorique($pdo, $commande_id, $statut, $note = null, $staffId = null){
@@ -187,6 +239,15 @@ function csrfToken() {
 
 function csrfField() {
     return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(csrfToken()) . '">';
+}
+
+function renderPasswordToggle(string $inputId, ?string $checkboxId = null): string
+{
+    $checkboxId = $checkboxId ?? 'show-' . $inputId;
+    return '<div class="form-check mt-1">'
+        . '<input type="checkbox" class="form-check-input password-toggle-check" id="' . htmlspecialchars($checkboxId) . '" data-password-target="' . htmlspecialchars($inputId) . '" aria-controls="' . htmlspecialchars($inputId) . '">'
+        . '<label class="form-check-label small" for="' . htmlspecialchars($checkboxId) . '">Afficher le mot de passe</label>'
+        . '</div>';
 }
 
 function verifyCsrf($token) {

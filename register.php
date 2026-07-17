@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 require 'includes/db.php';
 require 'includes/helpers.php';
@@ -111,7 +111,7 @@ include 'includes/header.php';
         <input type="text" name="ville" id="reg-ville" class="form-control" required autocomplete="address-level2">
     </div>
 </div>
-<div class="mb-3"><label class="form-label" for="reg-password">Mot de passe <span class="text-danger" aria-hidden="true">*</span></label><input type="password" name="password" id="reg-password" class="form-control" required minlength="10" autocomplete="new-password" aria-describedby="register-help"></div>
+<div class="mb-3"><label class="form-label" for="reg-password">Mot de passe <span class="text-danger" aria-hidden="true">*</span></label><input type="password" name="password" id="reg-password" class="form-control" required minlength="10" autocomplete="new-password" aria-describedby="register-help"><?= renderPasswordToggle('reg-password') ?></div>
 <button type="submit" class="btn btn-primary">Creer le compte</button>
 </form>
 

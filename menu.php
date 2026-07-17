@@ -103,27 +103,11 @@ $savedCart = null;
 if (!empty($_SESSION['menu_cart']) && (int)($_SESSION['menu_cart_menu_id'] ?? 0) === $id) {
     $savedCart = $_SESSION['menu_cart'];
 }
-$resumeCommande = isset($_GET['resume']) && $_GET['resume'] === 'commande' && isset($_SESSION['user_id']);
+$resumeCommande = isset($_GET['resume']) && $_GET['resume'] === 'commande' && isset($_SESSION['user_id']) && !empty($savedCart);
 $activeCartTypes = array_values(array_filter(MENU_TYPES, static fn(string $t): bool => !empty($group[$t])));
 
 $galleryImages = getMenuGalleryImages($menu, $group, 10);
 $menuPriceLabel = formatMenuPriceLabel($menu);
-
-function platBadge(string $regime): string
-{
-    $map = [
-        'vegan' => ['Vegan', 'bg-success'],
-        'vegetarien' => ['Vegetarien', 'bg-warning text-dark'],
-        'sans gluten' => ['Sans gluten', 'bg-info text-dark'],
-        'sans lactose' => ['Sans lactose', 'bg-primary'],
-        'halal' => ['Halal', 'bg-dark'],
-        'pescetarien' => ['Pescetarien', 'bg-secondary'],
-        'classique' => ['Classique', 'bg-secondary'],
-    ];
-    $key = strtolower(trim($regime));
-    [$label, $cls] = $map[$key] ?? ['Classique', 'bg-secondary'];
-    return '<span class="badge ' . $cls . '">' . htmlspecialchars($label) . '</span>';
-}
 
 $pageTitle = htmlspecialchars($menu['titre']) . ' — Menu traiteur | Vite & Gourmand';
 $pageDescription = mb_substr(strip_tags($menu['description'] ?? 'Menu traiteur evenementiel a Bordeaux.'), 0, 160);
@@ -148,41 +132,42 @@ include 'includes/header.php';
 <div class="menu-order-header text-center mb-4">
     <h1><?= htmlspecialchars($menu['titre']) ?></h1>
     <?php if (!empty($menu['description'])): ?>
-    <p class="text-muted mb-2"><?= htmlspecialchars($menu['description']) ?></p>
+    <p class="menu-order-lead text-muted mb-3"><?= htmlspecialchars($menu['description']) ?></p>
     <?php endif; ?>
-    <p class="menu-price mb-2"><?= $menuPriceLabel ?></p>
-    <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
-        <?php if (!empty($menu['theme'])): ?>
-        <span class="badge bg-secondary"><?= htmlspecialchars(ucfirst($menu['theme'])) ?></span>
-        <?php endif; ?>
-        <?php if (!empty($menu['regime'])): ?>
-        <span class="badge bg-warning text-dark"><?= htmlspecialchars(ucfirst($menu['regime'])) ?></span>
-        <?php endif; ?>
-        <span class="badge bg-dark">Min. <?= $min ?> personnes</span>
-        <span class="badge bg-info text-dark">Delai <?= $delai ?> jours</span>
-        <span class="badge bg-success">Reduction -10% si +5 pers.</span>
+    <p class="menu-price mb-3" aria-label="Tarif"><?= $menuPriceLabel ?></p>
+    <ul class="menu-meta-badges list-unstyled d-flex flex-wrap justify-content-center gap-2 mb-0" aria-label="Caracteristiques du menu">
+        <?php
+        $themeKey = resolveMenuThemeKey($menu);
+        $regimeKey = resolveMenuRegimeKey($menu);
+        ?>
+        <li><span class="badge menu-badge-theme"><?= htmlspecialchars(ucfirst($themeKey)) ?></span></li>
+        <li><span class="badge menu-badge-regime"><?= htmlspecialchars(ucfirst($regimeKey)) ?></span></li>
+        <li><span class="badge menu-badge-dark">Min. <?= $min ?> personnes</span></li>
+        <li><span class="badge menu-badge-info">Delai <?= $delai ?> jours</span></li>
+        <li><span class="badge menu-badge-ok">Reduction -10% si +5 pers.</span></li>
         <?php if ($stock > 0): ?>
-        <span class="badge bg-success"><?= $stock ?> commande(s) possible(s)</span>
+        <li><span class="badge menu-badge-ok"><?= $stock ?> commande(s) possible(s)</span></li>
         <?php else: ?>
-        <span class="badge bg-danger">Rupture de stock</span>
+        <li><span class="badge menu-badge-danger">Rupture de stock</span></li>
         <?php endif; ?>
         <?php if (isset($_SESSION['user_id'])): ?>
-        <form method="POST" action="menu.php?id=<?= $id ?>" class="d-inline">
-            <?= csrfField() ?>
-            <input type="hidden" name="action" value="toggle_favori">
-            <input type="hidden" name="menu_id" value="<?= $id ?>">
-            <button type="submit" class="btn btn-sm <?= $isFavori ? 'btn-danger' : 'btn-outline-danger' ?>">
-                <i class="fa-<?= $isFavori ? 'solid' : 'regular' ?> fa-heart me-1"></i><?= $isFavori ? 'Favori' : 'Ajouter aux favoris' ?>
-            </button>
-        </form>
+        <li>
+            <form method="POST" action="menu.php?id=<?= $id ?>" class="d-inline">
+                <?= csrfField() ?>
+                <input type="hidden" name="action" value="toggle_favori">
+                <input type="hidden" name="menu_id" value="<?= $id ?>">
+                <button type="submit" class="btn btn-sm <?= $isFavori ? 'btn-danger' : 'btn-outline-danger' ?>" aria-pressed="<?= $isFavori ? 'true' : 'false' ?>">
+                    <i class="fa-<?= $isFavori ? 'solid' : 'regular' ?> fa-heart me-1" aria-hidden="true"></i><?= $isFavori ? 'Retirer des favoris' : 'Ajouter aux favoris' ?>
+                </button>
+            </form>
+        </li>
         <?php endif; ?>
-    </div>
-    <?php if ($stock > 0 && $hasOptions): ?>
-    <button type="button" class="btn btn-success btn-lg" id="btn-commander-top">
-        <i class="fa-solid fa-cart-shopping me-2"></i>Commander ce menu
-    </button>
-    <?php endif; ?>
+    </ul>
 </div>
+
+<?php if ($stock > 0 && $hasOptions): ?>
+<a href="#step-invites" class="visually-hidden-focusable btn btn-sm btn-outline-primary d-inline-block mb-4">Aller au formulaire de commande</a>
+<?php endif; ?>
 
 <?php if (!empty($menu['conditions'])): ?>
 <div class="alert alert-warning border border-warning border-3 shadow-sm menu-conditions-alert mb-4" role="alert">
@@ -233,7 +218,7 @@ if ($cartFlash):
 <?php endif; ?>
 
 <?php if ($resumeCommande && $savedCart): ?>
-<div class="alert alert-success" role="status">Connecte — votre selection a ete restauree. Verifiez le recapitulatif puis continuez la commande.</div>
+<div class="alert alert-success" role="status">Connecte — votre selection a ete restauree. Verifiez le recapitulatif puis cliquez sur « Continuer la commande ».</div>
 <?php endif; ?>
 
 <div class="menu-wizard card-custom mb-4" id="wizard-stepper">
@@ -1155,11 +1140,6 @@ document.addEventListener('keydown', (e) => {
         goToStep(currentStepIndex - 1);
         e.preventDefault();
     }
-});
-
-document.getElementById('btn-commander-top')?.addEventListener('click', () => {
-    goToStep(0);
-    document.getElementById('step-invites')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 document.querySelectorAll('.btn-autofill-all').forEach(btn => {

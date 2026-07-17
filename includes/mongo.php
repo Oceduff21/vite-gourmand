@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/config.php';
 
 function getMongoManager() {
@@ -25,8 +25,29 @@ function mongoInsertCommandeStat(array $data) {
             'menu_titre' => $data['menu_titre'],
             'prix_total' => (float)$data['prix_total'],
             'nb_personnes' => (int)$data['nb_personnes'],
+            'statut' => $data['statut'] ?? 'en_attente',
             'date' => new MongoDB\BSON\UTCDateTime()
         ]);
+        $manager->executeBulkWrite(MONGO_DB . '.' . MONGO_COLLECTION, $bulk);
+        return true;
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+function mongoUpdateCommandeStatut(int $commandeId, string $statut): bool
+{
+    $manager = getMongoManager();
+    if (!$manager) {
+        return false;
+    }
+    try {
+        $bulk = new MongoDB\Driver\BulkWrite();
+        $bulk->update(
+            ['commande_id' => $commandeId],
+            ['$set' => ['statut' => $statut]],
+            ['multi' => false]
+        );
         $manager->executeBulkWrite(MONGO_DB . '.' . MONGO_COLLECTION, $bulk);
         return true;
     } catch (Throwable $e) {
@@ -39,7 +60,14 @@ function mongoGetCAparMenu($menuId = null, $dateDebut = null, $dateFin = null) {
     if (!$manager) {
         return [];
     }
-    $filter = [];
+
+    $filter = [
+        '$or' => [
+            ['statut' => ['$exists' => false]],
+            ['statut' => ['$nin' => ['annulee']]],
+        ],
+    ];
+
     if ($menuId) {
         $filter['menu_id'] = (int)$menuId;
     }
@@ -52,11 +80,16 @@ function mongoGetCAparMenu($menuId = null, $dateDebut = null, $dateFin = null) {
             $filter['date']['$lte'] = new MongoDB\BSON\UTCDateTime(strtotime($dateFin . ' 23:59:59') * 1000);
         }
     }
+
     try {
         $query = new MongoDB\Driver\Query($filter);
         $cursor = $manager->executeQuery(MONGO_DB . '.' . MONGO_COLLECTION, $query);
         $result = [];
         foreach ($cursor as $doc) {
+            $docStatut = $doc->statut ?? '';
+            if ($docStatut === 'annulee') {
+                continue;
+            }
             $mid = $doc->menu_id ?? 0;
             $titre = $doc->menu_titre ?? 'Inconnu';
             if (!isset($result[$mid])) {
@@ -65,6 +98,7 @@ function mongoGetCAparMenu($menuId = null, $dateDebut = null, $dateFin = null) {
             $result[$mid]['total'] += (float)($doc->prix_total ?? 0);
             $result[$mid]['count']++;
         }
+        usort($result, static fn($a, $b) => $b['count'] <=> $a['count'] ?: $b['total'] <=> $a['total']);
         return array_values($result);
     } catch (Exception $e) {
         return [];

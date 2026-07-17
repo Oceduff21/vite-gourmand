@@ -52,33 +52,33 @@ include 'partials/layout.php';
 ?>
 
 <div class="card-custom">
-    <h2 class="mb-4">Gestion des boissons</h2>
+    <h1 class="h2 mb-4">Gestion des boissons</h1>
 
-    <?php if ($message): ?><div class="alert alert-success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
-    <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+    <?php if ($message): ?><div class="alert alert-success" role="alert"><?= htmlspecialchars($message) ?></div><?php endif; ?>
+    <?php if ($error): ?><div class="alert alert-danger" role="alert"><?= htmlspecialchars($error) ?></div><?php endif; ?>
 
     <form method="POST" class="row g-3 mb-4">
         <?= csrfField() ?>
         <input type="hidden" name="action" value="add">
         <div class="col-md-4">
-            <label class="form-label">Nom</label>
-            <input type="text" name="nom" class="form-control" required>
+            <label class="form-label" for="boisson-nom">Nom</label>
+            <input type="text" name="nom" id="boisson-nom" class="form-control" required>
         </div>
         <div class="col-md-2">
-            <label class="form-label">Prix (EUR)</label>
-            <input type="number" step="0.01" name="prix" class="form-control" value="0">
+            <label class="form-label" for="boisson-prix">Prix (EUR)</label>
+            <input type="number" step="0.01" name="prix" id="boisson-prix" class="form-control" value="0">
         </div>
         <div class="col-md-3">
-            <label class="form-label">Categorie</label>
-            <select name="categorie" class="form-select">
+            <label class="form-label" for="boisson-categorie">Categorie</label>
+            <select name="categorie" id="boisson-categorie" class="form-select">
                 <?php foreach ($categories as $k => $label): ?>
                 <option value="<?= $k ?>"><?= htmlspecialchars($label) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
         <div class="col-md-3">
-            <label class="form-label">Description</label>
-            <input type="text" name="description" class="form-control">
+            <label class="form-label" for="boisson-description">Description</label>
+            <input type="text" name="description" id="boisson-description" class="form-control">
         </div>
         <div class="col-12">
             <button type="submit" class="btn btn-primary">Ajouter</button>
@@ -87,7 +87,14 @@ include 'partials/layout.php';
 
     <div class="table-responsive">
         <table class="table table-hover align-middle">
-            <thead><tr><th>ID</th><th>Nom</th><th>Categorie</th><th>Prix</th><th></th></tr></thead>
+            <caption class="visually-hidden">Liste des boissons</caption>
+            <thead><tr>
+                <th scope="col">ID</th>
+                <th scope="col">Nom</th>
+                <th scope="col">Categorie</th>
+                <th scope="col">Prix</th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr></thead>
             <tbody>
             <?php foreach ($boissons as $b): ?>
             <tr>

@@ -15,23 +15,23 @@ $menus = $pdo->query('
 
 <?php include 'partials/layout.php'; ?>
 
-<h2 class="mb-4">Gestion des menus</h2>
+<h1 class="h2 mb-4">Gestion des menus</h1>
 
 <a href="add-menu.php" class="btn btn-success mb-3">+ Ajouter un menu</a>
 
 <div class="card-custom">
 
 <table class="table table-hover">
-
+<caption class="visually-hidden">Liste des menus</caption>
 <thead class="table-light">
 <tr>
-<th>Titre</th>
-<th>Theme</th>
-<th>Prix</th>
-<th>Min</th>
-<th>Plats (E/P/D)</th>
-<th>Stock</th>
-<th>Actions</th>
+<th scope="col">Titre</th>
+<th scope="col">Theme</th>
+<th scope="col">Prix</th>
+<th scope="col">Min</th>
+<th scope="col">Plats (E/P/D)</th>
+<th scope="col">Stock</th>
+<th scope="col"><span class="visually-hidden">Actions</span></th>
 </tr>
 </thead>
 

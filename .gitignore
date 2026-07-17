@@ -2,3 +2,6 @@
 *.log
 vendor/
 includes/config.local.php
+deploy/
+*.tmp.odt
+

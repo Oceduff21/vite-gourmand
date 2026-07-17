@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 require 'includes/db.php';
 require 'includes/helpers.php';
@@ -48,22 +48,29 @@ if ($stock <= 0) {
 }
 
 $delaiJours = (int)($menu['delai_jours'] ?? 7);
+$cart = normalizeCartFromPost($_POST['cart_json'] ?? '');
 $delaiError = validateDateLivraisonMenu($date, $delaiJours);
 if ($delaiError) {
+    $_SESSION['commande_recap_confirmed'] = true;
+    $_SESSION['menu_cart'] = $cart;
+    $_SESSION['menu_cart_menu_id'] = $menu_id;
     $_SESSION['menu_cart_error'] = $delaiError;
-    header('Location: commande.php?menu_id=' . $menu_id);
+    header('Location: commande.php?menu_id=' . $menu_id . '&step=livraison');
     exit();
 }
 
-$cart = normalizeCartFromPost($_POST['cart_json'] ?? '');
 $cartError = validatePlatSelection($pdo, $menu_id, $cart, $quantite, $min);
 if ($cartError) {
+    $_SESSION['menu_cart'] = $cart;
+    $_SESSION['menu_cart_menu_id'] = $menu_id;
     $_SESSION['menu_cart_error'] = $cartError;
     header('Location: menu.php?id=' . $menu_id);
     exit();
 }
 
 if ((int)($cart['invites'] ?? 0) !== $quantite) {
+    $_SESSION['menu_cart'] = $cart;
+    $_SESSION['menu_cart_menu_id'] = $menu_id;
     $_SESSION['menu_cart_error'] = 'Le nombre de personnes doit correspondre a la repartition des plats.';
     header('Location: menu.php?id=' . $menu_id);
     exit();
@@ -106,7 +113,6 @@ $commande_id = (int)$pdo->lastInsertId();
 
 enregistrerHistorique($pdo, $commande_id, 'en_attente');
 
-$cart = normalizeCartFromPost($_POST['cart_json'] ?? '');
 if ($cart) {
     foreach (['entree', 'plat', 'dessert'] as $type) {
         if (empty($cart[$type]) || !is_array($cart[$type])) {
@@ -143,7 +149,7 @@ if (!empty($cart['boissons']) && is_array($cart['boissons'])) {
     }
 }
 
-unset($_SESSION['menu_cart'], $_SESSION['menu_cart_menu_id']);
+unset($_SESSION['menu_cart'], $_SESSION['menu_cart_menu_id'], $_SESSION['commande_recap_confirmed']);
 
 $pdo->prepare('UPDATE menus SET stock = stock - 1 WHERE id = ? AND stock > 0')->execute([$menu_id]);
 
@@ -163,7 +169,8 @@ mongoInsertCommandeStat([
     'menu_id' => $menu_id,
     'menu_titre' => $menu['titre'],
     'prix_total' => $total,
-    'nb_personnes' => $quantite
+    'nb_personnes' => $quantite,
+    'statut' => 'en_attente',
 ]);
 
 $stmt = $pdo->prepare('SELECT email, nom, prenom FROM users WHERE id = ?');
@@ -177,7 +184,7 @@ if ($user && !empty($user['email'])) {
         $message .= ' (dont ' . $nbEnfants . ' enfant(s))';
     }
     $message .= "\nDate : " . $date . ' a ' . $heure . "\nAdresse : " . $numero . ' ' . $rue . ', ' . $code_postal . ' ' . $ville . "\nTotal : " . $total . " EUR\n\nMerci de votre confiance !";
-    @mail($user['email'], $subject, $message, 'From: contact@vite-gourmand.fr');
+    sendMail($user['email'], $subject, $message);
 }
 
 header('Location: confirmation.php?id=' . $commande_id);

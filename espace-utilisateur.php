@@ -80,12 +80,12 @@ include 'includes/header.php';
                 <h5 class="mb-0"><?= htmlspecialchars(($user['prenom'] ?? '') . ' ' . ($user['nom'] ?? '')) ?></h5>
                 <small class="text-muted"><?= htmlspecialchars($user['email'] ?? '') ?></small>
             </div>
-            <nav class="nav flex-column user-nav">
-                <a class="nav-link <?= $tab === 'dashboard' ? 'active' : '' ?>" href="?tab=dashboard"><i class="fa-solid fa-gauge me-2"></i> Tableau de bord</a>
-                <a class="nav-link <?= $tab === 'commandes' ? 'active' : '' ?>" href="?tab=commandes"><i class="fa-solid fa-receipt me-2"></i> Mes commandes</a>
-                <a class="nav-link <?= $tab === 'favoris' ? 'active' : '' ?>" href="?tab=favoris"><i class="fa-solid fa-heart me-2"></i> Favoris <?= $stats['favoris'] ? '<span class="badge bg-danger">' . $stats['favoris'] . '</span>' : '' ?></a>
-                <a class="nav-link <?= $tab === 'notifications' ? 'active' : '' ?>" href="?tab=notifications"><i class="fa-solid fa-bell me-2"></i> Notifications <?= $unreadCount ? '<span class="badge bg-warning text-dark">' . $unreadCount . '</span>' : '' ?></a>
-                <a class="nav-link <?= $tab === 'profil' ? 'active' : '' ?>" href="?tab=profil"><i class="fa-solid fa-id-card me-2"></i> Mon profil</a>
+            <nav class="nav flex-column user-nav" aria-label="Navigation espace client">
+                <a class="nav-link <?= $tab === 'dashboard' ? 'active' : '' ?>" href="?tab=dashboard" <?= $tab === 'dashboard' ? 'aria-current="page"' : '' ?>><i class="fa-solid fa-gauge me-2" aria-hidden="true"></i> Tableau de bord</a>
+                <a class="nav-link <?= $tab === 'commandes' ? 'active' : '' ?>" href="?tab=commandes" <?= $tab === 'commandes' ? 'aria-current="page"' : '' ?>><i class="fa-solid fa-receipt me-2" aria-hidden="true"></i> Mes commandes</a>
+                <a class="nav-link <?= $tab === 'favoris' ? 'active' : '' ?>" href="?tab=favoris" <?= $tab === 'favoris' ? 'aria-current="page"' : '' ?>><i class="fa-solid fa-heart me-2" aria-hidden="true"></i> Favoris <?= $stats['favoris'] ? '<span class="badge bg-danger">' . $stats['favoris'] . '</span>' : '' ?></a>
+                <a class="nav-link <?= $tab === 'notifications' ? 'active' : '' ?>" href="?tab=notifications" <?= $tab === 'notifications' ? 'aria-current="page"' : '' ?>><i class="fa-solid fa-bell me-2" aria-hidden="true"></i> Notifications <?= $unreadCount ? '<span class="badge bg-warning text-dark">' . $unreadCount . '</span>' : '' ?></a>
+                <a class="nav-link <?= $tab === 'profil' ? 'active' : '' ?>" href="?tab=profil" <?= $tab === 'profil' ? 'aria-current="page"' : '' ?>><i class="fa-solid fa-id-card me-2" aria-hidden="true"></i> Mon profil</a>
             </nav>
             <hr>
             <a href="menus.php" class="btn btn-warning w-100 btn-sm">Commander un menu</a>
@@ -93,6 +93,8 @@ include 'includes/header.php';
     </div>
 
     <div class="col-lg-9">
+
+        <h1 class="visually-hidden">Mon espace</h1>
 
         <?php if ($tab === 'dashboard'): ?>
         <h2 class="mb-4">Tableau de bord</h2>
@@ -146,7 +148,14 @@ include 'includes/header.php';
         <?php else: ?>
         <div class="table-responsive card shadow-sm">
             <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light"><tr><th>Menu</th><th>Date</th><th>Total</th><th>Statut</th><th></th></tr></thead>
+                <caption class="visually-hidden">Dernieres commandes</caption>
+                <thead class="table-light"><tr>
+                    <th scope="col">Menu</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Total</th>
+                    <th scope="col">Statut</th>
+                    <th scope="col"><span class="visually-hidden">Actions</span></th>
+                </tr></thead>
                 <tbody>
                 <?php foreach (array_slice($commandes, 0, 5) as $c): ?>
                 <tr>
@@ -154,7 +163,7 @@ include 'includes/header.php';
                     <td><?= date('d/m/Y', strtotime($c['date_livraison'])) ?></td>
                     <td><?= number_format((float)$c['prix_total'], 2) ?> &euro;</td>
                     <td><span class="badge bg-<?= getStatutBadgeClass($c['statut']) ?>"><?= htmlspecialchars(getStatutLabel($c['statut'])) ?></span></td>
-                    <td><a href="?tab=commandes" class="btn btn-sm btn-outline-dark">Details</a></td>
+                    <td><a href="detail-commande.php?id=<?= (int)$c['id'] ?>" class="btn btn-sm btn-outline-dark">Details</a></td>
                 </tr>
                 <?php endforeach; ?>
                 </tbody>
@@ -181,6 +190,7 @@ include 'includes/header.php';
                     <div class="col-12"><i class="fa-solid fa-location-dot me-1"></i> <?= htmlspecialchars($c['numero'] . ' ' . $c['rue'] . ', ' . $c['code_postal'] . ' ' . $c['ville']) ?></div>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
+                    <a href="detail-commande.php?id=<?= (int)$c['id'] ?>" class="btn btn-dark btn-sm">Voir le detail</a>
                     <?php if ($c['statut'] === 'en_attente'): ?>
                     <a href="modifier-commande.php?id=<?= (int)$c['id'] ?>" class="btn btn-warning btn-sm">Modifier</a>
                     <form method="POST" action="annuler-commande.php" class="d-inline" onsubmit="return confirm('Annuler cette commande ?')">
@@ -190,7 +200,7 @@ include 'includes/header.php';
                     </form>
                     <?php endif; ?>
                     <?php if (!in_array($c['statut'], ['annulee'], true)): ?>
-                    <a href="suivi-commande.php?id=<?= (int)$c['id'] ?>" class="btn btn-info btn-sm">Suivi</a>
+                    <a href="detail-commande.php?id=<?= (int)$c['id'] ?>#suivi" class="btn btn-info btn-sm">Suivi</a>
                     <?php endif; ?>
                     <?php if (in_array($c['statut'], getReviewEligibleStatuts(), true)): ?>
                         <?php if (userHasReviewForOrder($pdo, $user_id, (int)$c['id'])): ?>
@@ -229,7 +239,7 @@ include 'includes/header.php';
                                 <?= csrfField() ?>
                                 <input type="hidden" name="action" value="toggle_favori">
                                 <input type="hidden" name="menu_id" value="<?= (int)$m['id'] ?>">
-                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Retirer"><i class="fa-solid fa-heart-crack"></i></button>
+                                <button type="submit" class="btn btn-outline-danger btn-sm" aria-label="Retirer <?= htmlspecialchars($m['titre']) ?> des favoris"><i class="fa-solid fa-heart-crack" aria-hidden="true"></i></button>
                             </form>
                         </div>
                     </div>
@@ -283,39 +293,57 @@ include 'includes/header.php';
         <?php elseif ($tab === 'profil'): ?>
         <h2 class="mb-4">Mon profil</h2>
         <div class="card border-0 shadow-sm p-4">
-            <form method="POST" action="update-user.php">
+            <form method="POST" action="update-user.php" aria-describedby="profil-help">
                 <?= csrfField() ?>
+                <p id="profil-help" class="visually-hidden">Modifiez vos informations personnelles et votre adresse.</p>
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label">Nom</label>
-                        <input type="text" name="nom" class="form-control" value="<?= htmlspecialchars($user['nom'] ?? '') ?>" required>
+                        <label class="form-label" for="profil-nom">Nom</label>
+                        <input type="text" name="nom" id="profil-nom" class="form-control" value="<?= htmlspecialchars($user['nom'] ?? '') ?>" required autocomplete="family-name">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Prenom</label>
-                        <input type="text" name="prenom" class="form-control" value="<?= htmlspecialchars($user['prenom'] ?? '') ?>" required>
+                        <label class="form-label" for="profil-prenom">Prenom</label>
+                        <input type="text" name="prenom" id="profil-prenom" class="form-control" value="<?= htmlspecialchars($user['prenom'] ?? '') ?>" required autocomplete="given-name">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Email</label>
-                        <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($user['email'] ?? '') ?>" required>
+                        <label class="form-label" for="profil-email">Email</label>
+                        <input type="email" name="email" id="profil-email" class="form-control" value="<?= htmlspecialchars($user['email'] ?? '') ?>" required autocomplete="email">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Telephone</label>
-                        <input type="tel" name="telephone" class="form-control" value="<?= htmlspecialchars($user['telephone'] ?? $user['gsm'] ?? '') ?>" required>
+                        <label class="form-label" for="profil-telephone">Telephone</label>
+                        <input type="tel" name="telephone" id="profil-telephone" class="form-control" value="<?= htmlspecialchars($user['telephone'] ?? $user['gsm'] ?? '') ?>" required autocomplete="tel">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Date de naissance</label>
-                        <input type="date" name="date_naissance" class="form-control" value="<?= htmlspecialchars($user['date_naissance'] ?? '') ?>">
+                        <label class="form-label" for="profil-naissance">Date de naissance</label>
+                        <input type="date" name="date_naissance" id="profil-naissance" class="form-control" value="<?= htmlspecialchars($user['date_naissance'] ?? '') ?>">
                     </div>
                 </div>
                 <hr>
-                <h5>Adresse</h5>
+                <h3 class="h5">Adresse</h3>
                 <div class="row g-3">
-                    <div class="col-md-6"><label class="form-label">Rue</label><input type="text" name="rue" class="form-control" value="<?= htmlspecialchars($user['rue'] ?? '') ?>" required></div>
-                    <div class="col-md-2"><label class="form-label">Numero</label><input type="text" name="numero" class="form-control" value="<?= htmlspecialchars($user['numero'] ?? '') ?>" required></div>
-                    <div class="col-md-4"><label class="form-label">Complement</label><input type="text" name="complement" class="form-control" value="<?= htmlspecialchars($user['complement'] ?? '') ?>"></div>
-                    <div class="col-md-4"><label class="form-label">Code postal</label><input type="text" name="code_postal" class="form-control" value="<?= htmlspecialchars($user['code_postal'] ?? '') ?>" required></div>
-                    <div class="col-md-8"><label class="form-label">Ville</label><input type="text" name="ville" class="form-control" value="<?= htmlspecialchars($user['ville'] ?? '') ?>" required></div>
-                    <div class="col-12"><button type="submit" class="btn btn-primary">Enregistrer</button></div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="profil-rue">Rue</label>
+                        <input type="text" name="rue" id="profil-rue" class="form-control" value="<?= htmlspecialchars($user['rue'] ?? '') ?>" required autocomplete="street-address">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" for="profil-numero">Numero</label>
+                        <input type="text" name="numero" id="profil-numero" class="form-control" value="<?= htmlspecialchars($user['numero'] ?? '') ?>" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="profil-complement">Complement</label>
+                        <input type="text" name="complement" id="profil-complement" class="form-control" value="<?= htmlspecialchars($user['complement'] ?? '') ?>" autocomplete="address-line2">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="profil-cp">Code postal</label>
+                        <input type="text" name="code_postal" id="profil-cp" class="form-control" value="<?= htmlspecialchars($user['code_postal'] ?? '') ?>" required autocomplete="postal-code">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label" for="profil-ville">Ville</label>
+                        <input type="text" name="ville" id="profil-ville" class="form-control" value="<?= htmlspecialchars($user['ville'] ?? '') ?>" required autocomplete="address-level2">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
                 </div>
             </form>
         </div>

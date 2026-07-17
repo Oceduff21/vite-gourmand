@@ -1,18 +1,21 @@
 <?php
 
-function setFlash($message){
-$_SESSION["flash"] = $message;
+function setFlash(string $message, string $type = 'success'): void
+{
+    $_SESSION['flash'] = $message;
+    $_SESSION['flash_type'] = in_array($type, ['success', 'danger', 'warning', 'info'], true) ? $type : 'success';
 }
 
-function showFlash(){
+function showFlash(): void
+{
+    if (!isset($_SESSION['flash'])) {
+        return;
+    }
 
-if(isset($_SESSION["flash"])){
+    $type = $_SESSION['flash_type'] ?? 'success';
+    echo '<div class="alert alert-' . htmlspecialchars($type) . '" role="alert">'
+        . htmlspecialchars($_SESSION['flash'])
+        . '</div>';
 
-echo '<div class="alert alert-success">'
-.$_SESSION["flash"].
-'</div>';
-
-unset($_SESSION["flash"]);
-
-}
+    unset($_SESSION['flash'], $_SESSION['flash_type']);
 }

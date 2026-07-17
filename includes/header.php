@@ -51,7 +51,7 @@ function isActive($pages, $currentPage){
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
 <!-- CSS Perso -->
-<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/style.css?v=20260717b">
 <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
 
 <script type="application/ld+json">
@@ -153,7 +153,7 @@ function isActive($pages, $currentPage){
                     <?php if(in_array($_SESSION["user_role"] ?? '', ['admin', 'employe'])): ?>
                         <li class="nav-item me-2">
                             <a class="nav-link text-danger fw-semibold" href="admin/index.php">
-                                <i class="fa-solid fa-shield-halved me-1"></i> Admin
+                                <i class="fa-solid fa-shield-halved me-1" aria-hidden="true"></i> Admin
                             </a>
                         </li>
                     <?php endif; ?>
@@ -170,7 +170,7 @@ function isActive($pages, $currentPage){
                         <a class="nav-link" href="register.php">Inscription</a>
                     </li>
                     <li class="nav-item"><a class="btn btn-dark rounded-pill px-4" href="login.php">
-                            <i class="fa-solid fa-right-to-bracket me-1"></i> Connexion
+                            <i class="fa-solid fa-right-to-bracket me-1" aria-hidden="true"></i> Connexion
                         </a>
                     </li>
 
@@ -217,8 +217,11 @@ if($page === 'menu.php' && isset($_GET['id'])){
         'contact.php' => 'Contact',
         'commande.php' => 'Commande',
         'login.php' => 'Connexion',
+        'mot-de-passe-oublie.php' => 'Mot de passe oublie',
+        'reinitialiser-mot-de-passe.php' => 'Reinitialiser mot de passe',
         'espace-utilisateur.php' => 'Mon espace',
         'mentions-legales.php' => 'Mentions legales',
+        'accessibilite.php' => 'Accessibilite',
         'cgv.php' => 'CGV'
     ];
 
@@ -226,6 +229,7 @@ if($page === 'menu.php' && isset($_GET['id'])){
 }
 ?>
 
+<?php if ($page !== 'index.php'): ?>
 <div class="breadcrumb-container py-2 bg-light border-bottom">
     <div class="container">
         <nav aria-label="Fil d'Ariane">
@@ -245,6 +249,7 @@ if($page === 'menu.php' && isset($_GET['id'])){
         </nav>
     </div>
 </div>
+<?php endif; ?>
 
 <!-- CONTENU -->
 <?php $mainClass = ($page === 'index.php') ? '' : ' class="container mt-4"'; ?>

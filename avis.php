@@ -87,15 +87,16 @@ include 'includes/header.php';
     <h1 class="mb-2">Avis clients</h1>
     <p class="text-muted mb-3">Ce que disent nos clients apres leurs evenements</p>
     <?php if ($nbAvis > 0): ?>
-    <div class="d-inline-flex align-items-center gap-2 bg-light rounded-pill px-4 py-2">
-        <span class="fs-3 fw-bold text-warning"><?= number_format($moyenne, 1) ?></span>
-        <span class="text-muted">/ 5 — <?= $nbAvis ?> avis verifie(s)</span>
+    <div class="d-inline-flex align-items-center gap-2 bg-light rounded-pill px-4 py-2" role="status">
+        <span class="visually-hidden">Note moyenne :</span>
+        <span class="fs-3 fw-bold text-warning" aria-hidden="true"><?= number_format($moyenne, 1) ?></span>
+        <span><?= number_format($moyenne, 1) ?> / 5 — <?= $nbAvis ?> avis verifie(s)</span>
     </div>
     <?php endif; ?>
 </div>
 
 <?php if ($message): ?>
-<div class="alert alert-<?= htmlspecialchars($messageType) ?> col-lg-8 mx-auto"><?= htmlspecialchars($message) ?></div>
+<div class="alert alert-<?= htmlspecialchars($messageType) ?> col-lg-8 mx-auto" role="alert"><?= htmlspecialchars($message) ?></div>
 <?php endif; ?>
 
 <?php if (!empty($pendingReviews) && !$showForm): ?>
@@ -128,16 +129,16 @@ include 'includes/header.php';
         <?= csrfField() ?>
         <input type="hidden" name="commande_id" value="<?= $commande_id ?>">
         <div class="mb-3">
-            <label class="form-label">Note</label>
-            <select name="note" class="form-select" required>
+            <label class="form-label" for="avis-note">Note</label>
+            <select name="note" id="avis-note" class="form-select" required>
                 <?php for ($i = 5; $i >= 1; $i--): ?>
-                <option value="<?= $i ?>"><?= $i ?> etoile(s)</option>
+                <option value="<?= $i ?>"><?= $i ?> etoile(s) sur 5</option>
                 <?php endfor; ?>
             </select>
         </div>
         <div class="mb-3">
-            <label class="form-label">Votre commentaire</label>
-            <textarea name="commentaire" class="form-control" rows="4" required placeholder="Qualite des plats, ponctualite, service..."></textarea>
+            <label class="form-label" for="avis-commentaire">Votre commentaire</label>
+            <textarea name="commentaire" id="avis-commentaire" class="form-control" rows="4" required placeholder="Qualite des plats, ponctualite, service..."></textarea>
         </div>
         <button class="btn btn-success">Envoyer mon avis</button>
         <a href="avis.php" class="btn btn-outline-secondary ms-2">Annuler</a>
@@ -169,12 +170,10 @@ include 'includes/header.php';
     ?>
     <div class="col-md-6 col-lg-4">
         <div class="review-card h-100 p-4 bg-white rounded-4 shadow-sm">
-            <div class="mb-2 text-warning">
-                <?php for ($i = 1; $i <= 5; $i++): ?>
-                <i class="fa-solid fa-star<?= $i <= (int)$a['note'] ? '' : ' text-muted opacity-25' ?>"></i>
-                <?php endfor; ?>
+            <div class="mb-2">
+                <?= renderStarRating((int)$a['note']) ?>
             </div>
-            <p class="mb-3">"<?= htmlspecialchars($a['commentaire']) ?>"</p>
+            <blockquote class="mb-3"><p class="mb-0">« <?= htmlspecialchars($a['commentaire']) ?> »</p></blockquote>
             <div class="d-flex align-items-center gap-2">
                 <span class="rounded-circle bg-warning text-dark d-inline-flex align-items-center justify-content-center" style="width:36px;height:36px;font-weight:700"><?= htmlspecialchars($initiale) ?></span>
                 <div>

@@ -1,7 +1,7 @@
 <?php
 /** Dashboard employe — sans donnees financieres (CA, panier moyen). */
 ?>
-<h2 class="mb-1">Mon espace employe</h2>
+<h1 class="h2 mb-1">Mon espace employe</h1>
 <p class="text-muted mb-4">Suivi operationnel de vos prestations — chiffre d'affaires reserve a l'administration.</p>
 
 <?php if ($dashboardError): ?>
@@ -20,12 +20,14 @@
         <div class="card-custom text-center">
             <h6 class="text-muted small mb-1">En preparation</h6>
             <strong class="fs-5 text-info"><?= $enPreparation ?></strong>
+            <?php if ($enPreparation): ?><div><a href="admin-commandes.php?statut=en_preparation" class="small">Voir</a></div><?php endif; ?>
         </div>
     </div>
     <div class="col-6 col-md-4 col-xl-2">
         <div class="card-custom text-center">
             <h6 class="text-muted small mb-1">En livraison</h6>
             <strong class="fs-5"><?= $enLivraison ?></strong>
+            <?php if ($enLivraison): ?><div><a href="admin-commandes.php?statut=en_livraison" class="small">Voir</a></div><?php endif; ?>
         </div>
     </div>
     <div class="col-6 col-md-4 col-xl-2">
@@ -49,17 +51,57 @@
     </div>
 </div>
 
+<div class="card-custom mb-4">
+    <h5 class="mb-3">Rechercher une commande</h5>
+    <form method="GET" action="admin-commandes.php" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small fw-semibold" for="filtre-statut">Statut</label>
+            <select name="statut" id="filtre-statut" class="form-select">
+                <option value="">Tous les statuts</option>
+                <?php foreach (getStatutsCommande() as $k => $label): ?>
+                <option value="<?= $k ?>"><?= htmlspecialchars($label) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-md-5">
+            <label class="form-label small fw-semibold" for="filtre-client">Client</label>
+            <input type="text" name="client" id="filtre-client" class="form-control" placeholder="Nom, prenom ou email">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">Filtrer les commandes</button>
+        </div>
+    </form>
+</div>
+
 <div class="row g-4 mb-4">
     <div class="col-lg-6">
         <div class="card-custom">
             <h5 class="mb-3">Repartition des commandes par statut</h5>
-            <div class="chart-wrap"><canvas id="chartStatuts"></canvas></div>
+            <?php
+            $statutRowsEmp = [];
+            foreach ($statutsBreakdown as $row) {
+                $statutRowsEmp[] = [$row['label'], (int)$row['count']];
+            }
+            ?>
+            <div class="chart-wrap" <?= chartFigureAttrs('Repartition des commandes par statut', 'table-emp-statuts') ?>>
+                <canvas id="chartStatuts" aria-hidden="true" role="presentation"></canvas>
+            </div>
+            <?= renderChartDataTable('Statuts commandes', ['Statut', 'Nombre'], $statutRowsEmp, 'table-emp-statuts') ?>
         </div>
     </div>
     <div class="col-lg-6">
         <div class="card-custom">
             <h5 class="mb-3">Volume de commandes (30 jours)</h5>
-            <div class="chart-wrap"><canvas id="chartJour"></canvas></div>
+            <?php
+            $jourRowsEmp = [];
+            foreach ($dates as $i => $d) {
+                $jourRowsEmp[] = [$d, (int)($totaux[$i] ?? 0)];
+            }
+            ?>
+            <div class="chart-wrap" <?= chartFigureAttrs('Volume de commandes sur 30 jours', 'table-emp-jour') ?>>
+                <canvas id="chartJour" aria-hidden="true" role="presentation"></canvas>
+            </div>
+            <?= renderChartDataTable('Commandes par jour', ['Date', 'Commandes'], $jourRowsEmp, 'table-emp-jour') ?>
         </div>
     </div>
 </div>
@@ -71,14 +113,15 @@
     </div>
     <div class="table-responsive">
         <table class="table table-sm align-middle mb-0">
+            <caption class="visually-hidden">Prochaines livraisons planifiees</caption>
             <thead class="table-light">
                 <tr>
-                    <th>#</th>
-                    <th>Client</th>
-                    <th>Menu</th>
-                    <th>Date</th>
-                    <th>Statut</th>
-                    <th></th>
+                    <th scope="col">#</th>
+                    <th scope="col">Client</th>
+                    <th scope="col">Menu</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Statut</th>
+                    <th scope="col"><span class="visually-hidden">Actions</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -102,8 +145,13 @@
 </div>
 
 <div class="alert alert-light border mb-0">
-    <strong>Rappel employe :</strong> toute annulation exige un contact client (GSM ou email) et un motif enregistre.
-    Les menus et plats sont modifiables ; les delais de reservation se reglent dans chaque fiche menu.
+    <strong>Rappel employe :</strong>
+    <ul class="mb-0 ps-3">
+        <li>Menus, plats et <a href="admin-horaires.php">horaires</a> : modification libre dans le menu lateral.</li>
+        <li>Annulation commande : contact client (GSM ou email) obligatoire + motif enregistre.</li>
+        <li>Statuts commande : acceptee → preparation → livraison → livre → materiel (si pret) → terminee.</li>
+        <li>Avis clients : valider ou refuser depuis <a href="admin-avis.php">Avis</a>.</li>
+    </ul>
 </div>
 
 <script>

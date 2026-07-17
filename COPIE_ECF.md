@@ -36,8 +36,9 @@ Pages de demonstration :
 
 | Role | Email | Mot de passe |
 |------|-------|--------------|
-| Admin | testadmin@test.com | Admin123! |
-| Admin (ECF) | admin@vite-gourmand.fr | Admin123! |
+| Admin (Jose) | jose@vite-gourmand.fr | Admin123! |
+| Employe (Julie) | julie@vite-gourmand.fr | Employe123! |
+| Client | client@vite-gourmand.fr | Client123! |
 
 ## Livrables PDF a joindre
 
@@ -60,8 +61,10 @@ Sources Markdown a convertir en PDF : dossier `docs/`
 - [x] GitHub public a jour
 - [x] Copie ODT completee (URL + stack ci-dessus) — voir docs/Copie_a_rendre_TP_Vite_Gourmand.odt
 - [x] 3 PDF livrables (docs/MANUEL_UTILISATEUR.pdf, CHARTE_GRAPHIQUE.pdf, DOCUMENTATION_TECHNIQUE.pdf)
-- [ ] Upload prod des fichiers modifies (FileZilla)
-- [ ] Test parcours : inscription → commande → suivi → avis
+- [ ] Upload prod derniere version — `deploy/vite-gourmand-prod.zip` (regenere 17/07, ~105 Mo)
+- [ ] SQL prod — `patch-menu-entreprise-prix.sql`, `patch-site-settings.sql`
+- [ ] Test parcours complet — voir `docs/DOSSIER_ECF_FINAL.md` et `docs/TESTS_PROD_ECF.md`
+- [ ] Verifier ODT + joindre les 3 PDF au dossier papier
 - [x] Mentions legales : hebergeur InfinityFree
 
 ## Texte type pour la copie ODT (stack)

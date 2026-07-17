@@ -34,7 +34,7 @@ include 'includes/header.php';
 ?>
 
 <!-- HERO -->
-<section class="hero" aria-label="Presentation Vite et Gourmand">
+<section class="hero" aria-label="Presentation Vite et Gourmand" aria-roledescription="carousel">
 
     <div class="hero-slide active" aria-hidden="true" style="background-image:url('<?= htmlspecialchars(assetImageUrl('assets/images/presentation.jpg')) ?>')"></div>
     <div class="hero-slide" aria-hidden="true" style="background-image:url('<?= htmlspecialchars(assetImageUrl('assets/images/hero1.jpg')) ?>')"></div>
@@ -76,7 +76,7 @@ include 'includes/header.php';
     <div class="team-card">
         <img src="<?= htmlspecialchars(assetImageUrl('assets/images/chef.jpg')) ?>" alt="Chef experimente en cuisine">
         <div class="p-3">
-            <h5>Chef experimente</h5>
+            <h3 class="h5 mb-2">Chef experimente</h3>
             <p>15 ans d'experience en gastronomie.</p>
         </div>
     </div>
@@ -86,7 +86,7 @@ include 'includes/header.php';
     <div class="team-card">
         <img src="<?= htmlspecialchars(assetImageUrl('assets/images/chef.jpg')) ?>" alt="Service traiteur">
         <div class="p-3">
-            <h5>Service haut de gamme</h5>
+            <h3 class="h5 mb-2">Service haut de gamme</h3>
             <p>Professionnalisme et discretion.</p>
         </div>
     </div>
@@ -96,7 +96,7 @@ include 'includes/header.php';
     <div class="team-card">
         <img src="<?= htmlspecialchars(assetImageUrl('assets/images/presentation.jpg')) ?>" alt="Organisation evenementielle">
         <div class="p-3">
-            <h5>Organisation</h5>
+            <h3 class="h5 mb-2">Organisation</h3>
             <p>Accompagnement sur mesure.</p>
         </div>
     </div>
@@ -137,10 +137,10 @@ include 'includes/header.php';
     <div class="menu-card h-100 shadow-sm">
         <img src="<?= htmlspecialchars(menuCoverUrl($menu)) ?>" alt="<?= htmlspecialchars($menu['titre']) ?>" class="card-img-top" style="height:180px;object-fit:cover" loading="lazy">
         <div class="p-3 d-flex flex-column">
-            <h5><?= htmlspecialchars($menu['titre']) ?></h5>
+            <h3 class="h5 mb-2"><?= htmlspecialchars($menu['titre']) ?></h3>
             <p class="text-muted small flex-grow-1 mb-2"><?= htmlspecialchars(formatMenuExcerpt($menu['description'] ?? '')) ?></p>
-            <p class="mb-1 small"><i class="fa-solid fa-users me-1"></i> Min. <?= (int)$menu['min_personnes'] ?> pers.</p>
-            <p class="text-danger fw-bold mb-3"><?= number_format((float)$menu['prix'], 2) ?> EUR / pers.</p>
+            <p class="mb-1 small"><i class="fa-solid fa-users me-1" aria-hidden="true"></i> Min. <?= (int)$menu['min_personnes'] ?> pers.</p>
+            <p class="menu-price fw-bold mb-3"><?= number_format((float)$menu['prix'], 2) ?> EUR / pers.</p>
             <a href="menu.php?id=<?= (int)$menu['id'] ?>" class="btn btn-outline-dark w-100 mt-auto">Composer ce menu</a>
         </div>
     </div>
@@ -154,21 +154,27 @@ include 'includes/header.php';
 </section>
 
 <!-- AVIS -->
-<section class="bg-dark text-white py-5">
+<section class="bg-dark text-white py-5" aria-labelledby="avis-accueil-title">
 <div class="container text-center">
 
-<h2 class="mb-3">Avis clients</h2>
+<h2 class="mb-3" id="avis-accueil-title">Avis clients</h2>
 
-<p class="mb-5"><?= $moyenne ? round($moyenne, 1) : 0 ?> / 5</p>
+<p class="mb-5" role="status">
+    <span class="visually-hidden">Note moyenne :</span>
+    <?= $moyenne ? round($moyenne, 1) : 0 ?> / 5
+</p>
 
 <div class="row g-4">
 
 <?php foreach ($avisList as $a): ?>
 <div class="col-md-4">
-    <div class="review-card">
-        <p>"<?= htmlspecialchars($a['commentaire'] ?? '') ?>"</p>
-        <h6><?= str_repeat('*', (int)($a['note'] ?? 0)) ?> - <?= htmlspecialchars($a['nom'] ?? '') ?></h6>
-    </div>
+    <article class="review-card review-card-dark">
+        <blockquote class="mb-3"><p class="mb-0">« <?= htmlspecialchars($a['commentaire'] ?? '') ?> »</p></blockquote>
+        <footer class="small">
+            <?= renderStarRating((int)($a['note'] ?? 0)) ?>
+            <span class="ms-2"><?= htmlspecialchars($a['nom'] ?? '') ?></span>
+        </footer>
+    </article>
 </div>
 <?php endforeach; ?>
 

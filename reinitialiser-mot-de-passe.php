@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require 'includes/db.php';
 require 'includes/helpers.php';
 
@@ -37,16 +37,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $valid) {
 include 'includes/header.php';
 ?>
 <div class="container py-5">
-<h2>Reinitialiser le mot de passe</h2>
+<h1 class="h2">Reinitialiser le mot de passe</h1>
 <?php if (!$valid): ?>
-<div class="alert alert-danger">Lien invalide ou expire.</div>
+<div class="alert alert-danger" role="alert">Lien invalide ou expire.</div>
 <?php else: ?>
-<?php if ($message): ?><div class="alert alert-<?= $type ?>"><?= htmlspecialchars($message) ?></div><?php endif; ?>
+<?php if ($message): ?><div class="alert alert-<?= $type ?>" role="alert"><?= htmlspecialchars($message) ?></div><?php endif; ?>
 <form method="POST" class="col-md-6">
 <?= csrfField() ?>
-<label class="form-label">Nouveau mot de passe</label>
-<input type="password" name="password" class="form-control mb-3" required minlength="10">
-<button class="btn btn-primary">Enregistrer</button>
+<label class="form-label" for="reset-password">Nouveau mot de passe</label>
+<input type="password" name="password" id="reset-password" class="form-control" required minlength="10" autocomplete="new-password">
+<?= renderPasswordToggle('reset-password') ?>
+<button class="btn btn-primary mt-3">Enregistrer</button>
 </form>
 <?php endif; ?>
 </div>

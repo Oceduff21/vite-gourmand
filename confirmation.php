@@ -154,7 +154,8 @@ try {
             </div>
 
             <div class="d-flex flex-wrap gap-2 justify-content-center">
-                <a href="suivi-commande.php?id=<?= $id ?>" class="btn btn-primary">Suivre ma commande</a>
+                <a href="detail-commande.php?id=<?= $id ?>" class="btn btn-primary">Voir le detail de ma commande</a>
+                <a href="detail-commande.php?id=<?= $id ?>#suivi" class="btn btn-outline-primary">Suivre ma commande</a>
                 <a href="espace-utilisateur.php?tab=commandes" class="btn btn-outline-dark">Mes commandes</a>
                 <a href="menus.php" class="btn btn-outline-secondary">Continuer mes achats</a>
             </div>

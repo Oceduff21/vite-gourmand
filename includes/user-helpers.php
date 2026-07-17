@@ -1,5 +1,91 @@
 <?php
 
+function getUsersTableColumns(PDO $pdo): array
+{
+    static $columns = null;
+    if ($columns !== null) {
+        return $columns;
+    }
+    try {
+        $columns = array_column($pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_ASSOC), 'Field');
+    } catch (Throwable $e) {
+        $columns = ['id', 'nom', 'prenom', 'email', 'gsm', 'password', 'role'];
+    }
+    return $columns;
+}
+
+/**
+ * @return array{ok: bool, error?: string}
+ */
+function saveUserProfile(PDO $pdo, int $userId, array $input): array
+{
+    $nom = trim($input['nom'] ?? '');
+    $prenom = trim($input['prenom'] ?? '');
+    $email = trim($input['email'] ?? '');
+    $telephone = trim($input['telephone'] ?? '');
+    $dateNaissance = trim($input['date_naissance'] ?? '');
+    $rue = trim($input['rue'] ?? '');
+    $numero = trim($input['numero'] ?? '');
+    $complement = trim($input['complement'] ?? '');
+    $codePostal = trim($input['code_postal'] ?? '');
+    $ville = trim($input['ville'] ?? '');
+
+    if ($nom === '' || $prenom === '' || $email === '' || $telephone === '') {
+        return ['ok' => false, 'error' => 'Tous les champs obligatoires doivent etre remplis.'];
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return ['ok' => false, 'error' => 'Adresse email invalide.'];
+    }
+
+    $dup = $pdo->prepare('SELECT id FROM users WHERE email = ? AND id <> ? LIMIT 1');
+    $dup->execute([$email, $userId]);
+    if ($dup->fetch()) {
+        return ['ok' => false, 'error' => 'Cet email est deja utilise par un autre compte.'];
+    }
+
+    $cols = getUsersTableColumns($pdo);
+    $values = [
+        'nom' => $nom,
+        'prenom' => $prenom,
+        'email' => $email,
+        'telephone' => $telephone,
+        'gsm' => $telephone,
+        'date_naissance' => $dateNaissance !== '' ? $dateNaissance : null,
+        'rue' => $rue,
+        'numero' => $numero,
+        'complement' => $complement,
+        'code_postal' => $codePostal,
+        'ville' => $ville,
+    ];
+
+    if (in_array('adresse', $cols, true) && !in_array('rue', $cols, true)) {
+        $parts = array_filter([$numero, $rue, $complement, trim($codePostal . ' ' . $ville)]);
+        $values['adresse'] = implode(', ', $parts);
+    }
+
+    $sets = [];
+    $params = [];
+    foreach ($values as $field => $value) {
+        if (in_array($field, $cols, true)) {
+            $sets[] = "{$field} = ?";
+            $params[] = $value;
+        }
+    }
+
+    if (empty($sets)) {
+        return ['ok' => false, 'error' => 'Impossible de mettre a jour le profil (structure base incomplete).'];
+    }
+
+    $params[] = $userId;
+    try {
+        $pdo->prepare('UPDATE users SET ' . implode(', ', $sets) . ' WHERE id = ?')->execute($params);
+    } catch (Throwable $e) {
+        return ['ok' => false, 'error' => 'Erreur lors de l\'enregistrement. Contactez le support si le probleme persiste.'];
+    }
+
+    return ['ok' => true];
+}
+
 function userTablesAvailable(PDO $pdo): bool
 {
     static $ok = null;
@@ -216,5 +302,73 @@ function getOrdersPendingReview(PDO $pdo, int $userId): array
         ORDER BY c.date_livraison DESC
     ");
     $stmt->execute($params);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function fetchCommandeForUser(PDO $pdo, int $userId, int $orderId): ?array
+{
+    $stmt = $pdo->prepare('
+        SELECT c.*, m.titre AS menu_titre, m.theme, m.prix AS menu_prix_unitaire, m.min_personnes
+        FROM commandes c
+        JOIN menus m ON m.id = c.menu_id
+        WHERE c.id = ? AND c.user_id = ?
+    ');
+    $stmt->execute([$orderId, $userId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row ?: null;
+}
+
+function fetchCommandePlats(PDO $pdo, int $orderId): array
+{
+    $stmt = $pdo->prepare('
+        SELECT cd.quantite, cd.type, p.nom, p.regime, p.allergenes
+        FROM commande_details cd
+        JOIN plats p ON p.id = cd.plat_id
+        WHERE cd.commande_id = ?
+        ORDER BY FIELD(cd.type, "entree", "plat", "dessert"), p.nom
+    ');
+    $stmt->execute([$orderId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function fetchCommandeBoissons(PDO $pdo, int $orderId): array
+{
+    try {
+        $stmt = $pdo->prepare('
+            SELECT cb.quantite, cb.prix_unitaire, b.nom
+            FROM commande_boissons cb
+            JOIN boissons b ON b.id = cb.boisson_id
+            WHERE cb.commande_id = ?
+            ORDER BY b.nom
+        ');
+        $stmt->execute([$orderId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Throwable $e) {
+        return [];
+    }
+}
+
+function computeBoissonsSubtotal(array $boissons): float
+{
+    $total = 0.0;
+    foreach ($boissons as $b) {
+        $total += (float)($b['prix_unitaire'] ?? 0) * (int)($b['quantite'] ?? 0);
+    }
+    return round($total, 2);
+}
+
+function getPlatTypeLabels(): array
+{
+    return [
+        'entree' => 'Entrees',
+        'plat' => 'Plats',
+        'dessert' => 'Desserts',
+    ];
+}
+
+function fetchCommandeHistorique(PDO $pdo, int $orderId): array
+{
+    $stmt = $pdo->prepare('SELECT * FROM commande_historique WHERE commande_id = ? ORDER BY created_at ASC');
+    $stmt->execute([$orderId]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }

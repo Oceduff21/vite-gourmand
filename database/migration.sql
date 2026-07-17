@@ -82,5 +82,10 @@ CREATE TABLE IF NOT EXISTS password_resets (
 );
 
 INSERT IGNORE INTO users (nom, prenom, email, gsm, telephone, rue, numero, code_postal, ville, password, role, is_active)
-VALUES ('Admin', 'Vite', 'admin@vite-gourmand.fr', '0611223344', '0611223344', 'Rue Verteuil', '11', '33000', 'Bordeaux',
-'$2y$10$JfmsCrP1S2liy3hWG8Nwa.q1jmejbv3AP5cr4hrlyS3UmxHaoTUau', 'admin', 1);
+VALUES
+('Gourmand', 'Jose', 'jose@vite-gourmand.fr', '0622334455', '0622334455', 'Rue Verteuil', '11', '33000', 'Bordeaux',
+ '$2y$10$5ug3pkSriD0X503uEwIVmuo480xxHKzX0wzLf2R/v/Z2QC2bvZlM.', 'admin', 1),
+('Gourmand', 'Julie', 'julie@vite-gourmand.fr', '0611223344', '0611223344', 'Rue Verteuil', '11', '33000', 'Bordeaux',
+ '$2y$10$DpEVJNnWM82SRquJ1PLrbOjR2YOxYtYqgC.7mkDQX1voTchdh7odG', 'employe', 1),
+('Dupont', 'Marie', 'client@vite-gourmand.fr', '0633445566', '0633445566', 'Cours Victor Hugo', '25', '33000', 'Bordeaux',
+ '$2y$10$Xwsh9yOlEtPKKnvaWLvrSOeZQ2KflrwJbgRhZU5xQsNCqPr26nQLS', 'utilisateur', 1);

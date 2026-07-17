@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Complete the ECF copy ODT with deployment URL and corrected technical sections."""
+"""Met a jour docs/Copie_a_rendre_TP_Vite_Gourmand.odt (ECF Vite & Gourmand)."""
 
 from __future__ import annotations
 
@@ -8,13 +8,18 @@ import shutil
 import zipfile
 from pathlib import Path
 
-SOURCE = Path(
+ROOT = Path(__file__).resolve().parent.parent
+OUTPUT = ROOT / "docs" / "Copie_a_rendre_TP_Vite_Gourmand.odt"
+SOURCE_EXTERNAL = Path(
     r"C:\Users\ocean\OneDrive\Documents\Formation WEB DEVELOPPEUR FULL STACK"
     r"\ECF\Nouveau sujet\Copie à rendre_TP – Développeur Web et Web Mobile_remplie.odt"
 )
-ROOT = Path(__file__).resolve().parent.parent
-OUTPUT = ROOT / "docs" / "Copie_a_rendre_TP_Vite_Gourmand.odt"
 DEPLOY_URL = "https://vitegourmand.infinityfree.io/"
+GIT_URL = "https://github.com/Oceduff21/vite-gourmand"
+TRELLO_URL = (
+    "https://trello.com/invite/b/699bbc30842ff7943e2ca197/"
+    "ATTIb8196f37edf8d1cf58dd8c7dada0aad15B0A20DD/tp-developpeur-web-et-web-mobile-vite-gourmand"
+)
 
 
 def paragraph_containing(content: str, needle: str) -> str:
@@ -35,33 +40,101 @@ def replace_paragraph(content: str, needle: str, new_inner: str) -> str:
     return content.replace(old, new, 1)
 
 
-def replace_between(content: str, start_needle: str, end_needle: str, replacement: str) -> str:
-    start = content.find(start_needle)
-    end = content.find(end_needle, start)
-    if start == -1 or end == -1:
-        raise RuntimeError(f"Markers not found: {start_needle!r} / {end_needle!r}")
-    return content[:start] + replacement + content[end:]
+def replace_paragraph_optional(content: str, needle: str, new_inner: str) -> str:
+    try:
+        return replace_paragraph(content, needle, new_inner)
+    except RuntimeError:
+        print(f"WARN: section ignoree (introuvable) : {needle[:60]}...")
+        return content
 
 
 def patch_content(content: str) -> str:
-    # 1. Lien de deploiement
+    # --- En-tete : deploiement + comptes demo ---
     deploy_block = (
         '<text:p text:style-name="Standard"><text:a xlink:type="simple" '
         f'xlink:href="{DEPLOY_URL}" text:style-name="Internet_20_link" '
         'text:visited-style-name="Visited_20_Internet_20_Link">'
         f"{DEPLOY_URL}</text:a></text:p>"
     )
+    accounts_block = (
+        '<text:p text:style-name="P26">Comptes de démonstration (production) :</text:p>'
+        '<text:p text:style-name="P26">'
+        '<text:span text:style-name="Strong_20_Emphasis">Administrateur</text:span>'
+        ' — login : '
+        '<text:a xlink:type="simple" xlink:href="mailto:jose@vite-gourmand.fr" '
+        'text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">'
+        'jose@vite-gourmand.fr</text:a> / mot de passe : Admin123!'
+        '</text:p>'
+        '<text:p text:style-name="P26">'
+        '<text:span text:style-name="Strong_20_Emphasis">Employée</text:span>'
+        ' — login : '
+        '<text:a xlink:type="simple" xlink:href="mailto:julie@vite-gourmand.fr" '
+        'text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">'
+        'julie@vite-gourmand.fr</text:a> / mot de passe : Employe123! '
+        '(connexion via /admin/login.php)'
+        '</text:p>'
+        '<text:p text:style-name="P26">'
+        '<text:span text:style-name="Strong_20_Emphasis">Client</text:span>'
+        ' — login : '
+        '<text:a xlink:type="simple" xlink:href="mailto:client@vite-gourmand.fr" '
+        'text:style-name="Internet_20_link" text:visited-style-name="Visited_20_Internet_20_Link">'
+        'client@vite-gourmand.fr</text:a> / mot de passe : Client123! '
+        '(connexion via /login.php)'
+        '</text:p>'
+        '<text:p text:style-name="P26">Pages clés : accueil, /menus.php (filtres thème/régime/recherche), '
+        f'/menu.php, /login.php, /admin/login.php, /accessibilite.php — {DEPLOY_URL}'
+        '</text:p>'
+    )
+
+    old_admin = paragraph_containing(content, "Login et mot de passe administrateur")
     content = content.replace(
-        '<text:p text:style-name="Standard"><text:span text:style-name="T3"/></text:p>'
-        '<text:p text:style-name="P26">Login et mot de passe administrateur',
-        deploy_block + '<text:p text:style-name="P26">Login et mot de passe administrateur',
+        old_admin,
+        accounts_block,
         1,
     )
 
-    # 2. Stack / deploiement
-    content = replace_paragraph(
+    # Assurer le lien de deploiement (si deja present, ne pas dupliquer)
+    if DEPLOY_URL not in content.split("Comptes de démonstration")[0]:
+        content = content.replace(
+            '<text:p text:style-name="P26">Login et mot de passe administrateur',
+            deploy_block + accounts_block.replace(
+                '<text:p text:style-name="P26">Comptes de démonstration',
+                '<text:p text:style-name="P26">Comptes de démonstration',
+                1,
+            ),
+            1,
+        )
+
+    # --- Partie 1 : filtres menus ---
+    content = replace_paragraph_optional(
         content,
-        "Netlify",
+        "filtrer les offres selon plusieurs critères",
+        "filtrer les offres selon plusieurs critères combinables (recherche textuelle, thème, régime alimentaire, "
+        "budget, nombre de personnes) avec une recherche intelligente croisant titre, description et métadonnées",
+    )
+
+    # --- Partie 1 : accessibilite ---
+    content = replace_paragraph_optional(
+        content,
+        "Enfin, le projet devra respecter les bonnes pratiques",
+        "Enfin, le projet respecte les bonnes pratiques du développement web : accessibilité RGAA "
+        "(page dédiée accessibilite.php, labels de formulaires, tables structurées, navigation clavier, "
+        "audit WAVE sur les pages clés — score AIM ~8,8/10), sécurité (CSRF, PDO, bcrypt) et conformité RGPD "
+        "(politique de confidentialité, cookies, droits utilisateur)",
+    )
+
+    # --- Cahier des charges : admin etendu ---
+    content = replace_paragraph_optional(
+        content,
+        "administration (gestion des menus)",
+        "Interface d’administration (gestion menus, commandes, avis, utilisateurs ; rôles admin et employé ; "
+        "dashboard statistiques MySQL en production, MongoDB en local)",
+    )
+
+    # --- Stack technique ---
+    content = replace_paragraph_optional(
+        content,
+        "Le backend est développé en",
         "Le backend est développé en "
         '<text:span text:style-name="Strong_20_Emphasis">PHP 8.3</text:span> '
         "avec PDO et sessions. La base relationnelle "
@@ -71,65 +144,79 @@ def patch_content(content: str) -> str:
         "alimente les statistiques NoSQL en local (XAMPP/Docker) ; le dashboard admin "
         "bascule sur MySQL en production. L'application est déployée sur "
         '<text:span text:style-name="Strong_20_Emphasis">InfinityFree</text:span> '
-        f"({DEPLOY_URL}). Le front utilise Bootstrap 5, JavaScript (wizard menu, filtres AJAX) "
-        "et HTML sémantique.",
+        f"({DEPLOY_URL}). Le front utilise Bootstrap 5.3, Chart.js, JavaScript (wizard menu, filtres AJAX) "
+        "et HTML sémantique. Dépôt GitHub : "
+        f'<text:a xlink:type="simple" xlink:href="{GIT_URL}" text:style-name="Internet_20_link" '
+        f'text:visited-style-name="Visited_20_Internet_20_Link">{GIT_URL}</text:a>.',
     )
 
-    # 3. Environnement de travail
-    content = replace_paragraph(
+    # --- Environnement ---
+    content = replace_paragraph_optional(
         content,
-        "Live Server",
+        "Le développement local repose sur",
         "Le développement local repose sur "
         '<text:span text:style-name="Strong_20_Emphasis">XAMPP</text:span> '
-        "(Apache, PHP 8.3, MySQL). L'éditeur Visual Studio Code / Cursor est utilisé avec Git. "
+        "(Apache, PHP 8.3, MySQL). L'éditeur Cursor / Visual Studio Code est utilisé avec Git. "
         "L'architecture suit une organisation claire : pages PHP (site public et /admin/), "
-        "dossier /includes/ (db.php, auth.php, helpers.php), assets CSS/JS et migrations SQL "
-        "versionnées dans /database/. Le fichier README.md du dépôt GitHub documente "
-        "l'installation et le déploiement.",
+        "dossier /includes/ (db.php, auth.php, helpers.php, a11y-helpers.php), assets CSS/JS et migrations SQL "
+        "versionnées dans /database/. Le script scripts/fix-php-encoding.ps1 garantit l'encodage UTF-8 des fichiers PHP "
+        "avant déploiement sur InfinityFree. Le README.md du dépôt documente l'installation.",
     )
 
-    # 4. Securite front-end
-    old_sec_fe = paragraph_containing(content, "sont prévus afin de limiter les erreurs de saisie")
-    new_sec_fe = (
-        '<text:p text:style-name="Text_20_body">Côté front-end, des contrôles de validation HTML5 '
-        "et JavaScript sont en place (wizard menu, formulaires inscription/commande). "
-        "Les messages d'erreur sont explicites et les champs invalides reçoivent le focus clavier "
-        "(accessibilité RGAA). Les données affichées passent par htmlspecialchars() pour limiter les XSS."
-        "</text:p>"
-    )
-    content = content.replace(old_sec_fe, new_sec_fe, 1)
-
-    # 5. Securite back-end
-    old_sec_be = paragraph_containing(content, "le projet prévoit une gestion des rôles utilisateurs")
-    new_sec_be = (
-        '<text:p text:style-name="Text_20_body">Côté back-end, la sécurité est implémentée : '
-        "requêtes préparées PDO (anti-injection SQL), tokens CSRF sur inscription, commande et actions admin, "
-        "hashage bcrypt (password_hash), gestion des rôles (utilisateur, employé, admin) via auth.php, "
-        "sessions séparées site public / admin, validation serveur des délais de livraison et règles métier "
-        "(réduction 10 %, prix livraison)."
-        "</text:p>"
-    )
-    content = content.replace(old_sec_be, new_sec_be, 1)
-
-    # 6. Ameliorations futures
-    content = replace_paragraph(
+    # --- Securite front + RGAA ---
+    content = replace_paragraph_optional(
         content,
-        "système de paiement en ligne afin de finaliser les commandes",
-        "Plusieurs améliorations pourraient être envisagées : intégration d'un "
-        '<text:span text:style-name="Strong_20_Emphasis">paiement en ligne sécurisé</text:span> '
-        "(Stripe/PayPal), développement d'une "
-        '<text:span text:style-name="Strong_20_Emphasis">PWA</text:span> ou application mobile native '
-        "pour les clients réguliers, et synchronisation calendrier (Google Calendar) pour la disponibilité "
-        "du traiteur.",
+        "Côté front-end, des contrôles de validation HTML5",
+        "Côté front-end, des contrôles de validation HTML5 et JavaScript sont en place (wizard menu, "
+        "formulaires inscription/commande). Les messages d'erreur sont explicites et les champs invalides "
+        "reçoivent le focus clavier. Une page accessibilite.php décrit les mesures RGAA. Les données affichées "
+        "passent par htmlspecialchars() pour limiter les XSS. Audit WAVE réalisé (juillet 2026) : 0 erreur "
+        "structurelle sur les pages clés ; quelques alertes de contraste en cours de correction.",
     )
 
-    content = replace_paragraph(
+    # --- Securite back ---
+    content = replace_paragraph_optional(
         content,
-        "confirmations par email",
-        "D'autres pistes : module de "
-        '<text:span text:style-name="Strong_20_Emphasis">facturation B2B</text:span> '
-        "automatisée pour les séminaires entreprise, export comptable des commandes, et audit RGAA complet "
-        "avec tests utilisateurs en situation réelle.",
+        "Côté back-end, la sécurité est implémentée",
+        "Côté back-end, la sécurité est implémentée : requêtes préparées PDO (anti-injection SQL), tokens CSRF "
+        "sur inscription, commande et actions admin, hashage bcrypt (password_hash), gestion des rôles "
+        "(utilisateur, employé, admin) via auth.php, sessions séparées site public / admin, validation serveur "
+        "des délais de livraison et règles métier (réduction 10 %, prix livraison, stock menus).",
+    )
+
+    # --- Contraintes : RGAA explicite ---
+    content = replace_paragraph_optional(
+        content,
+        "Interface claire et accessible",
+        "Interface claire et accessible (RGAA : labels, contrastes, navigation clavier, page accessibilite.php)",
+    )
+
+    # --- Livrables PDF ---
+    content = replace_paragraph_optional(
+        content,
+        "Enfin, des ressources en ligne telles que",
+        "Les livrables PDF joints au dossier sont : Manuel utilisateur (docs/MANUEL_UTILISATEUR.pdf), "
+        "Charte graphique (docs/CHARTE_GRAPHIQUE.pdf) et Documentation technique "
+        "(docs/DOCUMENTATION_TECHNIQUE.pdf). Des ressources en ligne telles que MDN Web Docs",
+    )
+
+    # --- Difficultes : deploiement ---
+    content = replace_paragraph_optional(
+        content,
+        "La principale difficulté rencontrée lors de ce projet",
+        "Les principales difficultés rencontrées ont concerné le déploiement sur hébergement mutualisé "
+        "(InfinityFree) : encodage UTF-8 obligatoire des fichiers PHP, limites de taille en upload, "
+        "absence de MongoDB en production (fallback MySQL). L'adaptation responsive et l'accessibilité RGAA "
+        "ont également demandé plusieurs itérations (audit WAVE, corrections de contrastes et structure HTML).",
+    )
+
+    # --- Competences ---
+    content = replace_paragraph_optional(
+        content,
+        "Ce projet m",
+        "Ce projet m'a permis de mieux comprendre les enjeux liés à la sécurité, à l'accessibilité numérique "
+        "(RGAA/WAVE), au déploiement PHP/MySQL et à la conception d'une application web répondant à des "
+        "besoins concrets d'un traiteur événementiel.",
     )
 
     return content
@@ -140,25 +227,33 @@ def patch_odt(source: Path, destination: Path) -> None:
         raise FileNotFoundError(f"ODT source introuvable : {source}")
 
     destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(source, destination)
+    temp_out = destination.with_suffix(".tmp.odt")
 
-    with zipfile.ZipFile(destination, "r") as zin:
+    with zipfile.ZipFile(source, "r") as zin:
         content = zin.read("content.xml").decode("utf-8")
         content = patch_content(content)
         other_files = {name: zin.read(name) for name in zin.namelist() if name != "content.xml"}
 
-    with zipfile.ZipFile(destination, "w", zipfile.ZIP_DEFLATED) as zout:
+    with zipfile.ZipFile(temp_out, "w", zipfile.ZIP_DEFLATED) as zout:
         for name, data in other_files.items():
             zout.writestr(name, data)
         zout.writestr("content.xml", content.encode("utf-8"))
 
-    shutil.copy2(destination, source)
+    temp_out.replace(destination)
 
 
 def main() -> int:
-    patch_odt(SOURCE, OUTPUT)
-    print(f"OK ODT complete : {OUTPUT}")
-    print(f"OK Copie source mise a jour : {SOURCE}")
+    source = OUTPUT if OUTPUT.exists() else SOURCE_EXTERNAL
+    if not source.exists():
+        raise FileNotFoundError("Aucun fichier ODT source trouve.")
+
+    patch_odt(source, OUTPUT)
+    print(f"OK ODT mis a jour : {OUTPUT}")
+
+    if SOURCE_EXTERNAL.exists() and SOURCE_EXTERNAL != OUTPUT:
+        shutil.copy2(OUTPUT, SOURCE_EXTERNAL)
+        print(f"OK Copie OneDrive mise a jour : {SOURCE_EXTERNAL}")
+
     return 0
 
 

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require __DIR__ . '/partials/auth.php';
 requireAdminAccess();
 
@@ -17,27 +17,61 @@ $allowed = array_keys(getStatutsCommande());
 
 require '../includes/user-helpers.php';
 
+function adminStatutRedirect(string $url, ?string $error = null, ?string $success = null): void
+{
+    if ($error) {
+        $_SESSION['admin_flash_error'] = $error;
+    }
+    if ($success) {
+        $_SESSION['admin_flash'] = $success;
+    }
+    header('Location: ' . $url);
+    exit();
+}
+
 if (!$id || !in_array($statut, $allowed, true)) {
     header('Location: admin-commandes.php');
     exit();
 }
 
+$stmtCurrent = $pdo->prepare('SELECT statut, user_id FROM commandes WHERE id = ?');
+$stmtCurrent->execute([$id]);
+$current = $stmtCurrent->fetch(PDO::FETCH_ASSOC);
+if (!$current) {
+    header('Location: admin-commandes.php');
+    exit();
+}
+
+$currentStatut = $current['statut'];
+$orderUserId = (int)$current['user_id'];
+$staffId = (int)($_SESSION['user_id'] ?? 0);
+
 if ($statut === 'annulee') {
     $motif = trim($_POST['motif'] ?? '');
     $mode = trim($_POST['mode_contact'] ?? '');
+    $contactConfirme = !empty($_POST['contact_confirme']);
+    if (!$contactConfirme) {
+        adminStatutRedirect(
+            'annuler-commande.php?id=' . $id . ($redirect === 'detail' ? '&from=detail' : ''),
+            'Confirmez avoir contacte le client avant d\'annuler la commande.'
+        );
+    }
     if (!$motif || !$mode) {
-        die('Motif et mode de contact obligatoires pour annuler.');
+        adminStatutRedirect(
+            'annuler-commande.php?id=' . $id . ($redirect === 'detail' ? '&from=detail' : ''),
+            'Le mode de contact et le motif sont obligatoires.'
+        );
     }
     $note = "Annulation - Contact: $mode - Motif: $motif";
-    $staffId = (int)($_SESSION['user_id'] ?? 0);
     $pdo->prepare('UPDATE commandes SET statut = ? WHERE id = ?')->execute(['annulee', $id]);
     enregistrerHistorique($pdo, $id, 'annulee', $note, $staffId);
-    $stmtUser = $pdo->prepare('SELECT user_id FROM commandes WHERE id = ?');
-    $stmtUser->execute([$id]);
-    $orderUserId = (int)$stmtUser->fetchColumn();
+    if (is_file(__DIR__ . '/../includes/mongo.php')) {
+        require_once __DIR__ . '/../includes/mongo.php';
+        mongoUpdateCommandeStatut($id, 'annulee');
+    }
     if ($orderUserId > 0) {
         createUserNotification($pdo, $orderUserId, 'Commande #' . $id . ' refusee', $note, 'espace-utilisateur.php?tab=commandes', 'warning');
-        $stmtMail = $pdo->prepare('SELECT u.email, u.prenom, u.nom FROM commandes c JOIN users u ON c.user_id = u.id WHERE c.id = ?');
+        $stmtMail = $pdo->prepare('SELECT u.email, u.prenom FROM commandes c JOIN users u ON c.user_id = u.id WHERE c.id = ?');
         $stmtMail->execute([$id]);
         $client = $stmtMail->fetch(PDO::FETCH_ASSOC);
         if ($client && !empty($client['email'])) {
@@ -48,73 +82,116 @@ if ($statut === 'annulee') {
             );
         }
     }
-    header('Location: ' . $redirectUrl);
-    exit();
+    adminStatutRedirect($redirectUrl, null, 'Commande annulee. Le client a ete notifie.');
 }
 
-$staffId = (int)($_SESSION['user_id'] ?? 0);
-$pdo->prepare('UPDATE commandes SET statut = ? WHERE id = ?')->execute([$statut, $id]);
-enregistrerHistorique($pdo, $id, $statut, null, $staffId);
-
-$stmtUser = $pdo->prepare('SELECT user_id FROM commandes WHERE id = ?');
-$stmtUser->execute([$id]);
-$orderUserId = (int)$stmtUser->fetchColumn();
-if ($orderUserId > 0) {
-    $notifTitle = $statut === 'acceptee'
-        ? 'Commande #' . $id . ' confirmee'
-        : 'Mise a jour commande #' . $id;
-    $notifMsg = $statut === 'acceptee'
-        ? 'Votre commande a ete acceptee. Nous preparons votre prestation.'
-        : 'Nouveau statut : ' . getStatutLabel($statut);
-    $notifType = $statut === 'acceptee' ? 'success' : 'info';
-    if ($statut === 'livre') {
-        $notifTitle = 'Commande #' . $id . ' livree';
-        $notifMsg = 'Votre prestation a ete livree. Partagez votre avis !';
-        $notifType = 'success';
-    }
-    createUserNotification(
-        $pdo,
-        $orderUserId,
-        $notifTitle,
-        $notifMsg,
-        $statut === 'livre' ? 'avis.php?commande_id=' . $id : 'suivi-commande.php?id=' . $id,
-        $notifType
+if ($currentStatut !== $statut && !isStatutTransitionAllowed($currentStatut, $statut)) {
+    adminStatutRedirect(
+        $redirectUrl,
+        'Transition de statut non autorisee : ' . getStatutLabel($currentStatut) . ' → ' . getStatutLabel($statut) . '.'
     );
 }
 
-if ($statut === 'acceptee') {
-    if ($redirect === 'detail') {
-        $_SESSION['admin_flash'] = 'Commande confirmee. Le client a ete notifie.';
+if ($currentStatut === $statut) {
+    adminStatutRedirect($redirectUrl);
+}
+
+$pdo->prepare('UPDATE commandes SET statut = ? WHERE id = ?')->execute([$statut, $id]);
+enregistrerHistorique($pdo, $id, $statut, null, $staffId);
+
+if (is_file(__DIR__ . '/../includes/mongo.php')) {
+    require_once __DIR__ . '/../includes/mongo.php';
+    mongoUpdateCommandeStatut($id, $statut);
+}
+
+$stmtMail = $pdo->prepare('
+    SELECT u.email, u.nom, u.prenom, c.date_livraison, c.heure_livraison, m.titre
+    FROM commandes c
+    JOIN users u ON c.user_id = u.id
+    JOIN menus m ON c.menu_id = m.id
+    WHERE c.id = ?
+');
+$stmtMail->execute([$id]);
+$user = $stmtMail->fetch(PDO::FETCH_ASSOC);
+
+if ($orderUserId > 0) {
+    $notifTitle = 'Mise a jour commande #' . $id;
+    $notifMsg = 'Nouveau statut : ' . getStatutLabel($statut);
+    $notifType = 'info';
+    $notifLink = 'suivi-commande.php?id=' . $id;
+
+    if ($statut === 'acceptee') {
+        $notifTitle = 'Commande #' . $id . ' confirmee';
+        $notifMsg = 'Votre commande a ete acceptee. Nous preparons votre prestation.';
+        $notifType = 'success';
+    } elseif ($statut === 'en_preparation') {
+        $notifTitle = 'Commande #' . $id . ' en preparation';
+        $notifMsg = 'Notre equipe cuisine prepare votre menu.';
+    } elseif ($statut === 'en_livraison') {
+        $notifTitle = 'Commande #' . $id . ' en livraison';
+        $notifMsg = 'Votre commande est en cours de livraison.';
+    } elseif ($statut === 'livre') {
+        $notifTitle = 'Commande #' . $id . ' livree';
+        $notifMsg = 'Votre prestation a ete livree. Partagez votre avis !';
+        $notifType = 'success';
+        $notifLink = 'avis.php?commande_id=' . $id;
+    } elseif ($statut === 'en_attente_materiel') {
+        $notifTitle = 'Retour materiel requis';
+        $notifMsg = 'Merci de restituer le materiel sous 10 jours ouvrables (voir email).';
+        $notifType = 'warning';
+    } elseif ($statut === 'terminee') {
+        $notifTitle = 'Commande #' . $id . ' terminee';
+        $notifMsg = 'Votre commande est terminee. Merci de votre confiance !';
+        $notifType = 'success';
+        $notifLink = 'avis.php?commande_id=' . $id;
     }
-    $stmt = $pdo->prepare('SELECT u.email, u.nom, u.prenom, c.date_livraison, c.heure_livraison, m.titre FROM commandes c JOIN users u ON c.user_id = u.id JOIN menus m ON c.menu_id = m.id WHERE c.id = ?');
-    $stmt->execute([$id]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($user && !empty($user['email'])) {
+
+    createUserNotification($pdo, $orderUserId, $notifTitle, $notifMsg, $notifLink, $notifType);
+}
+
+if ($user && !empty($user['email'])) {
+    $prenom = $user['prenom'];
+    $dateLiv = $user['date_livraison'];
+    $heureLiv = substr($user['heure_livraison'], 0, 5);
+    $menuTitre = $user['titre'];
+
+    if ($statut === 'acceptee') {
         sendMail(
             $user['email'],
             'Commande confirmee - Vite & Gourmand',
-            "Bonjour {$user['prenom']},\n\nVotre commande #{$id} pour le menu \"{$user['titre']}\" est confirmee.\nLivraison prevue le {$user['date_livraison']} a {$user['heure_livraison']}.\n\nMerci de votre confiance !"
+            "Bonjour {$prenom},\n\nVotre commande #{$id} pour le menu \"{$menuTitre}\" est confirmee.\nLivraison prevue le {$dateLiv} a {$heureLiv}.\n\nMerci de votre confiance !"
+        );
+    } elseif ($statut === 'en_preparation') {
+        sendMail(
+            $user['email'],
+            'Commande en preparation - Vite & Gourmand',
+            "Bonjour {$prenom},\n\nVotre commande #{$id} est en cours de preparation par notre equipe cuisine.\nLivraison prevue le {$dateLiv} a {$heureLiv}.\n\nVite & Gourmand"
+        );
+    } elseif ($statut === 'en_livraison') {
+        sendMail(
+            $user['email'],
+            'Commande en livraison - Vite & Gourmand',
+            "Bonjour {$prenom},\n\nVotre commande #{$id} est en cours de livraison par notre equipe logistique.\nRendez-vous prevu le {$dateLiv} a {$heureLiv}.\n\nVite & Gourmand"
+        );
+    } elseif ($statut === 'livre') {
+        sendMail(
+            $user['email'],
+            'Commande livree - Vite & Gourmand',
+            "Bonjour {$prenom},\n\nVotre commande #{$id} a ete livree.\nNous esperons que votre evenement s'est deroule a merveille.\nConnectez-vous pour laisser un avis.\n\nVite & Gourmand"
+        );
+    } elseif ($statut === 'en_attente_materiel') {
+        sendMail(
+            $user['email'],
+            'Retour materiel requis - Vite & Gourmand',
+            "Bonjour {$prenom},\n\nDu materiel vous a ete prete dans le cadre de votre commande #{$id}.\nMerci de le restituer sous 10 jours ouvrables en prenant contact avec Vite & Gourmand :\n- Email : contact@vite-gourmand.fr\n- Telephone : 04 12 34 56 78\n\nPasse ce delai, des frais de 600 EUR seront factures conformement a nos CGV.\n\nVite & Gourmand"
+        );
+    } elseif ($statut === 'terminee') {
+        sendMail(
+            $user['email'],
+            'Commande terminee - Vite & Gourmand',
+            "Bonjour {$prenom},\n\nVotre commande #{$id} est terminee.\nConnectez-vous pour laisser un avis si vous le souhaitez.\n\nMerci de votre confiance !"
         );
     }
 }
 
-if ($statut === 'terminee') {
-    $stmt = $pdo->prepare('SELECT u.email, u.nom, u.prenom FROM commandes c JOIN users u ON c.user_id = u.id WHERE c.id = ?');
-    $stmt->execute([$id]);
-    $user = $stmt->fetch();
-    if ($user) {
-        sendMail($user['email'], 'Commande terminee - Vite & Gourmand', "Bonjour {$user['prenom']},\n\nVotre commande est terminee. Connectez-vous pour laisser un avis.\n\nMerci !");
-    }
-}
-
-if ($statut === 'en_attente_materiel') {
-    $stmt = $pdo->prepare('SELECT u.email, u.prenom FROM commandes c JOIN users u ON c.user_id = u.id WHERE c.id = ?');
-    $stmt->execute([$id]);
-    $user = $stmt->fetch();
-    if ($user) {
-        sendMail($user['email'], 'Retour materiel requis', "Bonjour {$user['prenom']},\n\nMerci de restituer le materiel sous 10 jours ouvrables. Passé ce delai, 600 EUR seront factures (voir CGV).");
-    }
-}
-
-header('Location: ' . $redirectUrl);
-exit();
+adminStatutRedirect($redirectUrl, null, 'Statut mis a jour : ' . getStatutLabel($statut) . '.');

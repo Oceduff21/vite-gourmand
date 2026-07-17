@@ -67,6 +67,7 @@ include 'includes/header.php';
 <div class="mb-3">
 <label class="form-label" for="login-password">Mot de passe <span class="text-danger" aria-hidden="true">*</span></label>
 <input type="password" name="password" id="login-password" class="form-control" required autocomplete="current-password">
+<?= renderPasswordToggle('login-password') ?>
 </div>
 
 <button type="submit" class="btn btn-primary">Se connecter</button>

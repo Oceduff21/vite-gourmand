@@ -113,7 +113,7 @@ require __DIR__ . '/partials/layout.php';
 
 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
     <div>
-        <h2 class="mb-1">Modifier le compte</h2>
+        <h1 class="h2 mb-1">Modifier le compte</h1>
         <p class="text-muted mb-0">
             <?= htmlspecialchars(trim(($user['prenom'] ?? '') . ' ' . ($user['nom'] ?? ''))) ?>
             — <?= htmlspecialchars($user['email']) ?>
@@ -135,30 +135,30 @@ require __DIR__ . '/partials/layout.php';
                 <?= csrfField() ?>
 
                 <div class="col-md-6">
-                    <label class="form-label small fw-semibold">Nom</label>
-                    <input type="text" name="nom" class="form-control" value="<?= htmlspecialchars($_POST['nom'] ?? '') ?>" required>
+                    <label class="form-label small fw-semibold" for="edit-user-nom">Nom</label>
+                    <input type="text" name="nom" id="edit-user-nom" class="form-control" value="<?= htmlspecialchars($_POST['nom'] ?? '') ?>" required autocomplete="family-name">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label small fw-semibold">Prenom</label>
-                    <input type="text" name="prenom" class="form-control" value="<?= htmlspecialchars($_POST['prenom'] ?? '') ?>" required>
+                    <label class="form-label small fw-semibold" for="edit-user-prenom">Prenom</label>
+                    <input type="text" name="prenom" id="edit-user-prenom" class="form-control" value="<?= htmlspecialchars($_POST['prenom'] ?? '') ?>" required autocomplete="given-name">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label small fw-semibold">Email</label>
-                    <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
+                    <label class="form-label small fw-semibold" for="edit-user-email">Email</label>
+                    <input type="email" name="email" id="edit-user-email" class="form-control" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required autocomplete="email">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label small fw-semibold">Telephone</label>
-                    <input type="text" name="telephone" class="form-control" value="<?= htmlspecialchars($_POST['telephone'] ?? '') ?>">
+                    <label class="form-label small fw-semibold" for="edit-user-telephone">Telephone</label>
+                    <input type="text" name="telephone" id="edit-user-telephone" class="form-control" value="<?= htmlspecialchars($_POST['telephone'] ?? '') ?>" autocomplete="tel">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label small fw-semibold">Mobile</label>
-                    <input type="text" name="gsm" class="form-control" value="<?= htmlspecialchars($_POST['gsm'] ?? '') ?>">
+                    <label class="form-label small fw-semibold" for="edit-user-gsm">Mobile</label>
+                    <input type="text" name="gsm" id="edit-user-gsm" class="form-control" value="<?= htmlspecialchars($_POST['gsm'] ?? '') ?>" autocomplete="tel">
                 </div>
 
                 <?php if (!$isAdminAccount): ?>
                 <div class="col-md-6">
-                    <label class="form-label small fw-semibold">Type de compte</label>
-                    <select name="role" class="form-select">
+                    <label class="form-label small fw-semibold" for="edit-user-role">Type de compte</label>
+                    <select name="role" id="edit-user-role" class="form-select">
                         <option value="employe" <?= ($_POST['role'] ?? '') === 'employe' ? 'selected' : '' ?>>Employe (acces back-office)</option>
                         <option value="utilisateur" <?= ($_POST['role'] ?? '') === 'utilisateur' ? 'selected' : '' ?>>Client (site public)</option>
                     </select>
@@ -173,9 +173,10 @@ require __DIR__ . '/partials/layout.php';
                 <?php endif; ?>
 
                 <div class="col-12">
-                    <label class="form-label small fw-semibold">Nouveau mot de passe</label>
-                    <input type="password" name="new_password" class="form-control" autocomplete="new-password" minlength="10"
+                    <label class="form-label small fw-semibold" for="edit-user-new-password">Nouveau mot de passe</label>
+                    <input type="password" name="new_password" id="edit-user-new-password" class="form-control" autocomplete="new-password" minlength="10"
                         placeholder="Laisser vide pour conserver l'actuel">
+                    <?= renderPasswordToggle('edit-user-new-password') ?>
                     <div class="form-text">10 caracteres min., majuscule, minuscule, chiffre et caractere special.</div>
                 </div>
 

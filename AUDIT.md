@@ -6,7 +6,7 @@
 
 Projet PHP/MySQL traiteur avec base UI solide (Bootstrap, filtres AJAX, espace admin). **Correctifs P0 appliques le 15/07/2026** : schema SQL unifie, footer JS repare, flux commande reconnecte, endpoints securises, acces employe ouvert.
 
-**Conformite estimee : ~65%** (apres P0 + P1 partiel). Reste : deploiement actif, PDF finaux, RGAA complet.
+**Conformite estimee : ~90%** (17/07/2026). Deploiement InfinityFree actif, RGAA renforce, MongoDB + fallback MySQL, livrables PDF generes.
 
 ---
 
@@ -33,21 +33,21 @@ Projet PHP/MySQL traiteur avec base UI solide (Bootstrap, filtres AJAX, espace a
 ## 2. Elements manquants
 
 ### Critiques (avant 23 juillet)
-- [ ] **Deploiement en ligne** (lien vide dans copie a rendre = rejet possible) — voir DEPLOY.md + render.yaml
-- [x] **MongoDB** stats + dashboard admin
+- [x] **Deploiement en ligne** — https://vitegourmand.infinityfree.io/
+- [x] **MongoDB** stats + dashboard admin (fallback MySQL prod)
 - [x] **Mot de passe oublie** + email reset
 - [x] **Email bienvenue** inscription
 - [x] **Contact** : formulaire fonctionnel
 - [x] **Workflow statuts complet** (8 statuts + historique)
 - [x] **commande_details** : choix plats persistes
-- [ ] **RGAA** accessibilite complete
+- [x] **RGAA** accessibilite (~90 %, page accessibilite.php)
 
 ### Importants
-- [ ] Galerie images par menu, allergenes affiches
-- [ ] CA par menu avec filtres (admin)
-- [ ] Validation mot de passe (10 car., complexite)
-- [ ] Manuel PDF, charte graphique, doc technique
-- [ ] Motif annulation employe avec mode contact
+- [x] Galerie images par menu, allergenes affiches
+- [x] CA par menu avec filtres (admin)
+- [x] Validation mot de passe (10 car., complexite)
+- [x] Manuel PDF, charte graphique, doc technique
+- [x] Motif annulation employe avec mode contact
 
 ---
 

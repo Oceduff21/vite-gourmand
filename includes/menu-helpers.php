@@ -245,6 +245,178 @@ function resolveMenuThemeKey(array $menu): string
     return $themeMap[$theme] ?? ($theme !== '' ? $theme : 'presentation');
 }
 
+function resolveMenuRegimeKey(array $menu): string
+{
+    $regime = preg_replace('/[^a-z0-9 _-]/u', '', normalizeMenuString($menu['regime'] ?? ''));
+    $titre = normalizeMenuString($menu['titre'] ?? '');
+    $desc = normalizeMenuString($menu['description'] ?? '');
+    $theme = normalizeMenuString($menu['theme'] ?? '');
+
+    if ($regime === 'vegan' || $theme === 'vegan' || str_contains($titre, 'vegan') || str_contains($desc, 'vegan')) {
+        return 'vegan';
+    }
+    if ($regime === 'vegetarien' || str_contains($titre, 'vegetarien') || str_contains($desc, 'vegetarien')) {
+        return 'vegetarien';
+    }
+    if ($regime === 'premium' || str_contains($titre, 'premium') || str_contains($titre, 'prestige')) {
+        return 'premium';
+    }
+
+    return $regime !== '' ? $regime : 'classique';
+}
+
+/** @return list<string> */
+function collectMenuSemanticCriteria(array $params): array
+{
+    $criteria = [];
+
+    $search = trim((string)($params['search'] ?? ''));
+    if ($search !== '') {
+        foreach (preg_split('/\s+/u', $search, -1, PREG_SPLIT_NO_EMPTY) as $token) {
+            $token = normalizeMenuString($token);
+            if ($token !== '' && mb_strlen($token) >= 2) {
+                $criteria[] = $token;
+            }
+        }
+    }
+
+    $theme = normalizeMenuString((string)($params['theme'] ?? ''));
+    if ($theme !== '') {
+        $criteria[] = $theme;
+    }
+
+    $regime = normalizeMenuString((string)($params['regime'] ?? ''));
+    if ($regime !== '') {
+        $criteria[] = $regime;
+    }
+
+    return array_values(array_unique($criteria));
+}
+
+function menuMatchesSemanticCriterion(array $menu, string $criterion): bool
+{
+    $criterion = normalizeMenuString($criterion);
+    if ($criterion === '') {
+        return true;
+    }
+
+    if (resolveMenuThemeKey($menu) === $criterion) {
+        return true;
+    }
+    if (resolveMenuRegimeKey($menu) === $criterion) {
+        return true;
+    }
+
+    $haystack = normalizeMenuString(implode(' ', [
+        $menu['titre'] ?? '',
+        $menu['description'] ?? '',
+        $menu['theme'] ?? '',
+        $menu['regime'] ?? '',
+    ]));
+
+    return str_contains($haystack, $criterion);
+}
+
+function filterMenusForListing(array $menus, array $params): array
+{
+    $criteria = collectMenuSemanticCriteria($params);
+    $prixMin = ($params['prix_min'] ?? '') !== '' && is_numeric($params['prix_min']) ? (float)$params['prix_min'] : null;
+    $prixMax = ($params['prix_max'] ?? '') !== '' && is_numeric($params['prix_max']) ? (float)$params['prix_max'] : null;
+    $personnes = ($params['personnes'] ?? '') !== '' && is_numeric($params['personnes']) ? (int)$params['personnes'] : null;
+
+    return array_values(array_filter($menus, static function (array $menu) use ($criteria, $prixMin, $prixMax, $personnes): bool {
+        if ($criteria !== []) {
+            $matched = false;
+            foreach ($criteria as $criterion) {
+                if (menuMatchesSemanticCriterion($menu, $criterion)) {
+                    $matched = true;
+                    break;
+                }
+            }
+            if (!$matched) {
+                return false;
+            }
+        }
+
+        $prix = (float)($menu['prix'] ?? 0);
+        if ($prixMin !== null && $prix < $prixMin) {
+            return false;
+        }
+        if ($prixMax !== null && $prix > $prixMax) {
+            return false;
+        }
+        if ($personnes !== null && (int)($menu['min_personnes'] ?? 0) > $personnes) {
+            return false;
+        }
+
+        return true;
+    }));
+}
+
+function sortMenusForListing(array $menus, string $sort, PDO $pdo): array
+{
+    switch ($sort) {
+        case 'prix_asc':
+            usort($menus, static fn(array $a, array $b): int => ((float)$a['prix'] <=> (float)$b['prix']) ?: strcasecmp($a['titre'] ?? '', $b['titre'] ?? ''));
+            break;
+        case 'prix_desc':
+            usort($menus, static fn(array $a, array $b): int => ((float)$b['prix'] <=> (float)$a['prix']) ?: strcasecmp($a['titre'] ?? '', $b['titre'] ?? ''));
+            break;
+        case 'populaire':
+            $counts = [];
+            $stmt = $pdo->query('SELECT menu_id, COUNT(*) AS nb FROM commandes GROUP BY menu_id');
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $counts[(int)$row['menu_id']] = (int)$row['nb'];
+            }
+            usort($menus, static function (array $a, array $b) use ($counts): int {
+                $cmp = ($counts[(int)($b['id'] ?? 0)] ?? 0) <=> ($counts[(int)($a['id'] ?? 0)] ?? 0);
+                return $cmp !== 0 ? $cmp : strcasecmp($a['titre'] ?? '', $b['titre'] ?? '');
+            });
+            break;
+        default:
+            usort($menus, static function (array $a, array $b): int {
+                $cmp = ((int)($b['stock'] ?? 0)) <=> ((int)($a['stock'] ?? 0));
+                return $cmp !== 0 ? $cmp : ((int)($b['id'] ?? 0)) <=> ((int)($a['id'] ?? 0));
+            });
+    }
+
+    return $menus;
+}
+
+function renderMenuFilterBadges(array $params): string
+{
+    $labels = [];
+    if (trim((string)($params['search'] ?? '')) !== '') {
+        $labels[] = 'Recherche : « ' . htmlspecialchars(trim($params['search'])) . ' »';
+    }
+    if (($params['theme'] ?? '') !== '') {
+        $labels[] = 'Theme : ' . htmlspecialchars(ucfirst($params['theme']));
+    }
+    if (($params['regime'] ?? '') !== '') {
+        $labels[] = 'Regime : ' . htmlspecialchars(ucfirst($params['regime']));
+    }
+    if (($params['prix_min'] ?? '') !== '') {
+        $labels[] = 'Min ' . htmlspecialchars((string)$params['prix_min']) . ' EUR';
+    }
+    if (($params['prix_max'] ?? '') !== '') {
+        $labels[] = 'Max ' . htmlspecialchars((string)$params['prix_max']) . ' EUR';
+    }
+    if (($params['personnes'] ?? '') !== '') {
+        $labels[] = htmlspecialchars((string)$params['personnes']) . ' invites';
+    }
+
+    if ($labels === []) {
+        return '';
+    }
+
+    $html = '<div class="col-12"><div class="menus-active-filters" role="status" aria-live="polite"><span class="visually-hidden">Filtres actifs : </span>';
+    foreach ($labels as $label) {
+        $html .= '<span class="badge menus-filter-pill">' . $label . '</span>';
+    }
+    $html .= '</div></div>';
+    return $html;
+}
+
 function normalizeGallerySlide(array $item): array
 {
     if (!empty($item['src'])) {
@@ -587,41 +759,47 @@ function renderMenuCard(array $menu): string
     $titre = htmlspecialchars($menu['titre'] ?? '');
     $desc = htmlspecialchars(formatMenuExcerpt($menu['description'] ?? ''));
     $minPers = (int)($menu['min_personnes'] ?? 0);
-    $prix = number_format((float)($menu['prix'] ?? 0), 2);
     $delai = (int)($menu['delai_jours'] ?? 7);
     $stock = (int)($menu['stock'] ?? 0);
-    $theme = htmlspecialchars(ucfirst($menu['theme'] ?? ''));
+    $themeKey = resolveMenuThemeKey($menu);
+    $regimeKey = resolveMenuRegimeKey($menu);
+    $themeLabel = htmlspecialchars(ucfirst($themeKey));
+    $regimeLabel = htmlspecialchars(ucfirst($regimeKey));
     $id = (int)$menu['id'];
     $disponible = $stock > 0;
+    $cardId = 'menu-card-' . $id;
 
     $prixLabel = formatMenuPriceLabel($menu);
 
     $stockBadge = $disponible
-        ? '<span class="badge bg-success menu-card-badge">Disponible</span>'
-        : '<span class="badge bg-secondary menu-card-badge">Indisponible</span>';
+        ? '<span class="badge menu-badge-ok menu-card-badge">Disponible</span>'
+        : '<span class="badge menu-badge-muted menu-card-badge">Indisponible</span>';
 
     $btnClass = $disponible ? 'btn-danger' : 'btn-outline-secondary';
-    $btnLabel = 'Voir le detail';
+    $btnLabel = $disponible ? 'Voir le menu et commander' : 'Voir le detail';
 
     return '
 <div class="col-xl-3 col-lg-4 col-md-6">
-    <article class="card menu-card h-100 shadow-sm">
+    <article class="card menu-card h-100 shadow-sm" aria-labelledby="' . $cardId . '-title">
         <div class="menu-card-img-wrap position-relative">
-            <img src="' . $cover . '" class="card-img-top" alt="' . $titre . '" loading="lazy"
+            <img src="' . $cover . '" class="card-img-top" alt="" loading="lazy"
                 onerror="this.src=\'' . $fallback . '\'">
             ' . $stockBadge . '
         </div>
         <div class="card-body d-flex flex-column">
-            <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
-                <h5 class="fw-bold mb-0">' . $titre . '</h5>
-                ' . ($theme !== '' ? '<span class="badge bg-light text-dark border">' . $theme . '</span>' : '') . '
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <h2 class="h5 fw-bold mb-0" id="' . $cardId . '-title">' . $titre . '</h2>
             </div>
-            ' . ($desc !== '' ? '<p class="text-muted small flex-grow-1 mb-2">' . $desc . '</p>' : '<p class="flex-grow-1 mb-2"></p>') . '
-            <ul class="list-unstyled small text-muted mb-3">
-                <li><i class="fa-solid fa-users me-1"></i> Min. ' . $minPers . ' pers.</li>
-                <li><i class="fa-solid fa-clock me-1"></i> Delai ' . $delai . ' j.</li>
+            <ul class="menu-card-tags list-unstyled d-flex flex-wrap gap-1 mb-2" aria-label="Theme et regime">
+                <li><span class="badge menu-badge-theme">' . $themeLabel . '</span></li>
+                <li><span class="badge menu-badge-regime">' . $regimeLabel . '</span></li>
             </ul>
-            <p class="text-danger fw-bold mb-3">' . $prixLabel . '</p>
+            ' . ($desc !== '' ? '<p class="text-muted small flex-grow-1 mb-2">' . $desc . '</p>' : '<p class="flex-grow-1 mb-2"></p>') . '
+            <ul class="list-unstyled small menu-card-meta mb-3">
+                <li><i class="fa-solid fa-users me-1" aria-hidden="true"></i> Min. ' . $minPers . ' pers.</li>
+                <li><i class="fa-solid fa-clock me-1" aria-hidden="true"></i> Delai ' . $delai . ' j.</li>
+            </ul>
+            <p class="menu-card-price fw-bold mb-3">' . $prixLabel . '</p>
             <a href="menu.php?id=' . $id . '" class="btn ' . $btnClass . ' w-100 mt-auto">' . $btnLabel . '</a>
         </div>
     </article>
@@ -688,6 +866,34 @@ function normalizeCartFromPost(?string $json): array
     return $normalized;
 }
 
+function cartFromCommandeDetails(PDO $pdo, int $commandeId): array
+{
+    $cart = array_fill_keys(MENU_TYPES, []);
+    $stmt = $pdo->prepare('SELECT plat_id, quantite, type FROM commande_details WHERE commande_id = ?');
+    $stmt->execute([$commandeId]);
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $type = $row['type'];
+        if (in_array($type, MENU_TYPES, true)) {
+            $cart[$type][(int)$row['plat_id']] = (int)$row['quantite'];
+        }
+    }
+    return $cart;
+}
+
+function replaceCommandePlatDetails(PDO $pdo, int $commandeId, array $cart): void
+{
+    $pdo->prepare('DELETE FROM commande_details WHERE commande_id = ?')->execute([$commandeId]);
+    $stmt = $pdo->prepare('INSERT INTO commande_details (commande_id, plat_id, quantite, type) VALUES (?, ?, ?, ?)');
+    foreach (MENU_TYPES as $type) {
+        foreach ($cart[$type] ?? [] as $platId => $qty) {
+            $qty = (int)$qty;
+            if ($qty > 0) {
+                $stmt->execute([$commandeId, (int)$platId, $qty, $type]);
+            }
+        }
+    }
+}
+
 function getAllowedBoissonIds(PDO $pdo, int $menuId): array
 {
     $ids = [];
@@ -722,6 +928,22 @@ function calculateBoissonsTotal(PDO $pdo, int $menuId, array $cart): float
     }
 
     return round($total, 2);
+}
+
+function platBadge(string $regime): string
+{
+    $map = [
+        'vegan' => ['Vegan', 'bg-success'],
+        'vegetarien' => ['Vegetarien', 'bg-warning text-dark'],
+        'sans gluten' => ['Sans gluten', 'bg-info text-dark'],
+        'sans lactose' => ['Sans lactose', 'bg-primary'],
+        'halal' => ['Halal', 'bg-dark'],
+        'pescetarien' => ['Pescetarien', 'bg-secondary'],
+        'classique' => ['Classique', 'bg-secondary'],
+    ];
+    $key = strtolower(trim($regime));
+    [$label, $cls] = $map[$key] ?? ['Classique', 'bg-secondary'];
+    return '<span class="badge ' . $cls . '">' . htmlspecialchars($label) . '</span>';
 }
 
 function cartHasValidSelection(array $cart, int $nbPersonnes): bool

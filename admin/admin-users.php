@@ -60,13 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         VALUES (?, ?, ?, ?, ?, ?, \'employe\', 1)
                     ');
                     $stmt->execute([$nom, $prenom, $email, $gsm ?: null, $gsm ?: null, $password]);
-                    @mail(
-                        $email,
-                        'Compte employe Vite & Gourmand',
-                        "Bonjour {$prenom},\n\nVotre compte employe a ete cree.\n"
-                        . "Connexion : https://vitegourmand.infinityfree.io/admin/login.php\n"
-                    );
-                    $_SESSION['admin_users_flash'] = "Employe {$prenom} {$nom} cree avec succes.";
+                    sendEmployeWelcomeEmail($email, $prenom);
+                    $_SESSION['admin_users_flash'] = "Employe {$prenom} {$nom} cree. Un email de notification a ete envoye (sans mot de passe — communiquez-le lui en personne).";
                     usersRedirect('employes');
                 }
             }
@@ -89,7 +84,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare("UPDATE users SET role = 'employe', is_active = 1 WHERE id = ? AND role = 'utilisateur'");
         $stmt->execute([$userId]);
         if ($stmt->rowCount() > 0) {
-            $_SESSION['admin_users_flash'] = 'Client promu en employe. Il peut desormais acceder au back-office.';
+            $u = $pdo->prepare('SELECT email, prenom FROM users WHERE id = ?');
+            $u->execute([$userId]);
+            if ($row = $u->fetch(PDO::FETCH_ASSOC)) {
+                sendEmployeWelcomeEmail($row['email'], $row['prenom']);
+            }
+            $_SESSION['admin_users_flash'] = 'Client promu en employe. Email de notification envoye (mot de passe : celui du compte client ou a redefinir).';
         }
         usersRedirect('clients');
     } elseif (isset($_POST['demote_client'])) {
@@ -174,7 +174,7 @@ $queryBase = static function (array $extra = []) use ($tab, $filterStatus, $filt
 require __DIR__ . '/partials/layout.php';
 ?>
 
-<h2 class="mb-1">Gestion des utilisateurs</h2>
+<h1 class="h2 mb-1">Gestion des utilisateurs</h1>
 <p class="text-muted mb-4">Employes du back-office et comptes clients du site public.</p>
 
 <?php if ($success): ?>
@@ -268,29 +268,33 @@ require __DIR__ . '/partials/layout.php';
 <?php if ($tab === 'employes'): ?>
 <div class="card-custom mb-4">
     <h5 class="mb-3"><i class="fa-solid fa-user-plus me-2 text-primary"></i>Creer un compte employe</h5>
-    <p class="text-muted small mb-3">Acces back-office : commandes, menus, plats, boissons, avis (sans gestion des utilisateurs).</p>
+    <p class="text-muted small mb-3">
+        Seuls des comptes <strong>employe</strong> peuvent etre crees ici (pas d'administrateur depuis l'application).
+        L'email sert d'identifiant. Le mot de passe est defini par vous et <strong>remis en personne</strong> a l'employe — il n'est jamais envoye par email.
+    </p>
     <form method="POST" class="row g-3">
         <?= csrfField() ?>
         <input type="hidden" name="tab" value="employes">
         <div class="col-md-3">
-            <label class="form-label small fw-semibold">Nom</label>
-            <input type="text" name="nom" class="form-control" value="<?= htmlspecialchars($_POST['nom'] ?? '') ?>" required>
+            <label class="form-label small fw-semibold" for="create-emp-nom">Nom</label>
+            <input type="text" name="nom" id="create-emp-nom" class="form-control" value="<?= htmlspecialchars($_POST['nom'] ?? '') ?>" required autocomplete="family-name">
         </div>
         <div class="col-md-3">
-            <label class="form-label small fw-semibold">Prenom</label>
-            <input type="text" name="prenom" class="form-control" value="<?= htmlspecialchars($_POST['prenom'] ?? '') ?>" required>
+            <label class="form-label small fw-semibold" for="create-emp-prenom">Prenom</label>
+            <input type="text" name="prenom" id="create-emp-prenom" class="form-control" value="<?= htmlspecialchars($_POST['prenom'] ?? '') ?>" required autocomplete="given-name">
         </div>
         <div class="col-md-3">
-            <label class="form-label small fw-semibold">Email</label>
-            <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required>
+            <label class="form-label small fw-semibold" for="create-emp-email">Email</label>
+            <input type="email" name="email" id="create-emp-email" class="form-control" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required autocomplete="email">
         </div>
         <div class="col-md-3">
-            <label class="form-label small fw-semibold">Mobile</label>
-            <input type="text" name="gsm" class="form-control" value="<?= htmlspecialchars($_POST['gsm'] ?? '') ?>">
+            <label class="form-label small fw-semibold" for="create-emp-gsm">Mobile</label>
+            <input type="text" name="gsm" id="create-emp-gsm" class="form-control" value="<?= htmlspecialchars($_POST['gsm'] ?? '') ?>" autocomplete="tel">
         </div>
         <div class="col-md-6">
-            <label class="form-label small fw-semibold">Mot de passe initial</label>
-            <input type="password" name="password" class="form-control" required minlength="10" autocomplete="new-password">
+            <label class="form-label small fw-semibold" for="create-employee-password">Mot de passe initial</label>
+            <input type="password" name="password" id="create-employee-password" class="form-control" required minlength="10" autocomplete="new-password">
+            <?= renderPasswordToggle('create-employee-password') ?>
         </div>
         <div class="col-md-6 d-flex align-items-end">
             <button name="create" value="1" class="btn btn-primary w-100">
@@ -305,16 +309,16 @@ require __DIR__ . '/partials/layout.php';
     <form method="GET" class="row g-3 align-items-end">
         <input type="hidden" name="tab" value="<?= htmlspecialchars($tab) ?>">
         <div class="col-md-4">
-            <label class="form-label small fw-semibold">Statut</label>
-            <select name="status" class="form-select">
+            <label class="form-label small fw-semibold" for="filtre-user-status">Statut</label>
+            <select name="status" id="filtre-user-status" class="form-select">
                 <option value="">Tous</option>
                 <option value="active" <?= $filterStatus === 'active' ? 'selected' : '' ?>>Actifs</option>
                 <option value="inactive" <?= $filterStatus === 'inactive' ? 'selected' : '' ?>>Desactives</option>
             </select>
         </div>
         <div class="col-md-5">
-            <label class="form-label small fw-semibold">Recherche</label>
-            <input type="text" name="q" class="form-control" placeholder="Nom, prenom, email..." value="<?= htmlspecialchars($filterSearch) ?>">
+            <label class="form-label small fw-semibold" for="filtre-user-q">Recherche</label>
+            <input type="text" name="q" id="filtre-user-q" class="form-control" placeholder="Nom, prenom, email..." value="<?= htmlspecialchars($filterSearch) ?>">
         </div>
         <div class="col-md-3 d-flex gap-2">
             <button class="btn btn-primary flex-grow-1">Filtrer</button>
@@ -341,15 +345,16 @@ require __DIR__ . '/partials/layout.php';
 
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
+            <caption class="visually-hidden">Liste des comptes utilisateurs</caption>
             <thead class="table-light">
                 <tr>
-                    <th>Utilisateur</th>
-                    <th>Email / Contact</th>
-                    <?php if ($tab === 'tous'): ?><th>Role</th><?php endif; ?>
-                    <th>Statut</th>
-                    <?php if ($tab === 'clients' || $tab === 'tous'): ?><th>Commandes</th><?php endif; ?>
-                    <th>Inscription</th>
-                    <th class="text-end">Actions</th>
+                    <th scope="col">Utilisateur</th>
+                    <th scope="col">Email / Contact</th>
+                    <?php if ($tab === 'tous'): ?><th scope="col">Role</th><?php endif; ?>
+                    <th scope="col">Statut</th>
+                    <?php if ($tab === 'clients' || $tab === 'tous'): ?><th scope="col">Commandes</th><?php endif; ?>
+                    <th scope="col">Inscription</th>
+                    <th scope="col" class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>

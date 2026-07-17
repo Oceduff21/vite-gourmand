@@ -1,0 +1,3 @@
+-- Jose = administrateur — voir patch-cleanup-users.sql
+-- Email : jose@vite-gourmand.fr
+-- Mot de passe : Admin123!

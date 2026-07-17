@@ -143,8 +143,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `nom`, `prenom`, `email`, `gsm`, `adresse`, `password`, `role`, `created_at`) VALUES
-(1, 'DOE', 'JOHN', 'test@test.com', '123456789', '', '$2y$10$fN.FbxWpjl/KyVL/bPefY.rI09VP1GUrSU6p3xDxl4mTUby9l8KWS', 'utilisateur', '2026-03-06 17:12:19'),
-(2, 'Test', 'Admin', 'testadmin@test.com', '123456789', '', '$2y$10$0.qcUaF7bdmBeqm7eRC61O.wzGu0Zhy7Z/Oret1BeFGrDvTlknRWS', 'admin', '2026-03-13 12:04:09');
+(1, 'Dupont', 'Marie', 'client@vite-gourmand.fr', '0633445566', 'Cours Victor Hugo 25, 33000 Bordeaux', '$2y$10$Xwsh9yOlEtPKKnvaWLvrSOeZQ2KflrwJbgRhZU5xQsNCqPr26nQLS', 'utilisateur', '2026-03-06 17:12:19'),
+(2, 'Gourmand', 'Jose', 'jose@vite-gourmand.fr', '0622334455', 'Rue Verteuil 11, 33000 Bordeaux', '$2y$10$5ug3pkSriD0X503uEwIVmuo480xxHKzX0wzLf2R/v/Z2QC2bvZlM.', 'admin', '2026-03-13 12:04:09'),
+(3, 'Gourmand', 'Julie', 'julie@vite-gourmand.fr', '0611223344', 'Rue Verteuil 11, 33000 Bordeaux', '$2y$10$DpEVJNnWM82SRquJ1PLrbOjR2YOxYtYqgC.7mkDQX1voTchdh7odG', 'employe', '2026-03-13 12:05:00');
 
 --
 -- Index pour les tables déchargées

@@ -11,13 +11,15 @@ Application web PHP/MySQL de gestion de menus et commandes pour un service trait
    - Base existante : `database/migration.sql`
 4. Acceder : http://localhost/vite-gourmand
 
-## Comptes de test
+## Comptes de demo
 
 | Role | Email | Mot de passe |
 |------|-------|--------------|
-| Admin | testadmin@test.com | Admin123! |
-| Admin (ECF) | admin@vite-gourmand.fr | Admin123! |
-| Utilisateur | test@test.com | (voir BDD) |
+| Admin (Jose) | jose@vite-gourmand.fr | Admin123! |
+| Employe (Julie) | julie@vite-gourmand.fr | Employe123! |
+| Client | client@vite-gourmand.fr | Client123! |
+
+Tri des comptes en BDD : executer `database/patch-cleanup-users.sql` dans phpMyAdmin.
 
 ## Stack
 

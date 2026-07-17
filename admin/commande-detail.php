@@ -64,8 +64,10 @@ $hist->execute([$id]);
 $historique = $hist->fetchAll(PDO::FETCH_ASSOC);
 
 $canDecide = $c['statut'] === 'en_attente';
+$allowedStatuts = getAllowedNextStatuts($c['statut']);
 $flash = $_SESSION['admin_flash'] ?? null;
-unset($_SESSION['admin_flash']);
+$flashError = $_SESSION['admin_flash_error'] ?? null;
+unset($_SESSION['admin_flash'], $_SESSION['admin_flash_error']);
 
 require __DIR__ . '/partials/layout.php';
 ?>
@@ -73,7 +75,7 @@ require __DIR__ . '/partials/layout.php';
 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
     <div>
         <a href="admin-commandes.php" class="text-muted small text-decoration-none">&larr; Retour aux commandes</a>
-        <h2 class="mb-1 mt-1">Commande #<?= $id ?></h2>
+        <h1 class="h2 mb-1 mt-1">Commande #<?= $id ?></h1>
         <p class="text-muted mb-0">Passee le <?= date('d/m/Y H:i', strtotime($c['created_at'])) ?></p>
     </div>
     <div class="text-end">
@@ -86,6 +88,9 @@ require __DIR__ . '/partials/layout.php';
 
 <?php if ($flash): ?>
 <div class="alert alert-success"><?= htmlspecialchars($flash) ?></div>
+<?php endif; ?>
+<?php if ($flashError): ?>
+<div class="alert alert-danger"><?= htmlspecialchars($flashError) ?></div>
 <?php endif; ?>
 
 <?php if ($canDecide): ?>
@@ -204,8 +209,15 @@ require __DIR__ . '/partials/layout.php';
         <div class="card-custom mb-4">
             <h5 class="mb-3">Selection des plats</h5>
             <table class="table table-sm align-middle mb-0">
+                <caption class="visually-hidden">Selection des plats pour la commande</caption>
                 <thead class="table-light">
-                    <tr><th>Categorie</th><th>Plat</th><th>Regime</th><th>Allergenes</th><th class="text-end">Invites</th></tr>
+                    <tr>
+                        <th scope="col">Categorie</th>
+                        <th scope="col">Plat</th>
+                        <th scope="col">Regime</th>
+                        <th scope="col">Allergenes</th>
+                        <th scope="col" class="text-end">Invites</th>
+                    </tr>
                 </thead>
                 <tbody>
                 <?php foreach ($details as $d): ?>
@@ -226,13 +238,14 @@ require __DIR__ . '/partials/layout.php';
         <div class="card-custom mb-4">
             <h5 class="mb-3">Boissons</h5>
             <table class="table table-sm align-middle mb-0">
+                <caption class="visually-hidden">Boissons commandees</caption>
                 <thead class="table-light">
                     <tr>
-                        <th>Boisson</th>
-                        <th class="text-end">Qte</th>
+                        <th scope="col">Boisson</th>
+                        <th scope="col" class="text-end">Qte</th>
                         <?php if ($canViewFinancials): ?>
-                        <th class="text-end">Prix unit.</th>
-                        <th class="text-end">Sous-total</th>
+                        <th scope="col" class="text-end">Prix unit.</th>
+                        <th scope="col" class="text-end">Sous-total</th>
                         <?php endif; ?>
                     </tr>
                 </thead>
@@ -270,20 +283,38 @@ require __DIR__ . '/partials/layout.php';
         <div class="card-custom mb-4">
             <h5 class="mb-3">Changer le statut</h5>
             <?php if ($isEmploye): ?>
-            <p class="small text-muted">Accepte, preparation, livraison, materiel, terminee — conformement au processus traiteur.</p>
+            <p class="small text-muted mb-2">Workflow : acceptee → preparation → livraison → livre → (materiel) → terminee.</p>
             <?php endif; ?>
+            <?php if (count($allowedStatuts) <= 1 && $c['statut'] !== 'annulee'): ?>
+            <p class="text-muted small mb-0">Aucune evolution de statut disponible pour cette commande.</p>
+            <?php else: ?>
             <form method="POST" action="update-statut.php">
                 <?= csrfField() ?>
                 <input type="hidden" name="id" value="<?= $id ?>">
                 <input type="hidden" name="redirect" value="detail">
                 <select name="statut" class="form-select mb-2">
-                <?php foreach ($statuts as $k => $label): if ($k === 'annulee') continue; ?>
+                <?php foreach ($statuts as $k => $label): if ($k === 'annulee' || !in_array($k, $allowedStatuts, true)) continue; ?>
                     <option value="<?= $k ?>" <?= $c['statut'] === $k ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
                 <?php endforeach; ?>
                 </select>
                 <button class="btn btn-dark w-100">Mettre a jour</button>
             </form>
-            <?php if ($c['statut'] !== 'annulee'): ?>
+            <?php
+            $nextStatuts = array_values(array_filter($allowedStatuts, fn($s) => $s !== $c['statut']));
+            foreach ($nextStatuts as $nextStatut):
+            ?>
+            <form method="POST" action="update-statut.php" class="mt-2">
+                <?= csrfField() ?>
+                <input type="hidden" name="id" value="<?= $id ?>">
+                <input type="hidden" name="redirect" value="detail">
+                <input type="hidden" name="statut" value="<?= htmlspecialchars($nextStatut) ?>">
+                <button class="btn btn-outline-primary w-100">
+                    Passer a « <?= htmlspecialchars($statuts[$nextStatut]) ?> »
+                </button>
+            </form>
+            <?php endforeach; ?>
+            <?php endif; ?>
+            <?php if ($c['statut'] !== 'annulee' && $c['statut'] !== 'terminee'): ?>
             <a href="annuler-commande.php?id=<?= $id ?>&from=detail" class="btn btn-outline-danger w-100 mt-2">
                 Refuser / Annuler (contact client requis)
             </a>
