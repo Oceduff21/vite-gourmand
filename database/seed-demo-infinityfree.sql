@@ -5,7 +5,7 @@ INSERT IGNORE INTO plats (id, nom, type, description, image, regime) VALUES
 (2, 'Salade gourmande', 'entree', 'Mesclun et noix', 'salade.jpg', 'vegan'),
 (7, 'Foie gras mi-cuit', 'entree', 'Chutney de figues', 'foie-gras.jpg', 'classique'),
 (3, 'Poulet fermier', 'plat', 'Label rouge roti', 'poulet.jpg', 'classique'),
-(4, 'Risotto aux champignons', 'plat', 'Cremeux parmesan', 'risotto.jpg', 'vegetarien'),
+(4, 'Risotto aux champignons', 'plat', 'Cremeux parmesan', 'risotto-champignons.jpg', 'vegetarien'),
 (8, 'Saumon grille', 'plat', 'Beurre citron', 'saumon.jpg', 'classique'),
 (5, 'Tiramisu maison', 'dessert', 'Recette italienne', 'tiramisu.jpg', 'classique'),
 (6, 'Fruits frais', 'dessert', 'Assortiment de saison', 'fruits.jpg', 'vegan'),

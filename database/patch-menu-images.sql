@@ -19,7 +19,7 @@ UPDATE menus SET image_principale = 'menu-cocktail.jpg' WHERE LOWER(titre) LIKE 
 UPDATE menus SET image_principale = 'menu-oriental.jpg' WHERE LOWER(titre) LIKE '%oriental%' OR LOWER(titre) LIKE '%mediterr%' OR LOWER(titre) LIKE '%portugais%';
 UPDATE menus SET image_principale = 'menu-brunch.jpg' WHERE LOWER(titre) LIKE '%brunch%';
 UPDATE menus SET image_principale = 'menu-enfant.jpg' WHERE LOWER(titre) LIKE '%enfant%';
-UPDATE menus SET image_principale = 'menu-barbecue.jpg' WHERE LOWER(titre) LIKE '%barbecue%' OR LOWER(titre) LIKE '%bbq%';
+UPDATE menus SET image_principale = 'menu-entreprise.jpg' WHERE id = 14 OR LOWER(titre) LIKE '%entreprise%';
 
 -- Images plats : eviter presentation.jpg generique sur entrees
 UPDATE plats SET image = 'veloute.jpg' WHERE id IN (1, 17) AND image IN ('presentation.jpg', 'default.jpg', 'image.jpg');
