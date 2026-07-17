@@ -59,7 +59,7 @@ Sources Markdown a convertir en PDF : dossier `docs/`
 - [x] Documentation livrables MD (docs/GESTION_PROJET.md, UML, wireframes)
 - [x] GitHub public a jour
 - [ ] Copie ODT completee (URL + stack ci-dessus)
-- [ ] 3 PDF livrables (exporter depuis docs/*.md)
+- [x] 3 PDF livrables (docs/MANUEL_UTILISATEUR.pdf, CHARTE_GRAPHIQUE.pdf, DOCUMENTATION_TECHNIQUE.pdf)
 - [ ] Upload prod des fichiers modifies (FileZilla)
 - [ ] Test parcours : inscription → commande → suivi → avis
 - [x] Mentions legales : hebergeur InfinityFree
