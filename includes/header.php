@@ -197,11 +197,11 @@ if($page === 'menu.php' && isset($_GET['id'])){
 
         $stmt = $pdo->prepare("SELECT titre FROM menus WHERE id=?");
         $stmt->execute([$_GET['id']]);
-        $menu = $stmt->fetch();
+        $menuBreadcrumb = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if($menu){
+        if($menuBreadcrumb){
             $current = "Menus";
-            $sub = $menu['titre'];
+            $sub = $menuBreadcrumb['titre'];
         }
 
     } catch(Exception $e){

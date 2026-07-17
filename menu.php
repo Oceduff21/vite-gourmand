@@ -100,6 +100,7 @@ if ($hasBoissons) {
 $wizardSteps[] = ['id' => 'recap', 'label' => 'Commande', 'num' => count($wizardSteps) + 1];
 
 $galleryImages = getMenuGalleryImages($menu, $group, 10);
+$menuPriceLabel = formatMenuPriceLabel($menu);
 
 function platBadge(string $regime): string
 {
@@ -142,7 +143,7 @@ include 'includes/header.php';
     <?php if (!empty($menu['description'])): ?>
     <p class="text-muted mb-2"><?= htmlspecialchars($menu['description']) ?></p>
     <?php endif; ?>
-    <p class="menu-price mb-2"><?= formatMenuPriceLabel($menu) ?></p>
+    <p class="menu-price mb-2"><?= $menuPriceLabel ?></p>
     <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
         <?php if (!empty($menu['theme'])): ?>
         <span class="badge bg-secondary"><?= htmlspecialchars(ucfirst($menu['theme'])) ?></span>
