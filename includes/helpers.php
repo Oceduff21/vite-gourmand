@@ -258,6 +258,18 @@ function sendSecurityHeaders(): void
     header('X-XSS-Protection: 1; mode=block');
 }
 
+function sanitizeInternalRedirect(?string $redirect, string $fallback = 'index.php'): string
+{
+    $redirect = trim((string)$redirect);
+    if ($redirect === ''
+        || preg_match('#^(https?://|//)#i', $redirect)
+        || strpos($redirect, '..') !== false
+        || !preg_match('#^[a-z0-9_./?=&%-]+$#i', $redirect)) {
+        return $fallback;
+    }
+    return $redirect;
+}
+
 function secureSessionLogin(int $userId, string $role, array $extra = []): void
 {
     if (session_status() === PHP_SESSION_NONE) {

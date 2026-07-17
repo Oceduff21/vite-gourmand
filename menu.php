@@ -99,6 +99,13 @@ if ($hasBoissons) {
 }
 $wizardSteps[] = ['id' => 'recap', 'label' => 'Commande', 'num' => count($wizardSteps) + 1];
 
+$savedCart = null;
+if (!empty($_SESSION['menu_cart']) && (int)($_SESSION['menu_cart_menu_id'] ?? 0) === $id) {
+    $savedCart = $_SESSION['menu_cart'];
+}
+$resumeCommande = isset($_GET['resume']) && $_GET['resume'] === 'commande' && isset($_SESSION['user_id']);
+$activeCartTypes = array_values(array_filter(MENU_TYPES, static fn(string $t): bool => !empty($group[$t])));
+
 $galleryImages = getMenuGalleryImages($menu, $group, 10);
 $menuPriceLabel = formatMenuPriceLabel($menu);
 
@@ -225,6 +232,10 @@ if ($cartFlash):
 <div class="alert alert-danger" role="alert"><?= htmlspecialchars($cartFlash) ?></div>
 <?php endif; ?>
 
+<?php if ($resumeCommande && $savedCart): ?>
+<div class="alert alert-success" role="status">Connecte — votre selection a ete restauree. Verifiez le recapitulatif puis continuez la commande.</div>
+<?php endif; ?>
+
 <div class="menu-wizard card-custom mb-4" id="wizard-stepper">
     <nav class="wizard-stepper d-flex flex-wrap justify-content-center gap-1 gap-md-2" aria-label="Etapes de composition du menu">
         <?php foreach ($wizardSteps as $i => $ws): ?>
@@ -238,6 +249,12 @@ if ($cartFlash):
         <?php endif; ?>
         <?php endforeach; ?>
     </nav>
+</div>
+
+<div class="d-flex justify-content-center mb-4">
+    <button type="button" class="btn btn-outline-primary btn-autofill-all">
+        <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Tout remplir auto
+    </button>
 </div>
 
 <section id="step-invites" class="wizard-panel card-custom mb-4 menu-guests-card wizard-panel-active">
@@ -410,7 +427,9 @@ foreach ($group as $type => $items):
     <div class="wizard-nav">
         <button type="button" class="btn btn-outline-secondary btn-wizard-prev" data-prev="<?= $hasBoissons ? 'step-boissons' : 'step-dessert' ?>"><i class="fa-solid fa-arrow-up me-1"></i> Precedent</button>
         <div class="d-flex gap-2 flex-wrap">
-            <button type="button" class="btn btn-outline-primary" id="btn-autofill">Tout remplir auto</button>
+            <button type="button" class="btn btn-outline-primary btn-autofill-all">
+                <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Tout remplir auto
+            </button>
             <button type="button" class="btn btn-success btn-lg" id="btn-commander" aria-disabled="true" aria-describedby="validation-msg">Continuer la commande</button>
         </div>
     </div>
@@ -436,11 +455,13 @@ const BASE_PRICE = <?= $prix ?>;
 const PRIX_ENFANT = <?= $menuEnfantInfo ? (float)$menuEnfantInfo['prix'] : 0 ?>;
 const HAS_ENFANT_OPTION = <?= ($menuEnfantInfo && !$isMenuEnfant) ? 'true' : 'false' ?>;
 const MIN_GUESTS = <?= $min ?>;
-const TYPES = ['entree', 'plat', 'dessert'];
+const TYPES = <?= json_encode($activeCartTypes) ?>;
 const HAS_BOISSONS = <?= $hasBoissons ? 'true' : 'false' ?>;
 const CSRF_TOKEN = <?= json_encode(csrfToken()) ?>;
 const WIZARD_STEPS = <?= json_encode(array_column($wizardSteps, 'id')) ?>;
 const WIZARD_LABELS = <?= json_encode(array_combine(array_column($wizardSteps, 'id'), array_column($wizardSteps, 'label')), JSON_UNESCAPED_UNICODE) ?>;
+const SAVED_CART = <?= json_encode($savedCart ?: null, JSON_UNESCAPED_UNICODE) ?>;
+const RESUME_COMMANDE = <?= $resumeCommande ? 'true' : 'false' ?>;
 const PLAT_TYPE_LABELS = { entree: 'Entrees', plat: 'Plats', dessert: 'Desserts' };
 
 let cart = { invites: MIN_GUESTS, enfants: 0, entree: {}, plat: {}, dessert: {}, boissons: {} };
@@ -552,6 +573,71 @@ function applyDistribution(type, ordered, total) {
         if (lbl) lbl.textContent = val;
     });
     updateAllSliderLimits();
+}
+
+function syncInvitesFromInput() {
+    const inp = document.getElementById('invites');
+    if (!inp) return;
+    cart.invites = Math.max(MIN_GUESTS, parseInt(inp.value, 10) || MIN_GUESTS);
+    inp.value = cart.invites;
+    if (cart.enfants > cart.invites) {
+        cart.enfants = cart.invites;
+        const nbE = document.getElementById('nb-enfants');
+        if (nbE) nbE.value = cart.enfants;
+    }
+    syncSlidersMax();
+}
+
+function restoreSavedCart(saved) {
+    if (!saved || typeof saved !== 'object') return false;
+
+    cart.invites = Math.max(MIN_GUESTS, parseInt(saved.invites, 10) || MIN_GUESTS);
+    const invitesInput = document.getElementById('invites');
+    if (invitesInput) invitesInput.value = cart.invites;
+
+    cart.enfants = Math.min(cart.invites, Math.max(0, parseInt(saved.enfants, 10) || 0));
+    if (HAS_ENFANT_OPTION) {
+        const hasEnfants = document.getElementById('has-enfants');
+        const nbEnfants = document.getElementById('nb-enfants');
+        if (hasEnfants) hasEnfants.checked = cart.enfants > 0;
+        if (nbEnfants) nbEnfants.value = cart.enfants;
+    }
+
+    cart.entree = {};
+    cart.plat = {};
+    cart.dessert = {};
+    cart.boissons = {};
+    document.querySelectorAll('.plat-slider').forEach(s => { s.value = 0; });
+    document.querySelectorAll('.boisson-qty').forEach(input => { input.value = 0; });
+
+    TYPES.forEach(type => {
+        if (!saved[type] || typeof saved[type] !== 'object') return;
+        Object.entries(saved[type]).forEach(([platId, qty]) => {
+            qty = parseInt(qty, 10) || 0;
+            if (qty <= 0) return;
+            const slider = document.getElementById(type + '-' + platId);
+            if (!slider) return;
+            slider.value = qty;
+            cart[type][platId] = qty;
+            const lbl = document.getElementById('label-' + type + '-' + platId);
+            if (lbl) lbl.textContent = qty;
+        });
+    });
+
+    if (saved.boissons && typeof saved.boissons === 'object') {
+        Object.entries(saved.boissons).forEach(([boissonId, qty]) => {
+            qty = parseInt(qty, 10) || 0;
+            if (qty <= 0) return;
+            const input = document.querySelector('.boisson-qty[data-id="' + boissonId + '"]');
+            if (!input) return;
+            input.value = qty;
+            cart.boissons[boissonId] = qty;
+        });
+    }
+
+    syncSlidersMax();
+    updateUI();
+    return true;
 }
 
 function autoFillCategory(type) {
@@ -928,7 +1014,13 @@ function updateUI() {
 }
 
 function autoFill() {
+    syncInvitesFromInput();
     TYPES.forEach(type => autoFillCategory(type));
+    hideValidationMsg();
+    const recapIdx = WIZARD_STEPS.indexOf('recap');
+    if (recapIdx >= 0) {
+        goToStep(recapIdx);
+    }
 }
 
 function submitOrder() {
@@ -1070,7 +1162,9 @@ document.getElementById('btn-commander-top')?.addEventListener('click', () => {
     document.getElementById('step-invites')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
-document.getElementById('btn-autofill').addEventListener('click', autoFill);
+document.querySelectorAll('.btn-autofill-all').forEach(btn => {
+    btn.addEventListener('click', autoFill);
+});
 document.getElementById('btn-commander').addEventListener('click', () => {
     if (!focusFirstInvalidField()) return;
     submitOrder();
@@ -1078,7 +1172,14 @@ document.getElementById('btn-commander').addEventListener('click', () => {
 
 syncSlidersMax();
 updateUI();
-goToStep(0, false);
+if (restoreSavedCart(SAVED_CART)) {
+    const recapIdx = WIZARD_STEPS.indexOf('recap');
+    if (recapIdx >= 0) {
+        goToStep(recapIdx, RESUME_COMMANDE);
+    }
+} else {
+    goToStep(0, false);
+}
 </script>
 <?php endif; ?>
 

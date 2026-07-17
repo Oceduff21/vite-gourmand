@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['data'])) {
         $_SESSION['menu_cart_menu_id'] = $postedMenuId;
     }
     if (!isset($_SESSION['user_id'])) {
-        header('Location: login.php?redirect=' . urlencode('commande.php?menu_id=' . $postedMenuId));
+        header('Location: login.php?redirect=' . urlencode('menu.php?id=' . $postedMenuId . '&resume=commande'));
         exit();
     }
     header('Location: commande.php?menu_id=' . $postedMenuId);
@@ -24,7 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['data'])) {
 }
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+    $loginRedirect = ($menu_id = (int)($_GET['menu_id'] ?? $_GET['id'] ?? 0)) > 0
+        && !empty($_SESSION['menu_cart'])
+        && (int)($_SESSION['menu_cart_menu_id'] ?? 0) === $menu_id
+        ? 'menu.php?id=' . $menu_id . '&resume=commande'
+        : $_SERVER['REQUEST_URI'];
+    header('Location: login.php?redirect=' . urlencode($loginRedirect));
     exit();
 }
 

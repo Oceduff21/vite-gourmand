@@ -25,10 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 secureSessionLogin((int)$user['id'], $user['role'], ['user_nom' => $user['nom']]);
 
-                $redirect = $_GET['redirect'] ?? 'index.php';
-                if (preg_match('#^(https?://|//)#i', $redirect) || strpos($redirect, '..') !== false) {
-                    $redirect = 'index.php';
-                }
+                $redirect = sanitizeInternalRedirect($_GET['redirect'] ?? 'index.php');
                 header('Location: ' . $redirect);
                 exit();
             }
@@ -39,12 +36,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageNoIndex = true;
+$redirect = sanitizeInternalRedirect($_GET['redirect'] ?? '', '');
+$isOrderFlow = $redirect !== '' && (strpos($redirect, 'menu.php') !== false || strpos($redirect, 'commande.php') !== false);
 include 'includes/header.php';
 ?>
 
 <div class="container mt-5">
 
 <h1 class="h2">Connexion</h1>
+
+<?php if ($isOrderFlow): ?>
+<div class="alert alert-info" role="status">
+    Connectez-vous ou <a href="register.php?redirect=<?= urlencode($redirect) ?>" class="alert-link">creez un compte</a> pour finaliser votre commande. Votre selection de menu sera conservee.
+</div>
+<?php endif; ?>
 
 <?php if ($message): ?>
 <div class="alert alert-danger" role="alert"><?= htmlspecialchars($message) ?></div>
@@ -68,7 +73,8 @@ include 'includes/header.php';
 
 </form>
 
-<p class="mt-3"><a href="mot-de-passe-oublie.php">Mot de passe oublie ?</a></p>
+<p class="mt-3">Pas encore de compte ? <a href="register.php<?= $redirect !== '' ? '?redirect=' . urlencode($redirect) : '' ?>">Creer un compte</a></p>
+<p class="mt-2"><a href="mot-de-passe-oublie.php">Mot de passe oublie ?</a></p>
 
 </div>
 
