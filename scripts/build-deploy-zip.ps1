@@ -16,7 +16,12 @@ $excludeDirs = @(
     "deploy",
     "node_modules",
     "vendor",
-    "docs"
+    "docs",
+    "dossier-projet",
+    "dossier-professionnel",
+    "PRET_A_ENVOYER",
+    "ECF_A_RENDRE",
+    "agent-transcripts"
 )
 
 $excludeFiles = @(
@@ -28,7 +33,10 @@ $excludeFiles = @(
 $excludePatterns = @(
     "*.pdf",
     "*.odt",
-    "*.md"
+    "*.md",
+    "DEPOT_*.zip",
+    "ECF_A_RENDRE.zip",
+    "PRET_A_ENVOYER*"
 )
 
 $temp = Join-Path $env:TEMP ("vite-gourmand-deploy-" + [guid]::NewGuid().Guid)

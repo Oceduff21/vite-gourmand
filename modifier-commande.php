@@ -3,11 +3,17 @@ session_start();
 require 'includes/db.php';
 require 'includes/helpers.php';
 require 'includes/menu-helpers.php';
+require_once __DIR__ . '/back/autoload.php';
+
+use ViteGourmand\Controllers\CommandeController;
+use ViteGourmand\Models\Commande;
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
+
+$commandeController = new CommandeController($pdo);
 
 $id = (int)($_GET['id'] ?? 0);
 $userId = (int)$_SESSION['user_id'];
@@ -77,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($error === '') {
-        $delaiError = validateDateLivraisonMenu($date, $delaiJours, $commande['created_at'] ?? null);
+        $delaiError = Commande::validateDateLivraison($date, $delaiJours, $commande['created_at'] ?? null);
         if ($delaiError) {
             $error = $delaiError;
         }
@@ -92,8 +98,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $prixMenu = calculateMenuPersonnesTotal((float)$commande['menu_prix'], $prixEnfant, $nb, $nbEnfants);
-        $livraison = calculateLivraisonPrice($ville, $codePostal);
-        $reduction = calculateCommandeReduction($prixMenu, $nb, $min);
+        $fees = $commandeController->applyFees($prixMenu, $nb, $min, $ville, $codePostal);
+        $livraison = $fees['livraison'];
+        $reduction = $fees['reduction'];
 
         $stmtBoissons = $pdo->prepare('SELECT COALESCE(SUM(quantite * prix_unitaire), 0) FROM commande_boissons WHERE commande_id = ?');
         $totalBoissons = 0.0;

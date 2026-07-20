@@ -2,6 +2,57 @@
   margin: 20mm 18mm;
 }
 
+@page cover {
+  margin: 25mm 20mm;
+}
+
+.cover-page {
+  page: cover;
+  page-break-after: always;
+  text-align: center;
+  padding-top: 35mm;
+  min-height: 220mm;
+}
+
+.cover-page .label {
+  font-size: 11pt;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 12mm;
+}
+
+.cover-page h1 {
+  border: none;
+  font-size: 26pt;
+  color: #c0392b;
+  margin: 0 0 8mm;
+  line-height: 1.2;
+}
+
+.cover-page .subtitle {
+  font-size: 14pt;
+  color: #1a1a2e;
+  margin-bottom: 20mm;
+}
+
+.cover-page .meta {
+  font-size: 12pt;
+  line-height: 1.8;
+  margin: 8mm auto 0;
+  max-width: 140mm;
+}
+
+.cover-page .meta strong {
+  color: #1a1a2e;
+}
+
+.cover-page .footer-note {
+  margin-top: 25mm;
+  font-size: 10pt;
+  color: #777;
+}
+
 body {
   font-family: "Segoe UI", system-ui, sans-serif;
   font-size: 11pt;

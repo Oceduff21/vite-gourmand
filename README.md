@@ -30,12 +30,22 @@ Tri des comptes en BDD : executer `database/patch-cleanup-users.sql` dans phpMyA
 
 ## Structure
 
-- `/` — Site public
-- `/admin/` — Back-office (admin + employe)
-- `/includes/` — Header, footer, DB, auth
-- `/database/` — SQL schema + migration
+Carte complete + guide debug : **[STRUCTURE.md](STRUCTURE.md)**  
+Architecture Front/Back + MVC/POO + AJAX : **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
 
-Voir [AUDIT.md](AUDIT.md) pour l'etat d'avancement ECF.
+```
+front/           Vues HTML + JavaScript (FRONT)
+back/            Models + Controllers POO (BACK MVC)
+api/             Endpoints AJAX
+admin/           Back-office
+includes/        Config, helpers, layout
+assets/          CSS + images
+database/        Schema SQL + patches
+docs/            Documentation (.md) + docs/depot/ (meta Studi)
+scripts/         Outils (PDF, ZIP, sync)
+```
+
+Meta depots Studi : [docs/depot/](docs/depot/) (paquets ZIP/PDF ignores par Git).
 
 
 ## MongoDB (NoSQL)

@@ -1,7 +1,35 @@
+# --- Secrets / local ---
 .env
-*.log
-vendor/
 includes/config.local.php
+*.log
+
+# --- Dependances & build deploiement ---
+vendor/
 deploy/
+*.zip
+
+# --- Paquets Studi / ECF (regenerables via scripts/) ---
+ECF_A_RENDRE/
+PRET_A_ENVOYER/
+DEPOT_*.zip
+ECF_A_RENDRE.zip
+
+# --- Binaires generes (sources .md restees trackees) ---
+*.pdf
+*.odt
+*.docx
 *.tmp.odt
 
+# --- Fichiers temporaires / dumps ---
+dossier-professionnel/_*.txt
+*.bak
+*.swp
+*~
+
+# --- OS / IDE ---
+Thumbs.db
+Desktop.ini
+.DS_Store
+.idea/
+.vscode/
+*.code-workspace

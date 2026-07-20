@@ -12,7 +12,8 @@
 | Piece | Fichier | Statut |
 |-------|---------|--------|
 | Copie a rendre (ODT) | `docs/Copie_a_rendre_TP_Vite_Gourmand.odt` | A verifier / imprimer |
-| Manuel utilisateur (PDF) | `docs/MANUEL_UTILISATEUR.pdf` | Pret |
+| Page de garde + sommaire (PDF) | `docs/PAGE_GARDE_ECF.pdf` | Generer via `python scripts/generate-pdfs.py` |
+| Manuel utilisateur (PDF) | `docs/MANUEL_UTILISATEUR.pdf` | Pret (comptes Jose/Julie/client) |
 | Charte graphique (PDF) | `docs/CHARTE_GRAPHIQUE.pdf` | Pret |
 | Documentation technique (PDF) | `docs/DOCUMENTATION_TECHNIQUE.pdf` | Pret |
 | Lien deploiement (dans ODT) | https://vitegourmand.infinityfree.io/ | OK |
@@ -85,25 +86,25 @@ Executer dans l'ordre :
 Cochez apres verification sur **https://vitegourmand.infinityfree.io/**
 
 ### Site public
-- [ ] Accueil : carousel, menus, avis, pas d'erreur WAVE bloquante
-- [ ] `/menus.php` : filtres AJAX, images visibles
-- [ ] `/menu.php?id=14` : 3 entrees, **prix affiche** (pas 0 EUR)
-- [ ] `/register.php` : inscription avec adresse complete
-- [ ] `/login.php` : connexion → « Mon espace »
+- [X] Accueil : carousel, menus, avis, pas d'erreur WAVE bloquante
+- [X] `/menus.php` : filtres AJAX, images visibles
+- [X] `/menu.php?id=14` : 3 entrees, **prix affiche** (pas 0 EUR)
+- [X] `/register.php` : inscription avec adresse complete
+- [X] `/login.php` : connexion → « Mon espace »
 - [X] Commande complete : wizard → recap → livraison → confirmation
-- [ ] `/espace-utilisateur.php` : commande visible
-- [ ] `/accessibilite.php` : page accessibilite
+- [X] `/espace-utilisateur.php` : commande visible
+- [X] `/accessibilite.php` : page accessibilite
 
 ### Admin
-- [ ] `/admin/login.php` : jose@vite-gourmand.fr / Admin123!
-- [ ] Dashboard : graphiques + KPI
-- [ ] Commandes : accepter → preparation → livraison → terminee
+- [X] `/admin/login.php` : jose@vite-gourmand.fr / Admin123!
+- [X] Dashboard : graphiques + KPI
+- [X] Commandes : accepter → preparation → livraison → terminee
 - [X] Avis : moderer un avis client
-- [ ] (Optionnel) Creer compte employe Jose
+- [x] (Optionnel) Creer compte employe Jose
 
 ### RGAA (capture pour dossier)
-- [ ] Extension WAVE sur accueil : 0 erreur (contrastes corriges le 17/07)
-- [ ] Navigation clavier Tab sur login + menu
+- [X] Extension WAVE sur accueil : 0 erreur
+- [X] Navigation clavier Tab sur login + menu
 
 Detail : `docs/TESTS_PROD_ECF.md`
 

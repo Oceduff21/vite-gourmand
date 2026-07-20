@@ -66,4 +66,4 @@ Liens utiles a coller dans la copie ODT si demande :
 5. Documentation technique (PDF)
 6. Copie ODT completee
 
-Voir `COPIE_ECF.md` pour la checklist detaillee.
+Voir `docs/depot/COPIE_ECF.md` pour la checklist detaillee.

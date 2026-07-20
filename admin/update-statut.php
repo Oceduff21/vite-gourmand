@@ -3,6 +3,10 @@ require __DIR__ . '/partials/auth.php';
 requireAdminAccess();
 
 require '../includes/db.php';
+require_once __DIR__ . '/../back/autoload.php';
+
+use ViteGourmand\Controllers\CommandeController;
+use ViteGourmand\Models\Commande;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !verifyCsrf($_POST['csrf_token'] ?? '')) {
     http_response_code(405);
@@ -13,7 +17,8 @@ $id = (int)($_POST['id'] ?? 0);
 $statut = $_POST['statut'] ?? '';
 $redirect = $_POST['redirect'] ?? 'list';
 $redirectUrl = ($redirect === 'detail' && $id) ? 'commande-detail.php?id=' . $id : 'admin-commandes.php';
-$allowed = array_keys(getStatutsCommande());
+$allowed = array_keys(Commande::getStatuts());
+$commandeController = new CommandeController($pdo);
 
 require '../includes/user-helpers.php';
 
@@ -85,7 +90,7 @@ if ($statut === 'annulee') {
     adminStatutRedirect($redirectUrl, null, 'Commande annulee. Le client a ete notifie.');
 }
 
-if ($currentStatut !== $statut && !isStatutTransitionAllowed($currentStatut, $statut)) {
+if ($currentStatut !== $statut && !$commandeController->canTransition($currentStatut, $statut)) {
     adminStatutRedirect(
         $redirectUrl,
         'Transition de statut non autorisee : ' . getStatutLabel($currentStatut) . ' → ' . getStatutLabel($statut) . '.'

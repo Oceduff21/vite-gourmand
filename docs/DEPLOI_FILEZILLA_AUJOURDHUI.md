@@ -118,12 +118,15 @@ return [
 
 ---
 
-## Etape 4 — SQL phpMyAdmin (apres upload, 15 min)
+## Etape 4 — SQL phpMyAdmin (apres upload, 10 min)
 
-Ordre d'execution dans phpMyAdmin :
+Ordre d'execution dans phpMyAdmin (base InfinityFree) :
 
-1. `database/patch-plat-images-complet.sql`
-2. `database/patch-menu-entreprise.sql`
+1. `database/patch-prod-ecf-20260720.sql` — **prioritaire** (prix Menu Entreprise + categories boissons)
+2. Si menus incomplets (0 plats) : `database/patch-sync-catalogue-local.sql`
+3. Optionnel images : `database/patch-plat-images-complet.sql`
+
+Ignorer les erreurs « Duplicate column » sur `categorie` / `description`.
 
 ---
 
@@ -138,8 +141,10 @@ Ordre d'execution dans phpMyAdmin :
 | Ctrl+F5 | Forcer rechargement sans cache |
 
 Comptes test :
-- `admin@vite-gourmand.fr` / `Admin123!`
-- `testadmin@test.com` / `Admin123!`
+- Admin Jose : `jose@vite-gourmand.fr` / `Admin123!`
+- Employe Julie : `julie@vite-gourmand.fr` / `Employe123!`
+- Client : `client@vite-gourmand.fr` / `Client123!`
+- Fallback : `admin@vite-gourmand.fr` / `Admin123!`
 
 ---
 

@@ -1,4 +1,4 @@
-﻿# Deploiement Vite & Gourmand
+# Deploiement Vite & Gourmand
 
 ## Option 1 : Render.com (recommande ECF — en ligne)
 
@@ -91,4 +91,4 @@ Copier `.env.example` en `.env` pour la prod.
 
 ## Livrables ECF
 
-Voir [COPIE_ECF.md](COPIE_ECF.md) et dossier [docs/](docs/) pour la copie ODT et les PDF.
+Voir [docs/depot/COPIE_ECF.md](docs/depot/COPIE_ECF.md) et dossier [docs/](docs/) pour la copie ODT et les PDF.

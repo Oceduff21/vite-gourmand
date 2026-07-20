@@ -42,7 +42,8 @@ Pages de demonstration :
 
 ## Livrables PDF a joindre
 
-1. **Manuel utilisateur** — parcours client + admin/employe
+0. **Page de garde + sommaire** — `docs/PAGE_GARDE_ECF.pdf` (modifier `docs/ecf-meta.json` puis `python scripts/generate-pdfs.py`)
+1. **Manuel utilisateur** — parcours client + admin/employe (comptes Jose/Julie/client)
 2. **Charte graphique** — couleurs (#c0392b, Bootstrap), typo, logo
 3. **Documentation technique** — architecture, BDD, deploiement
 
@@ -61,8 +62,9 @@ Sources Markdown a convertir en PDF : dossier `docs/`
 - [x] GitHub public a jour
 - [x] Copie ODT completee (URL + stack ci-dessus) — voir docs/Copie_a_rendre_TP_Vite_Gourmand.odt
 - [x] 3 PDF livrables (docs/MANUEL_UTILISATEUR.pdf, CHARTE_GRAPHIQUE.pdf, DOCUMENTATION_TECHNIQUE.pdf)
-- [ ] Upload prod derniere version — `deploy/vite-gourmand-prod.zip` (regenere 17/07, ~105 Mo)
-- [ ] SQL prod — `patch-menu-entreprise-prix.sql`, `patch-site-settings.sql`
+- [x] ZIP prod regenere — `deploy/vite-gourmand-prod.zip` (20/07/2026, ~105 Mo, 203 fichiers)
+- [ ] Upload FileZilla vers InfinityFree `htdocs` (ne pas ecraser `config.local.php`)
+- [ ] SQL prod — `database/patch-prod-ecf-20260720.sql` (+ sync catalogue si menus vides)
 - [ ] Test parcours complet — voir `docs/DOSSIER_ECF_FINAL.md` et `docs/TESTS_PROD_ECF.md`
 - [ ] Verifier ODT + joindre les 3 PDF au dossier papier
 - [x] Mentions legales : hebergeur InfinityFree

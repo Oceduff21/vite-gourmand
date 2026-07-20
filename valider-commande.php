@@ -5,6 +5,11 @@ require 'includes/helpers.php';
 require 'includes/menu-helpers.php';
 require 'includes/mongo.php';
 require 'includes/user-helpers.php';
+require_once __DIR__ . '/back/autoload.php';
+
+use ViteGourmand\Controllers\CommandeController;
+use ViteGourmand\Models\Commande;
+use ViteGourmand\Models\Menu;
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
@@ -22,6 +27,7 @@ $ville = trim($_POST['ville'] ?? '');
 $date = $_POST['date'] ?? '';
 $heure = $_POST['heure'] ?? '';
 $gsm = trim($_POST['gsm'] ?? '');
+$commandeController = new CommandeController($pdo);
 
 if (!verifyCsrf($_POST['csrf_token'] ?? '')) { die('Token CSRF invalide.'); }
 
@@ -29,15 +35,14 @@ if (!$menu_id || !$quantite || !$rue || !$numero || !$code_postal || !$ville || 
     die('Tous les champs obligatoires doivent etre remplis.');
 }
 
-$stmt = $pdo->prepare('SELECT * FROM menus WHERE id = ?');
-$stmt->execute([$menu_id]);
-$menu = $stmt->fetch(PDO::FETCH_ASSOC);
-if (!$menu) {
+$menuModel = Menu::findById($pdo, $menu_id);
+if (!$menuModel) {
     die('Menu invalide');
 }
+$menu = $menuModel->toArray();
 
-$min = (int)$menu['min_personnes'];
-$prix = (float)$menu['prix'];
+$min = $menuModel->minPersonnes();
+$prix = $menuModel->prix();
 $stock = (int)($menu['stock'] ?? 0);
 
 if ($quantite < $min) {
@@ -49,7 +54,7 @@ if ($stock <= 0) {
 
 $delaiJours = (int)($menu['delai_jours'] ?? 7);
 $cart = normalizeCartFromPost($_POST['cart_json'] ?? '');
-$delaiError = validateDateLivraisonMenu($date, $delaiJours);
+$delaiError = Commande::validateDateLivraison($date, $delaiJours);
 if ($delaiError) {
     $_SESSION['commande_recap_confirmed'] = true;
     $_SESSION['menu_cart'] = $cart;
@@ -85,8 +90,9 @@ if ($rowEnf = $stmtEnf->fetch(PDO::FETCH_ASSOC)) {
 
 $totalMenu = calculateMenuPersonnesTotal($prix, $prixEnfant, $quantite, $nbEnfants);
 $totalBoissons = calculateBoissonsTotal($pdo, $menu_id, $cart);
-$livraison = calculateLivraisonPrice($ville, $code_postal);
-$reduction = calculateCommandeReduction($totalMenu, $quantite, $min);
+$fees = $commandeController->applyFees($totalMenu, $quantite, $min, $ville, $code_postal);
+$livraison = $fees['livraison'];
+$reduction = $fees['reduction'];
 $total = round($totalMenu + $totalBoissons + $livraison - $reduction, 2);
 
 $pdo->beginTransaction();
