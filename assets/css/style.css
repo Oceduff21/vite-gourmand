@@ -556,7 +556,16 @@ font-size:1.75rem;
 .menu-order-page .card-custom{background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,.06);border:1px solid #e8ecf1}
 
 /* Wizard stepper */
-.menu-wizard{position:sticky;top:72px;z-index:200;background:#fff}
+/* Sticky stepper : laisse passer les clics hors boutons (evite de bloquer invites / Auto / sliders) */
+.menu-wizard{
+    position:sticky;top:72px;z-index:200;background:#fff;
+    pointer-events:none;
+}
+.menu-wizard .wizard-stepper,
+.menu-wizard .wizard-step-btn,
+.menu-wizard button{
+    pointer-events:auto;
+}
 .wizard-stepper{align-items:center}
 .wizard-step-btn{
     display:inline-flex;align-items:center;gap:6px;
@@ -580,13 +589,15 @@ font-size:1.75rem;
 .wizard-step-sep{color:#cbd5e1;font-size:1.1rem}
 
 .wizard-panel{
-    scroll-margin-top:140px;
+    display:none;
+    scroll-margin-top:180px;
     border:2px solid transparent;border-radius:16px;
     transition:border-color .3s,box-shadow .3s;
     background:#fff;padding:20px;
     box-shadow:0 4px 16px rgba(0,0,0,.06);
 }
 .wizard-panel-active{
+    display:block;
     border-color:var(--vg-gold,#c9a227);
     box-shadow:0 0 0 4px rgba(201,162,39,.15);
 }
@@ -606,7 +617,14 @@ font-size:1.75rem;
     25%{transform:translateX(-6px)}
     75%{transform:translateX(6px)}
 }
-.wizard-nav{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding-top:8px;border-top:1px solid #f1f5f9}
+.guest-stepper .form-control{
+    max-width:7rem;
+    border-left:0;border-right:0;
+}
+.guest-stepper .btn{
+    min-width:2.75rem;
+    font-size:1.25rem;font-weight:700;line-height:1;
+}
 button[aria-disabled="true"]{opacity:.72;cursor:not-allowed}
 button[aria-disabled="true"].btn-success{opacity:.85}
 .wizard-field-error{border-color:#dc3545!important;box-shadow:0 0 0 3px rgba(220,53,69,.25)!important}

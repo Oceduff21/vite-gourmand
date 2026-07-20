@@ -586,9 +586,10 @@ function submitOrder() {
     f.submit();
 }
 
-document.getElementById('invites').addEventListener('input', e => {
-    cart.invites = Math.max(MIN_GUESTS, parseInt(e.target.value, 10) || MIN_GUESTS);
-    e.target.value = cart.invites;
+function setInvitesCount(n) {
+    const inp = document.getElementById('invites');
+    cart.invites = Math.max(MIN_GUESTS, Math.min(500, parseInt(n, 10) || MIN_GUESTS));
+    if (inp) inp.value = cart.invites;
     if (cart.enfants > cart.invites) cart.enfants = cart.invites;
     const nbE = document.getElementById('nb-enfants');
     if (nbE) nbE.max = cart.invites;
@@ -596,13 +597,21 @@ document.getElementById('invites').addEventListener('input', e => {
     document.querySelectorAll('.plat-slider').forEach(s => { s.value = 0; });
     syncSlidersMax();
     updateUI();
+}
+
+document.querySelector('.btn-guest-dec')?.addEventListener('click', () => {
+    setInvitesCount(cart.invites - 1);
+});
+document.querySelector('.btn-guest-inc')?.addEventListener('click', () => {
+    setInvitesCount(cart.invites + 1);
+});
+
+document.getElementById('invites').addEventListener('input', e => {
+    setInvitesCount(e.target.value);
 });
 document.getElementById('invites').addEventListener('blur', e => {
     if ((parseInt(e.target.value, 10) || 0) < MIN_GUESTS) {
-        e.target.value = MIN_GUESTS;
-        cart.invites = MIN_GUESTS;
-        syncSlidersMax();
-        updateUI();
+        setInvitesCount(MIN_GUESTS);
     }
 });
 

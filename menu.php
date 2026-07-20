@@ -238,24 +238,25 @@ if ($cartFlash):
     </nav>
 </div>
 
-<div class="d-flex justify-content-center mb-4">
-    <button type="button" class="btn btn-outline-primary btn-autofill-all">
-        <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Tout remplir auto
-    </button>
-</div>
-
 <section id="step-invites" class="wizard-panel card-custom mb-4 menu-guests-card wizard-panel-active">
     <div class="wizard-panel-head">
         <h3 class="h5 mb-1"><span class="step-badge">1</span> Nombre d'invites</h3>
         <p class="text-muted small mb-0">Indiquez combien de personnes seront presentes.</p>
     </div>
     <div class="row align-items-center g-3 mt-2">
-        <div class="col-sm-4 col-md-3">
+        <div class="col-sm-5 col-md-4">
             <label class="form-label small fw-bold" for="invites">Total invites</label>
-            <input type="number" id="invites" class="form-control form-control-lg wizard-focus-field" value="<?= $min ?>" min="<?= $min ?>" max="500" autofocus>
+            <div class="input-group input-group-lg guest-stepper">
+                <button type="button" class="btn btn-outline-secondary btn-guest-dec" aria-label="Diminuer le nombre d'invites">−</button>
+                <input type="number" id="invites" class="form-control form-control-lg text-center wizard-focus-field" value="<?= $min ?>" min="<?= $min ?>" max="500" autofocus>
+                <button type="button" class="btn btn-outline-secondary btn-guest-inc" aria-label="Augmenter le nombre d'invites">+</button>
+            </div>
         </div>
-        <div class="col-sm-8 col-md-9">
-            <p class="text-muted mb-0 small">Minimum <strong><?= $min ?></strong> personnes. Ce nombre sera reparti entre les entrees, plats et desserts.</p>
+        <div class="col-sm-7 col-md-8">
+            <p class="text-muted mb-2 small">Minimum <strong><?= $min ?></strong> personnes. Ce nombre sera reparti entre les entrees, plats et desserts.</p>
+            <button type="button" class="btn btn-sm btn-outline-primary btn-autofill-all">
+                <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Tout remplir auto
+            </button>
         </div>
     </div>
     <?php if ($menuEnfantInfo && !$isMenuEnfant): ?>
@@ -452,7 +453,7 @@ const SAVED_CART = <?= json_encode($savedCart ?: null, JSON_UNESCAPED_UNICODE) ?
 const RESUME_COMMANDE = <?= $resumeCommande ? 'true' : 'false' ?>;
 const PLAT_TYPE_LABELS = { entree: 'Entrees', plat: 'Plats', dessert: 'Desserts' };
 </script>
-<script src="front/js/menu-wizard.js?v=20260720c"></script>
+<script src="front/js/menu-wizard.js?v=20260720d"></script>
 <?php endif; ?>
 
 <?php include 'includes/footer.php'; ?>

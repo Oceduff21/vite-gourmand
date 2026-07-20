@@ -23,15 +23,23 @@ vite-gourmand/                 ← DOCUMENT ROOT (ne pas deplacer les *.php)
 ├── database/                  schema.sql, migrations, patches
 ├── scripts/                   Outils (PDF, ZIP prod, sync Mongo…)
 │
-├── docs/                      Documentation source (.md) + meta ECF
+├── docs/                      Documentation (.md)
+│   ├── DEPLOY.md              Guide prod InfinityFree (unique)
+│   ├── ARCHITECTURE.md        Front / Back / MVC
+│   └── depot/                 Meta Studi / ECF
 ├── dossier-projet/            Sources dossier projet Studi
 ├── dossier-professionnel/     Sources dossier professionnel Studi
 │
 ├── *.php                      Pages d’entree publiques (garder a la racine)
 ├── README.md                  Installation / comptes demo
-├── STRUCTURE.md               ← ce fichier
-└── docs/ARCHITECTURE.md       Separation Front / Back / AJAX / MVC
+└── STRUCTURE.md               ← ce fichier
 ```
+
+Documentation utile :
+- Install : [README.md](README.md)
+- Deploy : [docs/DEPLOY.md](docs/DEPLOY.md)
+- Architecture : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- Studi : [docs/depot/](docs/depot/)
 
 ## Ou chercher un bug ?
 

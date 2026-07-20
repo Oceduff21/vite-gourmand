@@ -51,7 +51,7 @@ function isActive($pages, $currentPage){
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
 <!-- CSS Perso -->
-<link rel="stylesheet" href="assets/css/style.css?v=20260717b">
+<link rel="stylesheet" href="assets/css/style.css?v=20260720d">
 <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
 
 <script type="application/ld+json">

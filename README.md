@@ -60,7 +60,8 @@ Les statistiques CA par menu sont stockees dans MongoDB (collection `commandes_s
 ```bash
 docker-compose up -d --build
 ```
-Voir [DEPLOY.md](DEPLOY.md) pour le deploiement complet.
+
+Deploiement InfinityFree (FileZilla) : **[docs/DEPLOY.md](docs/DEPLOY.md)**
 
 ## Git workflow
 

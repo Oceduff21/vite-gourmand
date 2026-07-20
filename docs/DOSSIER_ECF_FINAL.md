@@ -62,7 +62,7 @@ Fichier : `deploy/vite-gourmand-prod.zip` (~105 Mo, 196 fichiers)
 
 ### 4.2 Upload FileZilla
 
-Guide detaille : `docs/DEPLOI_FILEZILLA_AUJOURDHUI.md`
+Guide detaille : `docs/DEPLOY.md`
 
 1. Connexion FTP InfinityFree → dossier **`htdocs`**
 2. Decompresser le ZIP localement
